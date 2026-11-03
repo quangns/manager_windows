@@ -743,7 +743,7 @@
                 </c:PageHeader>
                 <ContentControl DockPanel.Dock="Bottom" Content="{Binding}" ContentTemplate="{StaticResource StatusBar}" />
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel MaxWidth="900" HorizontalAlignment="Left">
+                    <StackPanel MaxWidth="960">
                         <Border Style="{StaticResource Card}" Margin="0,0,0,16">
                             <StackPanel>
                                 <TextBlock Text="{l:T Prio_Section}" Style="{StaticResource CardTitle}" Margin="0,0,0,4" />
@@ -756,40 +756,90 @@
                                 <c:SettingRow Title="{l:T Prio_AllowHigh}" BorderThickness="0">
                                     <CheckBox IsChecked="{Binding AllowHigh}" />
                                 </c:SettingRow>
-                                <Grid Margin="0,12,0,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition />
-                                        <ColumnDefinition Width="16" />
-                                        <ColumnDefinition />
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel>
-                                        <TextBlock Text="{l:T Prio_Pinned}" FontWeight="Medium" Margin="0,0,0,6" TextWrapping="Wrap" />
-                                        <TextBox Text="{Binding PinnedText}" AcceptsReturn="True" Height="100" VerticalScrollBarVisibility="Auto"
-                                                 FontFamily="{StaticResource MonoFont}" FontSize="12.5" />
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="2">
-                                        <TextBlock Text="{l:T Prio_Background}" FontWeight="Medium" Margin="0,0,0,6" TextWrapping="Wrap" />
-                                        <TextBox Text="{Binding BackgroundText}" AcceptsReturn="True" Height="100" VerticalScrollBarVisibility="Auto"
-                                                 FontFamily="{StaticResource MonoFont}" FontSize="12.5" />
-                                    </StackPanel>
-                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Chọn app để ưu tiên: mỗi app một dòng, đổi lựa chọn là lưu ngay -->
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                            <StackPanel>
+                                <DockPanel Margin="0,0,0,4">
+                                    <Button DockPanel.Dock="Right" Style="{StaticResource Secondary}" Content="{l:T Btn_Refresh}"
+                                            Command="{Binding LoadAppsCommand}" />
+                                    <TextBlock Text="{l:T Prio_PickTitle}" Style="{StaticResource CardTitle}" VerticalAlignment="Center" />
+                                </DockPanel>
+                                <TextBlock Text="{l:T Prio_PickDesc}" Style="{StaticResource Muted}" Margin="0,0,0,12" />
+                                <DockPanel Margin="0,0,0,10">
+                                    <CheckBox DockPanel.Dock="Right" Content="{l:T Prio_OnlyRunning}" IsChecked="{Binding OnlyRunning}" Margin="12,0,0,0" />
+                                    <TextBlock Style="{StaticResource Icon}" Text="&#xE721;" Foreground="{DynamicResource InkMuted}" Margin="0,0,10,0" />
+                                    <TextBox Text="{Binding AppFilter, UpdateSourceTrigger=PropertyChanged, Delay=200}" ToolTip="{l:T Prio_Search}" />
+                                </DockPanel>
+                                <Border BorderBrush="{DynamicResource Hairline}" BorderThickness="1" CornerRadius="8" Padding="2,2,2,0">
+                                    <DataGrid c:Table.Apply="True" ItemsSource="{Binding AppsView}" MaxHeight="340" MinHeight="120"
+                                              IsReadOnly="True">
+                                        <DataGrid.Columns>
+                                            <DataGridTemplateColumn Header="{l:T Col_App}" Width="*" SortMemberPath="DisplayName">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding DisplayName}" FontWeight="Medium" TextTrimming="CharacterEllipsis" />
+                                                            <TextBlock Text="{Binding Name}" Foreground="{DynamicResource InkMuted}" FontFamily="{StaticResource MonoFont}"
+                                                                       FontSize="11.5" Margin="8,0,0,0" VerticalAlignment="Center" />
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                            <DataGridTemplateColumn Header="{l:T Col_Processes}" Width="100" SortMemberPath="Processes">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding ProcessesText}" Style="{StaticResource Num}" Margin="0,0,12,0" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                            <DataGridTemplateColumn Header="RAM" Width="110" SortMemberPath="WorkingSet">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding RamText}" Style="{StaticResource Num}" Margin="0,0,12,0" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                            <DataGridTemplateColumn Header="{l:T Col_Choice}" Width="170" SortMemberPath="Choice">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <ComboBox ItemsSource="{Binding DataContext.Choices, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                                  DisplayMemberPath="Label" SelectedValuePath="Value" MinHeight="28"
+                                                                  SelectedValue="{Binding Choice, UpdateSourceTrigger=PropertyChanged}" Margin="0,3" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </Border>
+                                <!-- Thêm app chưa mở theo tên process -->
+                                <DockPanel Margin="0,12,0,0">
+                                    <TextBlock Text="{l:T Prio_AddLabel}" VerticalAlignment="Center" Margin="0,0,10,0" />
+                                    <Button DockPanel.Dock="Right" Style="{StaticResource Secondary}" Content="{l:T Prio_Add}" Command="{Binding AddAppCommand}" />
+                                    <TextBox Text="{Binding NewAppName, UpdateSourceTrigger=PropertyChanged}" FontFamily="{StaticResource MonoFont}"
+                                             ToolTip="{l:T Prio_AddHint}" />
+                                </DockPanel>
+                                <TextBlock Text="{Binding ChosenSummary}" Style="{StaticResource Muted}" FontSize="12" Margin="0,10,0,0" />
                             </StackPanel>
                         </Border>
 
                         <TextBlock Text="{l:T Prio_Managed}" Style="{StaticResource CardTitle}" Margin="0,4,0,10" />
                         <Border Style="{StaticResource TableCard}" Margin="0,0,0,16">
-                            <DataGrid c:Table.Apply="True" ItemsSource="{Binding Managed}" IsReadOnly="True" MaxHeight="220" MinHeight="80">
+                            <DataGrid c:Table.Apply="True" ItemsSource="{Binding Managed}" IsReadOnly="True" MaxHeight="260" MinHeight="80">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="{l:T Col_App}" Binding="{Binding Name}" Width="*" />
-                                    <DataGridTemplateColumn Header="PID" Width="90">
+                                    <DataGridTemplateColumn Header="{l:T Col_Processes}" Width="100">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
-                                                <TextBlock Text="{Binding Pid}" Style="{StaticResource Num}" Margin="0,0,12,0" />
+                                                <TextBlock Text="{Binding Processes}" Style="{StaticResource Num}" Margin="0,0,12,0" />
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
-                                    <DataGridTextColumn Header="{l:T Col_Original}" Binding="{Binding Original}" Width="160" />
-                                    <DataGridTextColumn Header="{l:T Col_Applied}" Binding="{Binding Applied}" Width="160" />
+                                    <DataGridTextColumn Header="{l:T Col_Original}" Binding="{Binding Original}" Width="140" />
+                                    <DataGridTextColumn Header="{l:T Col_Applied}" Binding="{Binding Applied}" Width="140" />
+                                    <DataGridTextColumn Header="{l:T Col_Reason}" Binding="{Binding Reason}" Width="160" />
                                 </DataGrid.Columns>
                             </DataGrid>
                         </Border>

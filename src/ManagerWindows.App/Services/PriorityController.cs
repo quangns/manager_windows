@@ -6,7 +6,7 @@ using ManagerWindows.Platform;
 
 namespace ManagerWindows.App.Services;
 
-public sealed record ManagedProcessView(int Pid, string Name, PriorityLevel Original, PriorityLevel Applied);
+public sealed record ManagedProcessView(int Pid, string Name, PriorityLevel Original, PriorityLevel Applied, string Reason);
 
 public sealed record ExcelStatus(bool Running, bool Heavy, string? File, long? FileBytes, long WorkingSet, double Cpu);
 
@@ -70,7 +70,9 @@ public sealed class PriorityController : BackgroundLoop
         if (_elevatedFailed.Count > 2000) _elevatedFailed.Clear(); // PID được dùng lại sau một thời gian
         var decisions = PriorityPolicy.Decide(snaps, _topUsed, opt, heavy);
         _applier.Apply(decisions, snaps);
-        Managed = _applier.Managed.Select(kv => new ManagedProcessView(kv.Key, kv.Value.Name, kv.Value.Original, kv.Value.Applied)).ToList();
+        var reasons = decisions.ToDictionary(d => d.Pid, d => d.Reason);
+        Managed = _applier.Managed.Select(kv => new ManagedProcessView(kv.Key, kv.Value.Name, kv.Value.Original, kv.Value.Applied,
+            reasons.GetValueOrDefault(kv.Key, ""))).ToList();
     }
 
     private bool UpdateExcel(List<ProcessSnapshot> snaps)

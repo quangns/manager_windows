@@ -40,6 +40,7 @@ public sealed partial class MainViewModel : ObservableObject
             case "dashboard": _ = Dashboard.RefreshCommand.ExecuteAsync(null); break;
             case "relocation": Relocation.LoadRecords(); break;
             case "usage": _ = Usage.RefreshCommand.ExecuteAsync(null); break;
+            case "priority": _ = Priority.LoadAppsCommand.ExecuteAsync(null); break;
         }
     }
 }

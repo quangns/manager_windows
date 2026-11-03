@@ -2,6 +2,9 @@ namespace ManagerWindows.Core.Priority;
 
 public enum PriorityLevel { Idle = 0, BelowNormal = 1, Normal = 2, AboveNormal = 3, High = 4 }
 
+/// <summary>Lựa chọn của người dùng cho một app trong danh sách chọn.</summary>
+public enum AppChoice { Normal, Priority, Background }
+
 public sealed class PriorityOptions
 {
     public bool Enabled { get; set; } = true;
@@ -16,6 +19,28 @@ public sealed class PriorityOptions
     /// <summary>Cho phép mức High cho app ghim. Mặc định chỉ dùng AboveNormal.</summary>
     public bool AllowHigh { get; set; }
     /// <summary>Hạ ưu tiên các app nền khi đang mở file Excel nặng.</summary>
+    public AppChoice GetChoice(string processName)
+    {
+        if (Pinned.Contains(processName, StringComparer.OrdinalIgnoreCase)) return AppChoice.Priority;
+        if (Background.Contains(processName, StringComparer.OrdinalIgnoreCase)) return AppChoice.Background;
+        return AppChoice.Normal;
+    }
+
+    /// <summary>
+    /// Đặt lựa chọn cho một app. Gán danh sách MỚI thay vì sửa tại chỗ vì vòng điều phối chạy ở luồng nền
+    /// đang đọc danh sách cũ.
+    /// </summary>
+    public void SetChoice(string processName, AppChoice choice)
+    {
+        var name = processName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? processName[..^4] : processName;
+        var pinned = Pinned.Where(n => !n.Equals(name, StringComparison.OrdinalIgnoreCase)).ToList();
+        var background = Background.Where(n => !n.Equals(name, StringComparison.OrdinalIgnoreCase)).ToList();
+        if (choice == AppChoice.Priority) pinned.Add(name);
+        if (choice == AppChoice.Background) background.Add(name);
+        Pinned = pinned;
+        Background = background;
+    }
+
     public List<string> ThrottleWhenExcelHeavy { get; set; } =
         ["chrome", "msedge", "firefox", "browser", "Zalo", "Telegram", "OneDrive", "Teams", "ms-teams"];
 }

@@ -126,10 +126,11 @@ A settings-style screen for CPU priority management and heavy Excel file analysi
 **Page Structure:**
 1. **Sidebar:** "Ưu tiên & Excel" selected.
 2. **Page Header:** Title, subtitle; primary "Lưu".
-3. **Priority Settings Card:** setting rows (label + description left, control right): toggle "Bật điều phối ưu tiên", number "Số app dùng nhiều được ưu tiên", toggle "Cho phép mức High"; two side-by-side multi-line inputs "App ưu tiên" and "App nền cần hạ ưu tiên".
-4. **Managed Processes Card:** table App, PID (monospace), Mức ban đầu, Mức hiện tại.
-5. **Heavy Excel Card:** toggle, threshold input (MB), live status line with icon; secondary "Phân tích file Excel…".
-6. **Excel Report Card:** file name, muted summary line (size · sheets · cells · formulas · styles), list of suggestions each with severity badge (Quan trọng red, Nên làm amber, Mẹo muted) and wrapped text.
+3. **Priority Settings Card:** setting rows (label + description left, control right): toggle "Bật điều phối ưu tiên", number "Số app dùng nhiều được ưu tiên", toggle "Cho phép mức High".
+4. **App Picker Card:** title "Chọn app để ưu tiên" with secondary "Làm mới"; search input and checkbox "Chỉ app đang chạy"; table with one row per app (all child processes grouped): app display name bold + process name in muted monospace, process count, RAM (monospace), and a dropdown "Bình thường / Ưu tiên / Hạ ưu tiên" that saves instantly; below, an inline row "Thêm app chưa mở" with a monospace input and secondary button; muted summary line "Đang ưu tiên: chrome, EXCEL · Hạ ưu tiên: OneDrive".
+5. **Managed Apps Card:** table grouped by app: App, Tiến trình (count), Mức ban đầu, Mức hiện tại, Lý do (Bạn chọn / Dùng nhiều / Chạy nền / Excel nặng).
+6. **Heavy Excel Card:** toggle, threshold input (MB), live status line with icon; secondary "Phân tích file Excel…".
+7. **Excel Report Card:** file name, muted summary line (size · sheets · cells · formulas · styles), list of suggestions each with severity badge (Quan trọng red, Nên làm amber, Mẹo muted) and wrapped text.
 ```
 
 ## 8. Cài đặt (Settings)

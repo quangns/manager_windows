@@ -101,6 +101,31 @@ public class PriorityTests
     }
 
     [Fact]
+    public void Choice_moves_app_between_lists_without_duplicates()
+    {
+        var opt = new PriorityOptions { Pinned = ["EXCEL"], Background = ["OneDrive", "chrome"] };
+        var oldPinned = opt.Pinned;
+
+        opt.SetChoice("chrome.exe", AppChoice.Priority);
+        Assert.Equal(AppChoice.Priority, opt.GetChoice("Chrome"));
+        Assert.DoesNotContain("chrome", opt.Background, StringComparer.OrdinalIgnoreCase);
+        Assert.Single(opt.Pinned, n => n.Equals("chrome", StringComparison.OrdinalIgnoreCase));
+        Assert.NotSame(oldPinned, opt.Pinned); // danh sách mới, luồng nền không bị đổi giữa chừng
+
+        opt.SetChoice("chrome", AppChoice.Priority);
+        Assert.Equal(2, opt.Pinned.Count);
+
+        opt.SetChoice("EXCEL", AppChoice.Normal);
+        Assert.Equal(AppChoice.Normal, opt.GetChoice("excel"));
+        opt.SetChoice("Zalo", AppChoice.Background);
+        Assert.Equal(AppChoice.Background, opt.GetChoice("zalo"));
+
+        // Ghim chrome thì khi Excel nặng chrome vẫn được ưu tiên, không bị hạ.
+        var d = PriorityPolicy.Decide([P("chrome")], [], opt, excelHeavy: true);
+        Assert.Equal(PriorityLevel.AboveNormal, d.Single().Target);
+    }
+
+    [Fact]
     public void Disabled_policy_does_nothing()
     {
         Assert.Empty(PriorityPolicy.Decide([P("EXCEL")], ["EXCEL"], new PriorityOptions { Enabled = false }, true));
