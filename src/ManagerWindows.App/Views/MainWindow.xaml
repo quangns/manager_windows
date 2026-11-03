@@ -84,6 +84,8 @@
                                 <StackPanel VerticalAlignment="Center">
                                     <TextBlock Text="Manager Windows" FontWeight="SemiBold" FontSize="14" Foreground="{DynamicResource Ink}" />
                                     <TextBlock Text="{l:T App_Tagline}" FontSize="11.5" Foreground="{DynamicResource InkMuted}" />
+                                    <TextBlock Text="{Binding EditionText}" FontFamily="{StaticResource MonoFont}" FontSize="11"
+                                               Foreground="{DynamicResource InkMuted}" Margin="0,2,0,0" />
                                 </StackPanel>
                             </StackPanel>
                             <!-- Trạng thái dịch vụ nền ở chân sidebar -->

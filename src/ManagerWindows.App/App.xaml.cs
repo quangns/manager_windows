@@ -17,9 +17,12 @@ public partial class App : Application
 {
     private const string MutexName = @"Local\ManagerWindows.App";
     private const string ShowEventName = @"Local\ManagerWindows.App.Show";
+    private const string ExitEventName = @"Local\ManagerWindows.App.Exit";
 
     private Mutex? _mutex;
     private EventWaitHandle? _showEvent;
+    private EventWaitHandle? _exitEvent;
+    private bool _ownsMutex;
     private AppHost? _host;
     private TaskbarIcon? _tray;
     private MainWindow? _window;
@@ -42,14 +45,8 @@ public partial class App : Application
             return;
         }
 
-        _mutex = new Mutex(true, MutexName, out var created);
-        if (!created)
-        {
-            // Đã có phiên đang chạy: nhờ phiên đó mở cửa sổ rồi thoát.
-            using (var ev = new EventWaitHandle(false, EventResetMode.AutoReset, ShowEventName)) ev.Set();
-            Shutdown();
-            return;
-        }
+        if (!AcquireSingleInstance()) return;
+        InstanceInfo.Current().Write();
 
         _host = new AppHost();
         Loc.Instance.SetLanguage(_host.Config.Language);
@@ -63,6 +60,86 @@ public partial class App : Application
         ListenForShowRequests();
 
         if (!e.Args.Contains("--tray")) ShowMain();
+    }
+
+    /// <summary>
+    /// Mỗi user chỉ chạy một phiên. Bản cài đặt và bản portable dùng chung khoá này: nếu phiên đang chạy là
+    /// bản khác (khác file exe hoặc khác phiên bản) thì hỏi người dùng có đóng bản đó để mở bản này không,
+    /// tránh trường hợp mở bản mới mà lại thấy cửa sổ của bản cũ.
+    /// </summary>
+    private bool AcquireSingleInstance()
+    {
+        _mutex = new Mutex(true, MutexName, out var created);
+        if (created) { _ownsMutex = true; return true; }
+
+        var me = InstanceInfo.Current();
+        var other = InstanceInfo.Read();
+        var others = OtherAppProcesses();
+        // Phiên kia vừa thoát: nhận khoá luôn.
+        if (others.Count == 0 && WaitForMutex(TimeSpan.FromSeconds(3)))
+        {
+            _ownsMutex = true;
+            return true;
+        }
+        // Phiên đang chạy chính là bản này: chỉ cần hiện cửa sổ của nó.
+        if (others.Count == 0 || other != null && other.SameAs(me) && others.Any(p => p.Id == other.Pid))
+        {
+            DisposeAll(others);
+            SignalShowAndQuit();
+            return false;
+        }
+
+        // Bản cũ (trước 0.2.1) không ghi instance.json: vẫn hỏi, chỉ là không biết rõ phiên bản.
+        var otherText = other != null && others.Any(p => p.Id == other.Pid) ? other.Describe() : Loc.Instance["Instance_Unknown"];
+        var answer = MessageBox.Show(Loc.F("Instance_Other", ("other", otherText), ("me", me.Describe())),
+            Loc.Instance["App_Title"], MessageBoxButton.YesNo, MessageBoxImage.Question);
+        if (answer != MessageBoxResult.Yes)
+        {
+            DisposeAll(others);
+            SignalShowAndQuit();
+            return false;
+        }
+
+        // Nhờ phiên kia tự thoát (trả lại mức ưu tiên, ghi nốt thống kê); bản cũ không hiểu lệnh này thì buộc dừng.
+        using (var exit = new EventWaitHandle(false, EventResetMode.AutoReset, ExitEventName)) exit.Set();
+        _ownsMutex = WaitForMutex(TimeSpan.FromSeconds(8));
+        if (!_ownsMutex)
+        {
+            foreach (var p in others)
+                try { p.Kill(); p.WaitForExit(5000); } catch (Exception ex) { Log.Error("instance", ex); }
+            _ownsMutex = WaitForMutex(TimeSpan.FromSeconds(5));
+        }
+        DisposeAll(others);
+        if (_ownsMutex) return true;
+
+        MessageBox.Show(Loc.Instance["Instance_CloseFailed"], Loc.Instance["App_Title"], MessageBoxButton.OK, MessageBoxImage.Warning);
+        Shutdown();
+        return false;
+    }
+
+    private bool WaitForMutex(TimeSpan timeout)
+    {
+        try { return _mutex!.WaitOne(timeout); }
+        catch (AbandonedMutexException) { return true; } // phiên kia thoát mà không trả khoá: vẫn nhận được
+    }
+
+    /// <summary>Các tiến trình ManagerWindows.App khác của cùng user (cùng phiên đăng nhập).</summary>
+    private static List<System.Diagnostics.Process> OtherAppProcesses()
+    {
+        var self = System.Diagnostics.Process.GetCurrentProcess();
+        return System.Diagnostics.Process.GetProcessesByName(self.ProcessName)
+            .Where(p => p.Id != self.Id && p.SessionId == self.SessionId).ToList();
+    }
+
+    private static void DisposeAll(List<System.Diagnostics.Process> list)
+    {
+        foreach (var p in list) p.Dispose();
+    }
+
+    private void SignalShowAndQuit()
+    {
+        using (var ev = new EventWaitHandle(false, EventResetMode.AutoReset, ShowEventName)) ev.Set();
+        Shutdown();
     }
 
     private void RunRollbackAll()
@@ -82,6 +159,14 @@ public partial class App : Application
             while (_showEvent.WaitOne()) Dispatcher.BeginInvoke(() => ShowMain());
         }) { IsBackground = true, Name = "show-listener" };
         thread.Start();
+
+        // Bản khác (cài đặt/portable, phiên bản khác) yêu cầu phiên này nhường chỗ.
+        _exitEvent = new EventWaitHandle(false, EventResetMode.AutoReset, ExitEventName);
+        var exitThread = new Thread(() =>
+        {
+            if (_exitEvent.WaitOne()) Dispatcher.BeginInvoke(ExitApp);
+        }) { IsBackground = true, Name = "exit-listener" };
+        exitThread.Start();
     }
 
     private void CreateTray()
@@ -181,6 +266,10 @@ public partial class App : Application
     {
         _host?.Stop(); // trả lại mức ưu tiên ban đầu, ghi nốt thống kê
         _tray?.Dispose();
+        if (_ownsMutex)
+        {
+            try { _mutex?.ReleaseMutex(); } catch (ApplicationException) { }
+        }
         _mutex?.Dispose();
         base.OnExit(e);
     }

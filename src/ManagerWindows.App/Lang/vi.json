@@ -249,5 +249,10 @@
   "Set_ThemeDesc": "Theo Windows sẽ tự đổi khi bạn đổi sáng/tối trong Cài đặt Windows.",
   "Theme_Auto": "Theo Windows",
   "Theme_Light": "Sáng",
-  "Theme_Dark": "Tối"
+  "Theme_Dark": "Tối",
+  "Edition_Portable": "Bản portable",
+  "Edition_Installed": "Bản cài đặt",
+  "Instance_Other": "Đang có một bản Manager Windows khác chạy dưới khay:\n{other}\n\nBạn đang mở:\n{me}\n\nĐóng bản đang chạy và dùng bản này?\n(Chọn No để mở lại cửa sổ của bản đang chạy.)",
+  "Instance_Unknown": "một bản cũ hơn (trước 0.2.1, không rõ phiên bản)",
+  "Instance_CloseFailed": "Không đóng được bản đang chạy. Bấm chuột phải biểu tượng Manager Windows dưới khay > Thoát, rồi mở lại."
 }

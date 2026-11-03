@@ -37,12 +37,12 @@ Vào mục [Releases](https://github.com/quangns/manager_windows/releases), có 
 | **Portable** | `ManagerWindows-<version>-win-x64-portable.zip` | Giải nén là chạy, không cần quyền admin, không cài gì vào máy |
 | **Cài đặt** | `ManagerWindows-<version>-win-x64.zip` | Muốn đủ tính năng (dịch vụ nền dọn thư mục hệ thống, đếm số lần mở app, ưu tiên cả process chạy quyền admin) |
 
-Cả 2 bản đã kèm .NET runtime, không cần cài thêm gì. Kiểm tra file tải về bằng `SHA256SUMS.txt`.
+Cả 2 bản đã kèm .NET runtime, không cần cài thêm gì. App trong hai bản là cùng một bộ file (script đóng gói kiểm tra SHA-256 từng file). Mỗi lúc chỉ chạy được một bản: mở bản này khi bản kia đang chạy dưới khay, app sẽ hỏi có đóng bản kia không. Phiên bản và loại bản hiện ở góc trên bên trái cửa sổ. Kiểm tra file tải về bằng `SHA256SUMS.txt`.
 
 ### Bản portable
 
 1. Giải nén vào chỗ bất kỳ, ví dụ `D:\Tools\ManagerWindows-Portable`.
-2. Chạy `ManagerWindows.App.exe`; biểu tượng app nằm ở khay hệ thống.
+2. Chạy `ManagerWindows.App.exe` (giữ nguyên các file `.dll` cạnh exe: bản portable dùng đúng bộ file App của bản cài đặt). Biểu tượng app nằm ở khay hệ thống.
 3. Mọi dữ liệu nằm trong thư mục `data` cạnh file exe. Mặc định app không tự chạy cùng Windows; bật trong phần Cài đặt nếu cần.
 
 Bản portable dọn rác của người dùng, gợi ý file, chuyển data, thống kê thời gian dùng và ưu tiên app như bản cài đặt. Những phần cần dịch vụ nền thì không có:

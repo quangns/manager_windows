@@ -249,5 +249,10 @@
   "Set_ThemeDesc": "\"Same as Windows\" follows the light/dark setting in Windows Settings.",
   "Theme_Auto": "Same as Windows",
   "Theme_Light": "Light",
-  "Theme_Dark": "Dark"
+  "Theme_Dark": "Dark",
+  "Edition_Portable": "Portable",
+  "Edition_Installed": "Installed",
+  "Instance_Other": "Another copy of Manager Windows is running in the tray:\n{other}\n\nYou are opening:\n{me}\n\nClose the running copy and use this one?\n(Choose No to show the running copy instead.)",
+  "Instance_Unknown": "an older copy (before 0.2.1, version unknown)",
+  "Instance_CloseFailed": "Couldn't close the running copy. Right-click the Manager Windows tray icon > Exit, then open this one again."
 }

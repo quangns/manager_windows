@@ -63,7 +63,7 @@ public sealed class AppHost
     private static (string Dir, bool Portable) ResolveDataDir()
     {
         var installed = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ManagerWindows");
-        if (File.Exists(Path.Combine(AppContext.BaseDirectory, "portable.txt")))
+        if (Edition.IsPortable)
         {
             var dir = Path.Combine(AppContext.BaseDirectory, "data");
             try
@@ -121,11 +121,17 @@ public static class Autostart
     private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
     private const string ValueName = "ManagerWindows";
 
+    /// <summary>
+    /// Bật: ghi đường dẫn exe này. Tắt: chỉ xoá khi mục đang trỏ đúng exe này, để bản portable
+    /// không xoá mất mục tự chạy của bản cài đặt (và ngược lại).
+    /// </summary>
     public static void Apply(bool enabled)
     {
         using var k = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(RunKey);
-        if (enabled) k.SetValue(ValueName, $"\"{Environment.ProcessPath}\" --tray");
-        else if (k.GetValue(ValueName) != null) k.DeleteValue(ValueName);
+        var exe = Environment.ProcessPath ?? "";
+        if (enabled) k.SetValue(ValueName, $"\"{exe}\" --tray");
+        else if (k.GetValue(ValueName) is string current && current.Contains(exe, StringComparison.OrdinalIgnoreCase))
+            k.DeleteValue(ValueName);
     }
 }
 

@@ -16,6 +16,9 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty] private int _selectedTab;
 
+    /// <summary>"v0.2.1 · Bản portable" / "v0.2.1 · Bản cài đặt" ở sidebar, để biết đang mở bản nào.</summary>
+    public string EditionText => Services.Edition.Label;
+
     public MainViewModel() => Dashboard.NavigateRequested = Navigate;
 
     public void Navigate(string? tab)
