@@ -1,0 +1,112 @@
+// Luật dọn rác mặc định. Sửa file này để thêm/bớt luật, không cần build lại.
+// Paths hỗ trợ biến môi trường và ký tự đại diện (*) trong từng đoạn đường dẫn.
+// Scope=System: chạy bởi service (quyền SYSTEM). Scope=User: chạy bởi app trong phiên người dùng.
+[
+  {
+    "id": "user-temp",
+    "name": { "vi": "File tạm của người dùng (%TEMP%)", "en": "User temporary files (%TEMP%)" },
+    "paths": [ "%TEMP%" ],
+    "minAgeDays": 2,
+    "scope": "User"
+  },
+  {
+    "id": "windows-temp",
+    "name": { "vi": "File tạm của Windows", "en": "Windows temporary files" },
+    "paths": [ "%SystemRoot%\\Temp" ],
+    "minAgeDays": 2,
+    "scope": "System"
+  },
+  {
+    "id": "windows-update-cache",
+    "name": { "vi": "Bộ cài Windows Update đã tải", "en": "Downloaded Windows Update files" },
+    "paths": [ "%SystemRoot%\\SoftwareDistribution\\Download" ],
+    "minAgeDays": 10,
+    "scope": "System"
+  },
+  {
+    "id": "delivery-optimization",
+    "name": { "vi": "Bộ nhớ đệm Delivery Optimization", "en": "Delivery Optimization cache" },
+    "paths": [ "%SystemRoot%\\ServiceProfiles\\NetworkService\\AppData\\Local\\Microsoft\\Windows\\DeliveryOptimization\\Cache" ],
+    "minAgeDays": 3,
+    "scope": "System"
+  },
+  {
+    "id": "error-reports",
+    "name": { "vi": "Báo cáo lỗi và file dump", "en": "Error reports and crash dumps" },
+    "paths": [ "%ProgramData%\\Microsoft\\Windows\\WER\\ReportArchive", "%ProgramData%\\Microsoft\\Windows\\WER\\ReportQueue", "%SystemRoot%\\Minidump" ],
+    "minAgeDays": 7,
+    "scope": "System"
+  },
+  {
+    "id": "user-crash-dumps",
+    "name": { "vi": "File dump lỗi ứng dụng", "en": "Application crash dumps" },
+    "paths": [ "%LOCALAPPDATA%\\CrashDumps", "%LOCALAPPDATA%\\Microsoft\\Windows\\WER\\ReportArchive" ],
+    "minAgeDays": 7,
+    "scope": "User"
+  },
+  {
+    "id": "thumbnail-cache",
+    "name": { "vi": "Bộ nhớ đệm ảnh thu nhỏ", "en": "Thumbnail cache" },
+    "paths": [ "%LOCALAPPDATA%\\Microsoft\\Windows\\Explorer" ],
+    "patterns": [ "thumbcache_*.db", "iconcache_*.db" ],
+    "recursive": false,
+    "deleteEmptyDirectories": false,
+    "minAgeDays": 7,
+    "scope": "User"
+  },
+  {
+    "id": "browser-cache",
+    "name": { "vi": "Bộ nhớ đệm trình duyệt (Chrome, Edge, Cốc Cốc, Brave)", "en": "Browser cache (Chrome, Edge, Coc Coc, Brave)" },
+    "paths": [
+      "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\*\\Cache",
+      "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\*\\Code Cache",
+      "%LOCALAPPDATA%\\Microsoft\\Edge\\User Data\\*\\Cache",
+      "%LOCALAPPDATA%\\Microsoft\\Edge\\User Data\\*\\Code Cache",
+      "%LOCALAPPDATA%\\CocCoc\\Browser\\User Data\\*\\Cache",
+      "%LOCALAPPDATA%\\CocCoc\\Browser\\User Data\\*\\Code Cache",
+      "%LOCALAPPDATA%\\BraveSoftware\\Brave-Browser\\User Data\\*\\Cache"
+    ],
+    "minAgeDays": 3,
+    "scope": "User"
+  },
+  {
+    "id": "firefox-cache",
+    "name": { "vi": "Bộ nhớ đệm Firefox", "en": "Firefox cache" },
+    "paths": [ "%LOCALAPPDATA%\\Mozilla\\Firefox\\Profiles\\*\\cache2" ],
+    "minAgeDays": 3,
+    "scope": "User"
+  },
+  {
+    "id": "teams-cache",
+    "name": { "vi": "Bộ nhớ đệm Microsoft Teams", "en": "Microsoft Teams cache" },
+    "paths": [ "%APPDATA%\\Microsoft\\Teams\\Cache", "%APPDATA%\\Microsoft\\Teams\\Service Worker\\CacheStorage", "%LOCALAPPDATA%\\Packages\\MSTeams_*\\LocalCache\\Microsoft\\MSTeams\\EBWebView\\*\\Cache" ],
+    "minAgeDays": 7,
+    "scope": "User",
+    "risk": "Review"
+  },
+  {
+    "id": "zalo-cache",
+    "name": { "vi": "Bộ nhớ đệm Zalo (không xoá tin nhắn)", "en": "Zalo cache (messages kept)" },
+    "paths": [ "%APPDATA%\\ZaloData\\Cache", "%APPDATA%\\ZaloData\\Code Cache", "%APPDATA%\\ZaloData\\GPUCache" ],
+    "minAgeDays": 7,
+    "scope": "User",
+    "risk": "Review"
+  },
+  {
+    "id": "old-logs",
+    "name": { "vi": "File log cũ hơn 30 ngày", "en": "Log files older than 30 days" },
+    "paths": [ "%SystemRoot%\\Logs\\CBS", "%SystemRoot%\\Logs\\DISM" ],
+    "patterns": [ "*.log", "*.etl" ],
+    "minAgeDays": 30,
+    "scope": "System",
+    "enabledByDefault": false
+  },
+  {
+    "id": "recycle-bin",
+    "kind": "RecycleBin",
+    "name": { "vi": "Thùng rác", "en": "Recycle Bin" },
+    "scope": "User",
+    "risk": "Review",
+    "enabledByDefault": false
+  }
+]

@@ -1,0 +1,25 @@
+# Mẫu GitHub Actions chạy build + test trên máy Windows thật (kiểm tra junction, Thùng rác, ưu tiên process).
+# Chưa đặt sẵn trong .github/workflows vì token push hiện tại không có quyền "workflow".
+# Muốn bật: copy file này sang .github/workflows/windows-build.yml và push bằng token có quyền workflow.
+name: windows-build
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - run: dotnet test tests/ManagerWindows.Core.Tests -c Release
+      - run: dotnet publish src/ManagerWindows.App -c Release -r win-x64 --self-contained true -o dist/ManagerWindows
+      - run: dotnet publish src/ManagerWindows.Service -c Release -r win-x64 --self-contained true -o dist/ManagerWindows
+      - run: Copy-Item scripts/install.*, scripts/uninstall.* dist/ManagerWindows
+        shell: pwsh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ManagerWindows-win-x64
+          path: dist/ManagerWindows

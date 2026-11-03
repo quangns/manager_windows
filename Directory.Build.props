@@ -1,0 +1,12 @@
+<Project>
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Cho phép build project net8.0-windows (WPF, Windows Service) trên Linux -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <Version>0.1.0</Version>
+    <Product>Manager Windows</Product>
+    <Authors>Nguyễn Sỹ Quang</Authors>
+  </PropertyGroup>
+</Project>

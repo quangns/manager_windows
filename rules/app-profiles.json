@@ -1,0 +1,131 @@
+// Hồ sơ app hay lưu data lớn vào ổ C. Chỉ thư mục thực sự tồn tại trên máy mới được hiển thị.
+// method=Junction: chuyển data sang ổ khác, để junction ở chỗ cũ. method=Manual: chỉ hiển thị hướng dẫn.
+[
+  {
+    "id": "zalo",
+    "name": "Zalo",
+    "processNames": [ "Zalo", "ZaloCall", "ZaloUpdate" ],
+    "folders": [ "%LOCALAPPDATA%\\ZaloPC", "%APPDATA%\\ZaloData", "%USERPROFILE%\\Documents\\Zalo Received Files" ],
+    "notes": {
+      "vi": "Chứa tin nhắn, ảnh, file nhận. Đóng hẳn Zalo (cả biểu tượng ở khay) trước khi chuyển.",
+      "en": "Holds messages, photos and received files. Fully quit Zalo (including tray icon) before moving."
+    }
+  },
+  {
+    "id": "telegram",
+    "name": "Telegram Desktop",
+    "processNames": [ "Telegram" ],
+    "folders": [ "%APPDATA%\\Telegram Desktop\\tdata", "%USERPROFILE%\\Downloads\\Telegram Desktop" ],
+    "notes": { "vi": "Bộ nhớ đệm và file tải về của Telegram.", "en": "Telegram cache and downloads." }
+  },
+  {
+    "id": "viber",
+    "name": "Viber",
+    "processNames": [ "Viber" ],
+    "folders": [ "%APPDATA%\\ViberPC" ],
+    "notes": { "vi": "", "en": "" }
+  },
+  {
+    "id": "wechat",
+    "name": "WeChat",
+    "processNames": [ "WeChat", "Weixin" ],
+    "folders": [ "%USERPROFILE%\\Documents\\WeChat Files", "%APPDATA%\\Tencent\\WeChat" ],
+    "notes": { "vi": "", "en": "" }
+  },
+  {
+    "id": "teams",
+    "name": "Microsoft Teams (classic)",
+    "processNames": [ "Teams" ],
+    "folders": [ "%APPDATA%\\Microsoft\\Teams" ],
+    "notes": { "vi": "", "en": "" }
+  },
+  {
+    "id": "chrome",
+    "name": "Google Chrome",
+    "processNames": [ "chrome" ],
+    "folders": [ "%LOCALAPPDATA%\\Google\\Chrome\\User Data" ],
+    "notes": { "vi": "Đóng hết cửa sổ Chrome và tắt 'Tiếp tục chạy ứng dụng nền'.", "en": "Close all Chrome windows and disable 'Continue running background apps'." }
+  },
+  {
+    "id": "edge",
+    "name": "Microsoft Edge",
+    "processNames": [ "msedge" ],
+    "folders": [ "%LOCALAPPDATA%\\Microsoft\\Edge\\User Data" ],
+    "notes": { "vi": "Edge hay chạy nền: tắt 'Startup boost' trước khi chuyển.", "en": "Edge often runs in background: disable 'Startup boost' first." }
+  },
+  {
+    "id": "coccoc",
+    "name": "Cốc Cốc",
+    "processNames": [ "browser" ],
+    "folders": [ "%LOCALAPPDATA%\\CocCoc\\Browser\\User Data" ],
+    "notes": { "vi": "", "en": "" }
+  },
+  {
+    "id": "discord",
+    "name": "Discord",
+    "processNames": [ "Discord" ],
+    "folders": [ "%APPDATA%\\discord" ],
+    "notes": { "vi": "", "en": "" }
+  },
+  {
+    "id": "spotify",
+    "name": "Spotify",
+    "processNames": [ "Spotify" ],
+    "folders": [ "%LOCALAPPDATA%\\Spotify\\Storage" ],
+    "notes": { "vi": "", "en": "" }
+  },
+  {
+    "id": "itunes-backup",
+    "name": "iTunes / Apple Devices (backup iPhone)",
+    "processNames": [ "iTunes", "AppleMobileDeviceProcess", "AppleDevices" ],
+    "folders": [ "%APPDATA%\\Apple Computer\\MobileSync\\Backup", "%USERPROFILE%\\Apple\\MobileSync\\Backup" ],
+    "notes": { "vi": "Backup iPhone thường vài chục GB.", "en": "iPhone backups are often tens of GB." }
+  },
+  {
+    "id": "dev-caches",
+    "name": "Cache lập trình (npm, NuGet, Gradle, pip)",
+    "processNames": [ "node", "dotnet", "java" ],
+    "folders": [ "%LOCALAPPDATA%\\npm-cache", "%USERPROFILE%\\.nuget\\packages", "%USERPROFILE%\\.gradle\\caches", "%LOCALAPPDATA%\\pip\\Cache" ],
+    "notes": { "vi": "", "en": "" }
+  },
+  {
+    "id": "outlook",
+    "name": "Microsoft Outlook (.ost/.pst)",
+    "method": "Manual",
+    "folders": [ "%LOCALAPPDATA%\\Microsoft\\Outlook" ],
+    "notes": {
+      "vi": "Microsoft không hỗ trợ đặt file Outlook sau junction. Cách đúng: File > Account Settings > Data Files để chuyển .pst; với .ost: Account Settings > Change > More Settings > Advanced > Outlook Data File Settings, hoặc đặt policy ForceOSTPath.",
+      "en": "Microsoft does not support Outlook data behind junctions. Use File > Account Settings > Data Files for .pst; for .ost use Outlook Data File Settings or the ForceOSTPath policy."
+    }
+  },
+  {
+    "id": "wsl-docker",
+    "name": "WSL / Docker Desktop",
+    "method": "Manual",
+    "folders": [ "%LOCALAPPDATA%\\Docker\\wsl", "%LOCALAPPDATA%\\Packages\\CanonicalGroupLimited.*\\LocalState" ],
+    "notes": {
+      "vi": "Dùng 'wsl --export <distro> D:\\backup.tar' rồi 'wsl --import <distro> D:\\WSL\\<distro> D:\\backup.tar'. Docker Desktop: Settings > Resources > Disk image location.",
+      "en": "Use 'wsl --export' then 'wsl --import' to a new drive. Docker Desktop: Settings > Resources > Disk image location."
+    }
+  },
+  {
+    "id": "onedrive",
+    "name": "OneDrive",
+    "method": "Manual",
+    "folders": [ "%USERPROFILE%\\OneDrive" ],
+    "notes": {
+      "vi": "OneDrive không hoạt động sau junction. Vào Cài đặt OneDrive > Tài khoản > Hủy liên kết, rồi đăng nhập lại và chọn thư mục ở ổ khác.",
+      "en": "OneDrive does not work behind a junction. Unlink the account in OneDrive settings, then sign in again and choose a folder on another drive."
+    }
+  },
+  {
+    "id": "user-folders",
+    "name": "Downloads / Documents / Pictures / Videos",
+    "method": "Manual",
+    "folders": [ "%USERPROFILE%\\Downloads", "%USERPROFILE%\\Videos" ],
+    "notes": {
+      "vi": "Chuột phải thư mục > Properties > Location > Move… để Windows chuyển đúng cách (không dùng junction).",
+      "en": "Right-click the folder > Properties > Location > Move… so Windows relocates it properly (no junction needed)."
+    }
+  }
+]
