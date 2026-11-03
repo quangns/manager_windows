@@ -115,7 +115,7 @@ Mọi dữ liệu chỉ lưu trên máy, không gửi đi đâu.
 
 ## Phát triển
 
-Yêu cầu .NET 10 SDK (LTS). Giao diện dùng bộ điều khiển Fluent của WPF (`ThemeMode`). Code build và test được trên Linux (các project Windows nhờ `EnableWindowsTargeting`), nhưng app chỉ chạy được trên Windows.
+Yêu cầu .NET 10 SDK (LTS). Mọi điều khiển WPF được vẽ bằng style riêng theo `docs/design/DESIGN.md` (không phụ thuộc theme Fluent/Aero của máy). Code build và test được trên Linux (các project Windows nhờ `EnableWindowsTargeting`), nhưng app chỉ chạy được trên Windows.
 
 ```bash
 dotnet test tests/ManagerWindows.Core.Tests      # 47 test: Core + Storage + IPC

@@ -1,6 +1,5 @@
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 
 namespace ManagerWindows.App.Controls;
 
@@ -32,8 +31,8 @@ public sealed class SettingRow : ContentControl
 }
 
 /// <summary>
-/// c:Table.Apply="True": đặt các thuộc tính bảng chung mà vẫn giữ style Fluent mặc định của DataGrid
-/// (gán Style riêng sẽ làm mất style Fluent sáng/tối).
+/// c:Table.Apply="True": đặt các thuộc tính hành vi chung của bảng. Màu sắc do style DataGrid ngầm định
+/// trong Themes/StandardControls.xaml đảm nhận.
 /// </summary>
 public static class Table
 {
@@ -50,25 +49,6 @@ public static class Table
         g.CanUserAddRows = false;
         g.CanUserDeleteRows = false;
         g.CanUserResizeRows = false;
-        g.HeadersVisibility = DataGridHeadersVisibility.Column;
-        g.GridLinesVisibility = DataGridGridLinesVisibility.Horizontal;
         g.SelectionMode = DataGridSelectionMode.Single;
-        g.RowHeight = 36;
-        g.BorderThickness = new Thickness(0);
-        g.Background = System.Windows.Media.Brushes.Transparent;
-        g.SetResourceReference(DataGrid.HorizontalGridLinesBrushProperty, "Hairline");
-
-        // Màu chữ/nền hàng và tiêu đề cột theo bảng màu của app, để chế độ tối không ra chữ đen.
-        g.SetResourceReference(Control.ForegroundProperty, "Ink");
-        g.SetResourceReference(DataGrid.RowBackgroundProperty, "Surface");
-        g.SetResourceReference(DataGrid.AlternatingRowBackgroundProperty, "Surface");
-        var baseHeader = g.TryFindResource(typeof(DataGridColumnHeader)) as Style;
-        var header = new Style(typeof(DataGridColumnHeader), baseHeader);
-        header.Setters.Add(new Setter(Control.ForegroundProperty, new DynamicResourceExtension("InkMuted")));
-        header.Setters.Add(new Setter(Control.BackgroundProperty, new DynamicResourceExtension("Surface")));
-        header.Setters.Add(new Setter(Control.BorderBrushProperty, new DynamicResourceExtension("Hairline")));
-        header.Setters.Add(new Setter(Control.FontWeightProperty, FontWeights.Medium));
-        header.Setters.Add(new Setter(Control.PaddingProperty, new Thickness(10, 8, 10, 8)));
-        g.ColumnHeaderStyle = header;
     }
 }

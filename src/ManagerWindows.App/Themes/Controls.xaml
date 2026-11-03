@@ -4,7 +4,7 @@
                     xmlns:cv="clr-namespace:ManagerWindows.App.Converters">
     <!--
       Style dùng chung theo docs/design/DESIGN.md. Mọi màu lấy bằng DynamicResource từ Palette.*.xaml
-      để đổi sáng/tối tức thì. Điều khiển chuẩn (TextBox, ComboBox, CheckBox, DataGrid) giữ style Fluent của WPF.
+      để đổi sáng/tối tức thì. Điều khiển chuẩn (TextBox, ComboBox, CheckBox, DataGrid…) ở StandardControls.xaml.
     -->
     <cv:NotConverter x:Key="Not" />
     <cv:BoolToVisibilityConverter x:Key="BoolVis" />

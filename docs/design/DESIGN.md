@@ -13,7 +13,7 @@ Bảng điều khiển hệ thống điềm tĩnh và đáng tin, kiểu "phòng
 - **Chuyển động 2/10, kiểu "Static Restrained":** đây là công cụ chạy nền, không phải trang giới thiệu. Chỉ dùng hiệu ứng mờ dần ngắn khi đổi trang và khi bấm nút; không có vòng lặp chuyển động vô hạn.
   - Đây là điểm cố ý lệch so với mặc định 6/10 của skill: app nằm cả ngày ở khay hệ thống, chuyển động liên tục sẽ gây phiền và tốn CPU, đi ngược mục đích "ưu tiên tài nguyên".
 
-Giao diện sáng hoặc tối theo Windows, có tuỳ chọn ép sáng/tối. Cả hai chế độ dùng chung một bảng màu trung tính lạnh (Zinc), không pha xám ấm và xám lạnh lẫn nhau.
+Giao diện sáng hoặc tối theo Windows, có tuỳ chọn ép sáng/tối; thanh tiêu đề cửa sổ cũng đổi theo (DWM immersive dark mode). Cả hai chế độ dùng chung một bảng màu trung tính lạnh (Zinc), không pha xám ấm và xám lạnh lẫn nhau.
 
 ## 2. Color Palette & Roles
 
@@ -86,9 +86,13 @@ Chỉ có một màu nhấn duy nhất (Pine Teal, độ bão hoà < 80%), khôn
 * **Thanh dung lượng:** cao 8px, bo tròn hai đầu, rãnh Raised Surface, phần đã dùng màu Pine Teal; chuyển Amber khi trống < 15%, Signal Red khi < 10%.
 * **Bảng (DataGrid):**
   - Không kẻ dọc, chỉ kẻ ngang 1px Border. Hàng cao 36px.
-  - Tiêu đề cột và màu hàng hover/chọn giữ theo DataGrid Fluent để tự đổi sáng/tối; bảng nằm trong một thẻ, nền trong suốt.
+  - Tiêu đề cột 12/500 màu Muted, viền dưới 1px. Hàng hover nền Raised Surface, hàng chọn nền Pine Wash, chữ luôn là Ink. Bảng nằm trong một thẻ, nền trong suốt.
   - Cột số căn phải bằng JetBrains Mono.
-* **Ô nhập, hộp chọn, ô tick, bảng:** dùng điều khiển Fluent chuẩn của WPF (.NET 10 ThemeMode) nên tự đổi sáng/tối; viền focus và ô tick theo màu nhấn của Windows. Nhãn nằm trên ô hoặc bên trái dòng thiết lập; không dùng nhãn nổi (floating label).
+* **Ô nhập, hộp chọn, ô tick, bảng, thanh cuộn, tooltip, menu khay:** tự vẽ bằng bảng màu của app (Themes/StandardControls.xaml), không dựa vào theme Fluent/Aero của Windows. Lý do: trên một số máy theme Fluent không được áp dụng, điều khiển rơi về nền sáng chữ đen giữa giao diện tối.
+  - Ô nhập: bo góc 6px, viền Border, focus viền màu nhấn.
+  - Ô tick: 18px, khi tick có nền Pine Teal Fill và dấu tick trắng.
+  - Thanh cuộn: mảnh 10px.
+  - Nhãn nằm trên ô hoặc bên trái dòng thiết lập; không dùng nhãn nổi (floating label).
 * **Huy hiệu (badge):** viên thuốc cao 22px, nền nhạt của màu trạng thái, chữ 12/500 kèm biểu tượng. Ví dụ "Nên xem lại", "Đã xem", "Hệ thống".
 * **Trạng thái đang tải:** thanh tiến trình mảnh 2px chạy ngang ở chân trang, ngay trên chữ trạng thái. Không dùng vòng xoay tròn ở giữa màn.
 * **Trạng thái trống:** biểu tượng lớn màu Muted, một câu giải thích và một nút hành động, ví dụ "Chưa quét. Bấm Quét để xem có thể dọn bao nhiêu."
