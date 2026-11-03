@@ -7,6 +7,13 @@
 # App chỉ publish MỘT lần rồi chép vào cả hai gói, nên giao diện và tính năng của App ở hai bản giống hệt nhau;
 # bản portable chỉ khác ở file portable.txt và không có dịch vụ nền.
 set -euo pipefail
+# Chạy cả script dưới reap-run (child subreaper): mọi tiến trình con mồ côi của dotnet (MSBuild node,
+# VBCSCompiler, testhost) được thu dọn thay vì thành zombie dưới PID 1 của container.
+REAP=/workspace/.toolchain/bin/reap-run
+if [[ -z "${UNDER_REAP_RUN:-}" && -x "$REAP" ]]; then
+  export UNDER_REAP_RUN=1
+  exec "$REAP" "$0" "$@"
+fi
 cd "$(dirname "$0")/.."
 export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
 # Không để MSBuild node / VBCSCompiler chạy nền sau khi build: trong container PID 1 không dọn
