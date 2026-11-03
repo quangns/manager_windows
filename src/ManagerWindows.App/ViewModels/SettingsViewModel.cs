@@ -20,7 +20,8 @@ public sealed partial class SettingsViewModel : ViewModelBase
     [ObservableProperty] private int _retentionDays;
     [ObservableProperty] private int _backupKeepDays;
 
-    public string Version => typeof(SettingsViewModel).Assembly.GetName().Version?.ToString(3) ?? "";
+    public string Version => (typeof(SettingsViewModel).Assembly.GetName().Version?.ToString(3) ?? "")
+                             + (Host.IsPortable ? " (portable)" : "");
     public string DataDir => Host.DataDir;
 
     /// <summary>Báo cho App dựng lại cửa sổ theo ngôn ngữ mới.</summary>

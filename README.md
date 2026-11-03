@@ -14,18 +14,37 @@ App chạy nền trên Windows 10/11 (x64) giúp:
 
 Giao diện có tiếng Việt và tiếng Anh, chuyển được trong phần Cài đặt.
 
-## Cài đặt
+## Tải về
 
-1. Tải `ManagerWindows-<version>-win-x64.zip` và giải nén.
-2. Chạy `install.cmd` (Windows sẽ hỏi quyền admin).
+Vào mục [Releases](https://github.com/quangns/manager_windows/releases), có 2 bản:
+
+| Bản | File | Dùng khi |
+|---|---|---|
+| **Portable** | `ManagerWindows-<version>-win-x64-portable.zip` | Giải nén là chạy, không cần quyền admin, không cài gì vào máy |
+| **Cài đặt** | `ManagerWindows-<version>-win-x64.zip` | Muốn đủ tính năng (dịch vụ nền dọn thư mục hệ thống, đếm số lần mở app, ưu tiên cả process chạy quyền admin) |
+
+Cả 2 bản đã kèm .NET runtime, không cần cài thêm gì. Kiểm tra file tải về bằng `SHA256SUMS.txt`.
+
+### Bản portable
+
+1. Giải nén vào chỗ bất kỳ, ví dụ `D:\Tools\ManagerWindows-Portable`.
+2. Chạy `ManagerWindows.App.exe`; biểu tượng app nằm ở khay hệ thống.
+3. Mọi dữ liệu nằm trong thư mục `data` cạnh file exe. Mặc định app không tự chạy cùng Windows; bật trong phần Cài đặt nếu cần.
+
+Bản portable dọn rác của người dùng, gợi ý file, chuyển data, thống kê thời gian dùng và ưu tiên app như bản cài đặt. Những phần cần dịch vụ nền thì không có:
+- Không dọn được `C:\Windows\Temp` và cache Windows Update.
+- Không đếm được số lần mở app.
+
+Trước khi xoá thư mục portable, nếu đã chuyển data app sang ổ khác, hãy bấm Hoàn tác trong app. Nếu không hoàn tác thì Zalo… vẫn chạy bình thường vì junction vẫn còn.
+
+### Bản cài đặt
+
+1. Giải nén rồi chạy `install.cmd` (Windows sẽ hỏi quyền admin).
    - App được cài vào `C:\Program Files\ManagerWindows` và đăng ký dịch vụ nền `ManagerWindowsService`.
-   - Shortcut được tạo trong Start Menu.
-   - App tự mở và nằm ở khay hệ thống (góc phải taskbar).
-3. Gỡ cài đặt: chạy `uninstall.ps1` trong thư mục cài đặt. Mặc định các thư mục data đã chuyển sẽ được đưa về lại ổ C trước khi gỡ.
+   - Shortcut được tạo trong Start Menu; app tự mở và nằm ở khay hệ thống.
+2. Gỡ cài đặt: chạy `uninstall.ps1` trong thư mục cài đặt. Mặc định các thư mục data đã chuyển sẽ được đưa về lại ổ C trước khi gỡ.
    - Thêm `-KeepRelocations` để giữ nguyên các thư mục đã chuyển.
    - Thêm `-RemoveData` để xoá luôn thống kê và cấu hình.
-
-App đã gồm sẵn .NET runtime, không cần cài thêm gì.
 
 ## Kiến trúc
 
@@ -85,7 +104,7 @@ Yêu cầu .NET 8 SDK. Code build và test được trên Linux (các project Wi
 
 ```bash
 dotnet test tests/ManagerWindows.Core.Tests      # 46 test: Core + Storage + IPC
-./scripts/build-release.sh                       # → dist/ManagerWindows-<version>-win-x64.zip
+./scripts/build-release.sh                       # → dist/*.zip: bản cài đặt + bản portable + SHA256SUMS.txt
 ```
 
 Trong container ChatWork, SDK nằm ở `/workspace/.toolchain/dotnet`; đặt `DOTNET=/workspace/.toolchain/dotnet/dotnet` nếu `dotnet` không có trong PATH.

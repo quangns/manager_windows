@@ -32,6 +32,7 @@
   "Dash_Service": "Background service (system rights)",
   "Dash_ServiceOk": "Running",
   "Dash_ServiceMissing": "Not running: system folders can't be cleaned and app launches aren't counted. Reinstall with install.ps1.",
+  "Dash_ServicePortable": "The portable edition has no background service: user cleanup, data moving, usage stats and priority still work. System folders aren't cleaned and app launches aren't counted; use the installer for full features.",
   "Dash_TopToday": "Most used today",
   "Dash_QuickClean": "Clean now",
 

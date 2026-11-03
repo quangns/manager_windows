@@ -22,6 +22,7 @@
   <ItemGroup>
     <Resource Include="Assets\app.ico" />
     <EmbeddedResource Include="Lang\*.json" />
-    <None Include="..\..\rules\*.json" Link="rules\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Để rules nằm ngoài file exe (bản portable một file) cho người dùng sửa được -->
+    <None Include="..\..\rules\*.json" Link="rules\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
   </ItemGroup>
 </Project>

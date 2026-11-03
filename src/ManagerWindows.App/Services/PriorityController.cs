@@ -27,6 +27,7 @@ public sealed class PriorityController : BackgroundLoop
     private string? _excelFile;
     private string? _notifiedFile;
     private bool _wasEnabled;
+    private DateTime _serviceRetryAt = DateTime.MinValue;
 
     public PriorityController(AppHost host)
     {
@@ -113,9 +114,11 @@ public sealed class PriorityController : BackgroundLoop
     /// <summary>Không đủ quyền (process chạy admin) thì nhờ service; lỗi một lần thì không thử lại PID đó.</summary>
     private bool ElevatedSet(int pid, PriorityLevel level, bool eco)
     {
-        if (_elevatedFailed.Contains(pid)) return false;
+        if (_elevatedFailed.Contains(pid) || DateTime.UtcNow < _serviceRetryAt) return false;
         var r = _host.Service.SendAsync(IpcCommands.SetPriority, new SetPriorityRequest(pid, level, eco)).GetAwaiter().GetResult();
         if (!r.Ok) _elevatedFailed.Add(pid);
+        // Không kết nối được service (bản portable/chưa cài): 10 phút sau mới thử lại.
+        if (!r.Ok && r.Error?.StartsWith("Không kết nối") == true) _serviceRetryAt = DateTime.UtcNow.AddMinutes(10);
         return r.Ok;
     }
 

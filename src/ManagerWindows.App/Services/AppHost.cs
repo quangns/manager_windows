@@ -14,6 +14,8 @@ public sealed class AppHost
     public static AppHost Current { get; private set; } = null!;
 
     public string DataDir { get; }
+    /// <summary>Bản portable: có file portable.txt cạnh exe, dữ liệu lưu trong thư mục data bên cạnh.</summary>
+    public bool IsPortable { get; }
     public ConfigStore ConfigStore { get; }
     public AppConfig Config { get; private set; }
     public Database Db { get; }
@@ -36,10 +38,13 @@ public sealed class AppHost
     public AppHost()
     {
         Current = this;
-        DataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ManagerWindows");
-        Directory.CreateDirectory(DataDir);
+        (DataDir, IsPortable) = ResolveDataDir();
+        Log.Dir = Path.Combine(DataDir, "logs");
         ConfigStore = new ConfigStore(Path.Combine(DataDir, "config.json"));
+        var firstRun = !File.Exists(ConfigStore.Path);
         Config = ConfigStore.Load();
+        // Bản portable không tự ghi khoá Run khi chưa được người dùng bật.
+        if (firstRun && IsPortable) Config.StartWithWindows = false;
         Db = new Database(Path.Combine(DataDir, "data.db"));
         Runs = new CleanupRunRepository(Db);
         Relocations = new RelocationRepository(Db);
@@ -53,6 +58,31 @@ public sealed class AppHost
         Scheduler = new CleanupScheduler(this);
         Priority = new PriorityController(this);
         Relocation = new RelocationService(this);
+    }
+
+    private static (string Dir, bool Portable) ResolveDataDir()
+    {
+        var installed = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ManagerWindows");
+        if (File.Exists(Path.Combine(AppContext.BaseDirectory, "portable.txt")))
+        {
+            var dir = Path.Combine(AppContext.BaseDirectory, "data");
+            try
+            {
+                // Giải nén vào chỗ không ghi được (Program Files, ổ chỉ đọc) thì dùng thư mục của user.
+                Directory.CreateDirectory(dir);
+                var probe = Path.Combine(dir, ".write-test");
+                File.WriteAllText(probe, "");
+                File.Delete(probe);
+                return (dir, true);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                Directory.CreateDirectory(installed);
+                return (installed, true);
+            }
+        }
+        Directory.CreateDirectory(installed);
+        return (installed, false);
     }
 
     public RelocationEngine CreateEngine() =>
@@ -137,6 +167,9 @@ public static class Log
 {
     private static readonly object Gate = new();
 
+    public static string Dir { get; set; } =
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ManagerWindows", "logs");
+
     public static void Error(string source, Exception ex) => Write("ERROR", source, ex.ToString());
     public static void Info(string source, string message) => Write("INFO", source, message);
 
@@ -144,7 +177,7 @@ public static class Log
     {
         try
         {
-            var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ManagerWindows", "logs");
+            var dir = Dir;
             Directory.CreateDirectory(dir);
             lock (Gate)
                 File.AppendAllText(Path.Combine(dir, $"app-{DateTime.Now:yyyyMMdd}.log"),

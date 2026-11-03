@@ -1,0 +1,21 @@
+MANAGER WINDOWS - BẢN PORTABLE (không cần cài đặt)
+
+Cách dùng:
+  1. Giải nén cả thư mục vào chỗ bất kỳ (vd. D:\Tools\ManagerWindows). Không cần quyền admin.
+  2. Chạy ManagerWindows.App.exe. Biểu tượng nằm ở khay hệ thống (góc phải taskbar).
+  3. Muốn tự chạy khi đăng nhập: vào Cài đặt > "Tự chạy khi đăng nhập Windows".
+
+- Dữ liệu (cấu hình, thống kê, log) lưu trong thư mục "data" cạnh file exe. Nếu thư mục không ghi được thì lưu vào %LOCALAPPDATA%\ManagerWindows.
+- Bản portable KHÔNG có dịch vụ nền nên không dọn được thư mục hệ thống (C:\Windows\Temp, Windows Update) và không đếm số lần mở app. Muốn đủ tính năng hãy dùng bản cài đặt (ManagerWindows-<version>-win-x64.zip).
+- Nếu đã chuyển data app (Zalo…) sang ổ khác, trước khi xoá thư mục này hãy mở app > Di chuyển data app > Hoàn tác (hoặc chạy: ManagerWindows.App.exe --rollback-all). Không hoàn tác thì Zalo vẫn chạy bình thường vì junction vẫn còn.
+- Xoá file portable.txt này thì app sẽ dùng chế độ thường (dữ liệu ở %LOCALAPPDATA%).
+
+MANAGER WINDOWS - PORTABLE EDITION (no installation)
+
+  1. Extract the whole folder anywhere. No admin rights needed.
+  2. Run ManagerWindows.App.exe. The icon lives in the system tray.
+  3. To start with Windows: Settings > "Start when signing in to Windows".
+
+- Data (settings, stats, logs) is stored in the "data" folder next to the exe (falls back to %LOCALAPPDATA%\ManagerWindows if not writable).
+- No background service: system folders aren't cleaned and app launches aren't counted. Use the installer edition for full features.
+- If you moved app data to another drive, undo it (Move app data > Undo, or ManagerWindows.App.exe --rollback-all) before deleting this folder.

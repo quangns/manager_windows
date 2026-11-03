@@ -48,7 +48,7 @@ public sealed partial class DashboardViewModel : ViewModelBase
 
         var ping = await Host.Service.SendAsync(IpcCommands.Ping);
         ServiceOk = ping.Ok;
-        ServiceStatus = Loc.Instance[ping.Ok ? "Dash_ServiceOk" : "Dash_ServiceMissing"];
+        ServiceStatus = Loc.Instance[ping.Ok ? "Dash_ServiceOk" : Host.IsPortable ? "Dash_ServicePortable" : "Dash_ServiceMissing"];
     }
 
     /// <summary>Dọn nhanh: luật người dùng đang bật + luật hệ thống mặc định qua service.</summary>

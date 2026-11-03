@@ -32,6 +32,7 @@
   "Dash_Service": "Dịch vụ nền (quyền hệ thống)",
   "Dash_ServiceOk": "Đang chạy",
   "Dash_ServiceMissing": "Chưa chạy: không dọn được thư mục hệ thống và không đếm được số lần mở app. Cài lại bằng install.ps1.",
+  "Dash_ServicePortable": "Bản portable không có dịch vụ nền: vẫn dọn rác của người dùng, chuyển data, thống kê, ưu tiên app được. Không dọn được thư mục hệ thống và không đếm số lần mở app; muốn đủ tính năng hãy dùng bản cài đặt.",
   "Dash_TopToday": "Dùng nhiều nhất hôm nay",
   "Dash_QuickClean": "Dọn rác ngay",
 
