@@ -17,11 +17,11 @@ Cách dùng:
 - Background: Canvas Mist (#FAFAFA); dark: Canvas Night (#09090B)
 - Surface: Pure Surface (#FFFFFF) for cards, tables and sidebar; dark: Night Surface (#18181B)
 - Raised Surface (#F4F4F5) for secondary buttons, row hover and progress tracks; dark: Raised Night (#27272A)
-- Primary Accent: Pine Teal (#0F766E) for the single primary button per page, selected navigation item, focus ring, links; dark: Pine Teal Glow (#2A9D8F)
+- Primary Accent: Pine Teal (#0F766E) as primary button fill with white label text in both themes; accent text, icons and selected navigation item use Pine Teal (#0F766E) in light and Pine Teal Ink (#3FB8A9) in dark. Never black text on teal
 - Accent wash: Pine Wash (#E6F2F1) behind the selected navigation item
 - Text Primary: Charcoal Ink (#18181B); dark: Frost Ink (#FAFAFA)
-- Text Secondary: Muted Steel (#71717A); dark: Muted Ash (#A1A1AA)
-- Borders: Whisper Border (#E4E4E7) 1px; dark: Night Border (#2E2E33)
+- Text Secondary: Muted Steel (#71717A); dark: Muted Ash (#B4B4BC)
+- Borders: Whisper Border (#E4E4E7) 1px; dark: Night Border (#34343A)
 - Status: Healthy Green (#15803D), Amber Caution (#B45309), Signal Red (#B91C1C), always paired with an icon and a text label
 - Typography: Be Vietnam Pro for all UI text (Vietnamese diacritics), JetBrains Mono for large numbers and numeric table columns
 - Cards: generously rounded (12px), 1px border, no shadow (hierarchy via border and surface tone), 20px padding

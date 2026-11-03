@@ -36,6 +36,10 @@ public static class ThemeManager
         if (old != null) dicts[dicts.IndexOf(old)] = fresh;
         else dicts.Add(fresh);
 
+        // Ghi lại để dò lỗi giao diện trên máy người dùng: bộ theme Fluent có được nạp không.
+        var fluent = dicts.Any(d => d.Source?.OriginalString.Contains("Fluent", StringComparison.OrdinalIgnoreCase) == true);
+        Log.Info("theme", $"setting={setting} dark={IsDark} fluent={fluent} os={Environment.OSVersion.Version}");
+
         if (!_listening)
         {
             _listening = true;

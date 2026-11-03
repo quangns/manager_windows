@@ -8,8 +8,9 @@
     <SolidColorBrush x:Key="InkMuted" Color="#71717A" />
     <SolidColorBrush x:Key="Hairline" Color="#E4E4E7" />
     <SolidColorBrush x:Key="Accent" Color="#0F766E" />
-    <SolidColorBrush x:Key="AccentHover" Color="#115E59" />
-    <SolidColorBrush x:Key="AccentPressed" Color="#134E4A" />
+    <SolidColorBrush x:Key="AccentFill" Color="#0F766E" />
+    <SolidColorBrush x:Key="AccentFillHover" Color="#115E59" />
+    <SolidColorBrush x:Key="AccentFillPressed" Color="#134E4A" />
     <SolidColorBrush x:Key="AccentOn" Color="#FFFFFF" />
     <SolidColorBrush x:Key="AccentWash" Color="#E6F2F1" />
     <SolidColorBrush x:Key="ChartBar" Color="#118F80" />

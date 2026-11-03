@@ -67,8 +67,10 @@
         </Style>
     </Window.Resources>
 
+    <!-- Foreground đặt tại chỗ: nội dung trang thừa hưởng màu chữ từ TabControl, không để style mặc định (chữ đen) quyết định -->
     <TabControl x:Name="Nav" SelectedIndex="{Binding SelectedTab}" ItemContainerStyle="{StaticResource NavItem}"
-                SelectionChanged="Nav_SelectionChanged" Background="Transparent" BorderThickness="0" Padding="0">
+                SelectionChanged="Nav_SelectionChanged" Background="Transparent" BorderThickness="0" Padding="0"
+                Foreground="{DynamicResource Ink}">
         <TabControl.Template>
             <ControlTemplate TargetType="TabControl">
                 <Grid>

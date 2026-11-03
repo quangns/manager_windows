@@ -9,16 +9,19 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
+# Không để MSBuild node / VBCSCompiler chạy nền sau khi build: trong container PID 1 không dọn
+# tiến trình mồ côi, build server bị bỏ lại thành zombie (xem /workspace/CLAUDE.md).
+export MSBUILDDISABLENODEREUSE=1 DOTNET_CLI_USE_MSBUILD_SERVER=0 UseSharedCompilation=false
 DOTNET="${DOTNET:-$(command -v dotnet || echo /workspace/.toolchain/dotnet/dotnet)}"
 
 VERSION=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' Directory.Build.props)
 rm -rf dist && mkdir -p dist/build/app dist/build/service
 
-"$DOTNET" test tests/ManagerWindows.Core.Tests -c Release --nologo -v q
+"$DOTNET" test tests/ManagerWindows.Core.Tests -c Release --nologo -v q --disable-build-servers
 
 # Tự chứa runtime .NET để máy văn phòng không cần cài thêm gì.
-"$DOTNET" publish src/ManagerWindows.App -c Release -r win-x64 --self-contained true -o dist/build/app --nologo -v q -p:DebugType=none
-"$DOTNET" publish src/ManagerWindows.Service -c Release -r win-x64 --self-contained true -o dist/build/service --nologo -v q -p:DebugType=none
+"$DOTNET" publish src/ManagerWindows.App -c Release -r win-x64 --self-contained true -o dist/build/app --nologo -v q --disable-build-servers -p:DebugType=none
+"$DOTNET" publish src/ManagerWindows.Service -c Release -r win-x64 --self-contained true -o dist/build/service --nologo -v q --disable-build-servers -p:DebugType=none
 
 # Bản cài đặt: Service trước, App sau (file runtime trùng nhau là cùng một bản .NET).
 INST=dist/ManagerWindows

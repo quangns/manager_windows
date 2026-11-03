@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 
 namespace ManagerWindows.App.Controls;
 
@@ -56,5 +57,18 @@ public static class Table
         g.BorderThickness = new Thickness(0);
         g.Background = System.Windows.Media.Brushes.Transparent;
         g.SetResourceReference(DataGrid.HorizontalGridLinesBrushProperty, "Hairline");
+
+        // Màu chữ/nền hàng và tiêu đề cột theo bảng màu của app, để chế độ tối không ra chữ đen.
+        g.SetResourceReference(Control.ForegroundProperty, "Ink");
+        g.SetResourceReference(DataGrid.RowBackgroundProperty, "Surface");
+        g.SetResourceReference(DataGrid.AlternatingRowBackgroundProperty, "Surface");
+        var baseHeader = g.TryFindResource(typeof(DataGridColumnHeader)) as Style;
+        var header = new Style(typeof(DataGridColumnHeader), baseHeader);
+        header.Setters.Add(new Setter(Control.ForegroundProperty, new DynamicResourceExtension("InkMuted")));
+        header.Setters.Add(new Setter(Control.BackgroundProperty, new DynamicResourceExtension("Surface")));
+        header.Setters.Add(new Setter(Control.BorderBrushProperty, new DynamicResourceExtension("Hairline")));
+        header.Setters.Add(new Setter(Control.FontWeightProperty, FontWeights.Medium));
+        header.Setters.Add(new Setter(Control.PaddingProperty, new Thickness(10, 8, 10, 8)));
+        g.ColumnHeaderStyle = header;
     }
 }

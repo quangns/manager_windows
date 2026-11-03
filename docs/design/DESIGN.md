@@ -26,7 +26,7 @@ Chỉ có một màu nhấn duy nhất (Pine Teal, độ bão hoà < 80%), khôn
 - **Charcoal Ink** (#18181B): chữ chính, số liệu lớn
 - **Muted Steel** (#71717A): chữ phụ, nhãn, mô tả, thời gian (4.8:1 trên nền trắng)
 - **Whisper Border** (#E4E4E7): viền thẻ 1px, đường kẻ bảng
-- **Pine Teal** (#0F766E): màu nhấn duy nhất cho nút chính, mục menu đang chọn, viền focus, liên kết (chữ trắng trên nền này đạt 5.5:1)
+- **Pine Teal** (#0F766E): màu nhấn duy nhất. Dùng làm nền nút chính (chữ trắng 5.5:1) và cho chữ liên kết, mục menu đang chọn, viền focus
 - **Pine Wash** (#E6F2F1): nền mục menu đang chọn, nền huy hiệu "đã xem"
 - **Chart Teal** (#118F80): cột biểu đồ (đã qua validator: độ sáng, độ bão hoà, tương phản ≥ 3:1 trên #FFFFFF)
 
@@ -35,9 +35,12 @@ Chỉ có một màu nhấn duy nhất (Pine Teal, độ bão hoà < 80%), khôn
 - **Night Surface** (#18181B): nền thẻ, bảng, sidebar
 - **Raised Night** (#27272A): nền nút phụ, hàng hover, rãnh thanh tiến trình
 - **Frost Ink** (#FAFAFA): chữ chính
-- **Muted Ash** (#A1A1AA): chữ phụ
-- **Night Border** (#2E2E33): viền thẻ, đường kẻ
-- **Pine Teal Glow** (#2A9D8F): màu nhấn (chữ #09090B trên nền này đạt 6.6:1); dùng chung cho cột biểu đồ (đã qua validator trên #18181B)
+- **Muted Ash** (#B4B4BC): chữ phụ (8.6:1 trên Night Surface)
+- **Night Border** (#34343A): viền thẻ, đường kẻ
+- **Pine Teal Ink** (#3FB8A9): màu nhấn cho chữ, biểu tượng, mục menu đang chọn, vạch chỉ báo (7.3:1 trên #18181B)
+- **Pine Teal Fill** (#0F766E; hover #11806F; nhấn #0B6B62): nền nút chính, **chữ trắng** (5.5:1). Không đặt chữ đen trên nền teal: đạt chuẩn trên giấy nhưng khó đọc khi nhìn thật
+- **Chart Teal Night** (#2A9D8F): cột biểu đồ (đã qua validator trên #18181B)
+- **Màu hệ thống:** ghi đè ControlText, Window, Highlight, Info… để chữ của điều khiển chuẩn luôn sáng trên nền tối
 - **Pine Wash Night** (#12302D): nền mục menu đang chọn
 
 ### Trạng thái (light / dark)
