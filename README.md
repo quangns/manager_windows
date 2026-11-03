@@ -79,6 +79,7 @@ Mọi dữ liệu chỉ lưu trên máy, không gửi đi đâu.
 
 - **Dọn rác:**
   - Luôn có bước chạy thử để xem trước dung lượng.
+  - Sau khi chạy thử, bấm "Xem file" ở từng mục để xem danh sách file và bỏ tick những file muốn giữ. Mục "nên xem lại" (cache Zalo, Teams, Thùng rác) bắt buộc phải xem trước khi dọn; dọn tự động và nút "Dọn rác ngay" luôn bỏ qua các mục này.
   - Không đi theo junction/symlink khi quét, nên không xoá nhầm data đã chuyển sang ổ khác.
   - Chặn các luật trỏ vào gốc ổ đĩa, thư mục Windows hoặc hồ sơ người dùng.
   - Ngay trước khi xoá, kiểm tra lại tuổi của từng file. File đang mở thì bỏ qua.
@@ -103,7 +104,7 @@ Mọi dữ liệu chỉ lưu trên máy, không gửi đi đâu.
 Yêu cầu .NET 8 SDK. Code build và test được trên Linux (các project Windows nhờ `EnableWindowsTargeting`), nhưng app chỉ chạy được trên Windows.
 
 ```bash
-dotnet test tests/ManagerWindows.Core.Tests      # 46 test: Core + Storage + IPC
+dotnet test tests/ManagerWindows.Core.Tests      # 47 test: Core + Storage + IPC
 ./scripts/build-release.sh                       # → dist/*.zip: bản cài đặt + bản portable + SHA256SUMS.txt
 ```
 

@@ -8,13 +8,11 @@
   "Btn_Refresh": "Làm mới",
   "Dur_HM": "{h} giờ {m} phút",
   "Dur_M": "{m} phút",
-
   "Tray_Open": "Mở Manager Windows",
   "Tray_CleanNow": "Dọn rác ngay",
   "Tray_Relocation": "Di chuyển data app",
   "Tray_Exit": "Thoát",
   "Notify_Title": "Manager Windows",
-
   "Tab_Dashboard": "Tổng quan",
   "Tab_Cleanup": "Dọn rác",
   "Tab_Suggestions": "Gợi ý dọn file",
@@ -22,7 +20,6 @@
   "Tab_Usage": "Thống kê sử dụng",
   "Tab_Priority": "Ưu tiên & Excel",
   "Tab_Settings": "Cài đặt",
-
   "Dash_Drives": "Ổ đĩa",
   "Dash_FreeOf": "{free} trống / {total}",
   "Dash_LowSpace": "Sắp đầy: còn dưới 10%",
@@ -35,7 +32,6 @@
   "Dash_ServicePortable": "Bản portable không có dịch vụ nền: vẫn dọn rác của người dùng, chuyển data, thống kê, ưu tiên app được. Không dọn được thư mục hệ thống và không đếm số lần mở app; muốn đủ tính năng hãy dùng bản cài đặt.",
   "Dash_TopToday": "Dùng nhiều nhất hôm nay",
   "Dash_QuickClean": "Dọn rác ngay",
-
   "Clean_Scan": "Quét (chạy thử)",
   "Clean_Run": "Dọn mục đã chọn",
   "Clean_ScanResult": "Có thể giải phóng khoảng {size}. Chưa xoá gì cho tới khi bấm \"Dọn mục đã chọn\".",
@@ -44,6 +40,22 @@
   "Clean_SystemNeedsService": "(Dịch vụ nền chưa chạy nên bỏ qua mục hệ thống.)",
   "Clean_Schedule": "Dọn tự động:",
   "Clean_History": "Lịch sử dọn",
+  "Clean_Review": "Xem file",
+  "Clean_OpenRecycleBin": "Mở Thùng rác",
+  "Clean_Reviewed": "✓ Đã xem",
+  "Clean_FilesKept": "{count} (giữ {kept})",
+  "Clean_ReviewRequired": "Các mục sau cần xem danh sách file trước khi dọn:{rules}\n\nBấm \"Quét (chạy thử)\", rồi bấm \"Xem file\" ở từng mục và bỏ tick những file muốn giữ.",
+  "Clean_AutoSkipsReview": "Dọn tự động và nút \"Dọn rác ngay\" bỏ qua các mục \"nên xem lại\"; các mục đó chỉ dọn ở đây sau khi đã xem file.",
+  "Review_Title": "Xem file: {rule}",
+  "Review_Note": "Mục này có thể chứa dữ liệu ứng dụng vẫn cần dùng. Bỏ tick những file muốn giữ; chỉ file còn tick mới bị xoá.",
+  "Review_Filter": "Lọc theo tên/đường dẫn:",
+  "Review_IncludeAll": "Tick tất cả đang hiện",
+  "Review_ExcludeAll": "Bỏ tick tất cả đang hiện",
+  "Review_Summary": "Sẽ xoá {count} file ({size}) · giữ lại {kept} file ({keptSize})",
+  "Review_Done": "Xong",
+  "Review_Cancel": "Huỷ",
+  "Col_Delete": "Xoá",
+  "Col_Modified": "Ngày sửa",
   "Freq_Off": "Tắt",
   "Freq_Daily": "Hằng ngày",
   "Freq_Weekly": "Hằng tuần",
@@ -64,7 +76,6 @@
   "Risk_Review": "(nên xem lại)",
   "Trigger_manual": "Thủ công",
   "Trigger_schedule": "Theo lịch",
-
   "Sug_Note": "Đây chỉ là gợi ý: app không bao giờ tự xoá. File bạn chọn được chuyển vào Thùng rác, có thể khôi phục.",
   "Sug_Roots": "Thư mục cần quét (mỗi dòng một thư mục, dùng được %USERPROFILE%):",
   "Sug_Scan": "Quét",
@@ -86,7 +97,6 @@
   "Col_Path": "Đường dẫn",
   "Col_Size": "Dung lượng",
   "Col_LastUsed": "Dùng lần cuối",
-
   "Reloc_Intro": "Chuyển data của app (Zalo, Telegram, trình duyệt…) sang ổ khác. Đường dẫn trên ổ C giữ nguyên nhờ junction nên app vẫn chạy bình thường. Bản gốc được giữ dạng backup để hoàn tác.",
   "Reloc_TargetRoot": "Thư mục đích:",
   "Reloc_Browse": "Chọn…",
@@ -143,7 +153,6 @@
   "Health_LinkMissing": "Mất junction",
   "Health_LinkWrongTarget": "Junction trỏ sai",
   "Health_NotApplicable": "",
-
   "Usage_Hourly": "Thời gian dùng máy theo giờ trong ngày",
   "Usage_Total": "Tổng: {time}",
   "Usage_Pin": "Ghim ưu tiên",
@@ -155,7 +164,6 @@
   "Col_ActiveTime": "Thời gian dùng",
   "Col_Launches": "Số lần mở",
   "Col_Sessions": "Số phiên",
-
   "Prio_Intro": "App ưu tiên được Windows chia CPU trước khi máy bận. App nền bị hạ ưu tiên và chạy chế độ tiết kiệm (EcoQoS). Mức cũ được trả lại khi tắt tính năng hoặc thoát app.",
   "Prio_Enabled": "Bật điều phối ưu tiên",
   "Prio_TopN": "Tự ưu tiên số app dùng nhiều nhất (7 ngày):",
@@ -170,7 +178,6 @@
   "Level_Normal": "Bình thường",
   "Level_AboveNormal": "Trên bình thường",
   "Level_High": "Cao",
-
   "Excel_Section": "File Excel nặng",
   "Excel_Enabled": "Tự phát hiện Excel mở file nặng: ưu tiên Excel, hạ ưu tiên trình duyệt/Zalo/OneDrive",
   "Excel_Threshold": "Coi là nặng khi file lớn hơn (MB):",
@@ -200,7 +207,6 @@
   "ExcelS_UsePowerQuery": "Dữ liệu rất lớn: nên nạp bằng Power Query vào Data Model (Power Pivot) thay vì để trực tiếp trên sheet.",
   "ExcelS_DisableAddins": "Tắt add-in không dùng: File > Options > Add-ins > COM Add-ins.",
   "ExcelS_DisableHardwareAcceleration": "Máy yếu card đồ hoạ: File > Options > Advanced > tick \"Disable hardware graphics acceleration\".",
-
   "Set_Language": "Ngôn ngữ",
   "Lang_Auto": "Theo Windows",
   "Set_StartWithWindows": "Tự chạy khi đăng nhập Windows",

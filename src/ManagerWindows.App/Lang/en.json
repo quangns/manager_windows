@@ -8,13 +8,11 @@
   "Btn_Refresh": "Refresh",
   "Dur_HM": "{h}h {m}m",
   "Dur_M": "{m}m",
-
   "Tray_Open": "Open Manager Windows",
   "Tray_CleanNow": "Clean now",
   "Tray_Relocation": "Move app data",
   "Tray_Exit": "Exit",
   "Notify_Title": "Manager Windows",
-
   "Tab_Dashboard": "Overview",
   "Tab_Cleanup": "Cleanup",
   "Tab_Suggestions": "File suggestions",
@@ -22,7 +20,6 @@
   "Tab_Usage": "App usage",
   "Tab_Priority": "Priority & Excel",
   "Tab_Settings": "Settings",
-
   "Dash_Drives": "Drives",
   "Dash_FreeOf": "{free} free of {total}",
   "Dash_LowSpace": "Almost full: less than 10% free",
@@ -35,7 +32,6 @@
   "Dash_ServicePortable": "The portable edition has no background service: user cleanup, data moving, usage stats and priority still work. System folders aren't cleaned and app launches aren't counted; use the installer for full features.",
   "Dash_TopToday": "Most used today",
   "Dash_QuickClean": "Clean now",
-
   "Clean_Scan": "Scan (dry run)",
   "Clean_Run": "Clean selected",
   "Clean_ScanResult": "About {size} can be freed. Nothing is deleted until you click \"Clean selected\".",
@@ -44,6 +40,22 @@
   "Clean_SystemNeedsService": "(Background service not running, system items skipped.)",
   "Clean_Schedule": "Automatic cleanup:",
   "Clean_History": "Cleanup history",
+  "Clean_Review": "View files",
+  "Clean_OpenRecycleBin": "Open Recycle Bin",
+  "Clean_Reviewed": "✓ Reviewed",
+  "Clean_FilesKept": "{count} (keep {kept})",
+  "Clean_ReviewRequired": "These items need their file list reviewed before cleaning:{rules}\n\nClick \"Scan (dry run)\", then \"View files\" on each item and untick the files you want to keep.",
+  "Clean_AutoSkipsReview": "Automatic cleanup and \"Clean now\" skip \"review first\" items; those are only cleaned here after reviewing their files.",
+  "Review_Title": "Files: {rule}",
+  "Review_Note": "This item may contain app data that is still needed. Untick files you want to keep; only ticked files are deleted.",
+  "Review_Filter": "Filter by name/path:",
+  "Review_IncludeAll": "Tick all shown",
+  "Review_ExcludeAll": "Untick all shown",
+  "Review_Summary": "Will delete {count} files ({size}) · keep {kept} files ({keptSize})",
+  "Review_Done": "Done",
+  "Review_Cancel": "Cancel",
+  "Col_Delete": "Delete",
+  "Col_Modified": "Modified",
   "Freq_Off": "Off",
   "Freq_Daily": "Daily",
   "Freq_Weekly": "Weekly",
@@ -64,7 +76,6 @@
   "Risk_Review": "(review first)",
   "Trigger_manual": "Manual",
   "Trigger_schedule": "Scheduled",
-
   "Sug_Note": "These are suggestions only: nothing is deleted automatically. Selected files go to the Recycle Bin and can be restored.",
   "Sug_Roots": "Folders to scan (one per line, %USERPROFILE% allowed):",
   "Sug_Scan": "Scan",
@@ -86,7 +97,6 @@
   "Col_Path": "Path",
   "Col_Size": "Size",
   "Col_LastUsed": "Last used",
-
   "Reloc_Intro": "Move app data (Zalo, Telegram, browsers…) to another drive. The path on drive C stays the same through a junction, so apps keep working. The original is kept as a backup so you can undo.",
   "Reloc_TargetRoot": "Target folder:",
   "Reloc_Browse": "Browse…",
@@ -143,7 +153,6 @@
   "Health_LinkMissing": "Junction missing",
   "Health_LinkWrongTarget": "Junction points elsewhere",
   "Health_NotApplicable": "",
-
   "Usage_Hourly": "Computer usage by hour of day",
   "Usage_Total": "Total: {time}",
   "Usage_Pin": "Pin priority",
@@ -155,7 +164,6 @@
   "Col_ActiveTime": "Active time",
   "Col_Launches": "Launches",
   "Col_Sessions": "Sessions",
-
   "Prio_Intro": "Priority apps get CPU first when the computer is busy. Background apps are lowered and run in efficiency mode (EcoQoS). Original levels are restored when you turn this off or exit.",
   "Prio_Enabled": "Enable priority management",
   "Prio_TopN": "Automatically prioritize the most used apps (7 days):",
@@ -170,7 +178,6 @@
   "Level_Normal": "Normal",
   "Level_AboveNormal": "Above normal",
   "Level_High": "High",
-
   "Excel_Section": "Heavy Excel files",
   "Excel_Enabled": "Detect heavy Excel files: prioritize Excel, lower browsers/Zalo/OneDrive",
   "Excel_Threshold": "Heavy when the file is larger than (MB):",
@@ -200,7 +207,6 @@
   "ExcelS_UsePowerQuery": "Very large data: load it with Power Query into the Data Model (Power Pivot) instead of keeping it on sheets.",
   "ExcelS_DisableAddins": "Disable unused add-ins: File > Options > Add-ins > COM Add-ins.",
   "ExcelS_DisableHardwareAcceleration": "Weak graphics card: File > Options > Advanced > check \"Disable hardware graphics acceleration\".",
-
   "Set_Language": "Language",
   "Lang_Auto": "Same as Windows",
   "Set_StartWithWindows": "Start when signing in to Windows",

@@ -86,6 +86,26 @@ public class CleanupTests
     }
 
     [Fact]
+    public void Excluded_files_are_kept_when_executing()
+    {
+        using var t = new TempDir();
+        var root = t.Dir("cache");
+        var keep = t.File("cache/keep.db", 100, Now.AddDays(-10));
+        var drop = t.File("cache/drop.tmp", 50, Now.AddDays(-10));
+        var clock = new FakeClock(Now);
+        var plan = new CleanupPlanner(clock).Plan([Rule(root, 2)]);
+
+        var filtered = plan.Without(new HashSet<string>([keep], StringComparer.OrdinalIgnoreCase));
+        var result = new CleanupExecutor(new PermanentDeleter(), clock).Execute(filtered);
+
+        Assert.Equal(50, filtered.TotalBytes);
+        Assert.Equal(150, plan.TotalBytes); // bản gốc không bị đổi
+        Assert.Equal(1, result.Deleted);
+        Assert.True(File.Exists(keep));
+        Assert.False(File.Exists(drop));
+    }
+
+    [Fact]
     public void PathExpander_expands_wildcards_per_segment()
     {
         using var t = new TempDir();
@@ -121,6 +141,8 @@ public class CleanupTests
         Assert.Contains(rules, r => r.Kind == RuleKind.RecycleBin);
         Assert.All(rules, r => Assert.True(r.Name.ContainsKey("vi") && r.Name.ContainsKey("en"), r.Id));
         Assert.All(rules.Where(r => r.Kind == RuleKind.Files), r => Assert.NotEmpty(r.Paths));
+        // Mục "nên xem lại" phải là phạm vi người dùng: app liệt kê file được mà không cần quyền hệ thống.
+        Assert.All(rules.Where(r => r.Risk == RuleRisk.Review), r => Assert.Equal(RuleScope.User, r.Scope));
     }
 
     [Fact]

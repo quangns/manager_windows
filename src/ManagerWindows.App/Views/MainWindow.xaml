@@ -161,6 +161,20 @@
                         <DataGridTextColumn Header="{l:T Col_Scope}" Binding="{Binding ScopeText}" Width="110" IsReadOnly="True" />
                         <DataGridTextColumn Header="{l:T Col_Files}" Binding="{Binding Files}" Width="90" IsReadOnly="True" />
                         <DataGridTextColumn Header="{l:T Col_Estimate}" Binding="{Binding Estimate}" Width="110" IsReadOnly="True" />
+                        <DataGridTemplateColumn Width="170">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Button Content="{Binding ReviewLabel}" Style="{StaticResource Link}"
+                                                Visibility="{Binding CanReview, Converter={StaticResource BoolVis}}"
+                                                Command="{Binding DataContext.ReviewCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}" />
+                                        <TextBlock Text="{l:T Clean_Reviewed}" Foreground="{StaticResource Good}" VerticalAlignment="Center"
+                                                   Visibility="{Binding Reviewed, Converter={StaticResource BoolVis}}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
 
@@ -176,6 +190,7 @@
                     <TextBox Text="{Binding IdleMinutes}" Width="40" VerticalContentAlignment="Center" Margin="0,0,12,0" />
                     <CheckBox Content="{l:T Sched_SkipBattery}" IsChecked="{Binding SkipOnBattery}" VerticalAlignment="Center" Margin="0,0,12,0" />
                     <Button Content="{l:T Btn_Save}" Command="{Binding SaveScheduleCommand}" />
+                    <TextBlock Text="{l:T Clean_AutoSkipsReview}" Style="{StaticResource Muted}" Margin="0,6,0,0" Width="900" />
                 </WrapPanel>
 
                 <DockPanel Grid.Row="3" Margin="0,8,0,0">

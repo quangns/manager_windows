@@ -9,7 +9,7 @@ public interface IRecycleBin
     void Empty();
 }
 
-public sealed record CleanupCandidate(string RuleId, string Root, string Path, long Size);
+public sealed record CleanupCandidate(string RuleId, string Root, string Path, long Size, DateTime LastWriteUtc);
 
 public sealed class RulePlan
 {
@@ -25,6 +25,25 @@ public sealed class CleanupPlan
     public List<RulePlan> Rules { get; } = new();
     public long TotalBytes => Rules.Sum(r => r.TotalBytes);
     public int FileCount => Rules.Sum(r => r.Files.Count);
+
+    /// <summary>Bản kế hoạch bỏ đi các file người dùng muốn giữ (bỏ tick khi xem lại danh sách).</summary>
+    public CleanupPlan Without(IReadOnlySet<string> excludedPaths)
+    {
+        var plan = new CleanupPlan();
+        foreach (var rp in Rules)
+        {
+            var copy = new RulePlan { Rule = rp.Rule };
+            copy.Roots.AddRange(rp.Roots);
+            if (rp.Rule.Kind == RuleKind.RecycleBin) copy.TotalBytes = rp.TotalBytes;
+            foreach (var f in rp.Files.Where(f => !excludedPaths.Contains(f.Path)))
+            {
+                copy.Files.Add(f);
+                copy.TotalBytes += f.Size;
+            }
+            plan.Rules.Add(copy);
+        }
+        return plan;
+    }
 }
 
 /// <summary>Lập danh sách file sẽ xoá (chạy thử). Không xoá gì.</summary>
@@ -51,7 +70,7 @@ public sealed class CleanupPlanner(IClock clock, IRecycleBin? recycleBin = null)
                 foreach (var f in SafeFileWalker.EnumerateFiles(root, rule.Recursive, null, ct))
                 {
                     if (!IsEligible(rule, f, clock.UtcNow)) continue;
-                    rp.Files.Add(new CleanupCandidate(rule.Id, root, f.Path, f.Size));
+                    rp.Files.Add(new CleanupCandidate(rule.Id, root, f.Path, f.Size, f.LastWriteUtc));
                     rp.TotalBytes += f.Size;
                 }
             }

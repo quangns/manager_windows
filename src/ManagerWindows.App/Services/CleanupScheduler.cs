@@ -18,8 +18,12 @@ public sealed class CleanupScheduler(AppHost host) : BackgroundLoop
     public bool IsEnabled(CleanupRule r) =>
         host.Config.Cleanup.EnabledRuleIds?.Contains(r.Id) ?? r.EnabledByDefault;
 
+    /// <summary>
+    /// Luật người dùng đang bật dùng cho dọn tự động/dọn nhanh. Bỏ qua mục "nên xem lại":
+    /// mục đó chỉ được dọn thủ công sau khi người dùng đã xem danh sách file.
+    /// </summary>
     public List<CleanupRule> EnabledUserRules() =>
-        host.Rules.Where(r => r.Scope == RuleScope.User && IsEnabled(r)).ToList();
+        host.Rules.Where(r => r.Scope == RuleScope.User && r.Risk != RuleRisk.Review && IsEnabled(r)).ToList();
 
     protected override void Tick(CancellationToken ct)
     {
