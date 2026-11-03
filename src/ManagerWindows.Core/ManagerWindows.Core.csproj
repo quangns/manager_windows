@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!-- Logic thuần, không phụ thuộc Windows: unit test chạy được trên Linux -->
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="ManagerWindows.Core.Tests" />

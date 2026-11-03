@@ -1,0 +1,22 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Bảng màu Light — nguồn: docs/design/DESIGN.md. ThemeManager hoán đổi file này khi đổi sáng/tối. -->
+    <SolidColorBrush x:Key="Canvas" Color="#FAFAFA" />
+    <SolidColorBrush x:Key="Surface" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="Raised" Color="#F4F4F5" />
+    <SolidColorBrush x:Key="Ink" Color="#18181B" />
+    <SolidColorBrush x:Key="InkMuted" Color="#71717A" />
+    <SolidColorBrush x:Key="Hairline" Color="#E4E4E7" />
+    <SolidColorBrush x:Key="Accent" Color="#0F766E" />
+    <SolidColorBrush x:Key="AccentHover" Color="#115E59" />
+    <SolidColorBrush x:Key="AccentPressed" Color="#134E4A" />
+    <SolidColorBrush x:Key="AccentOn" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="AccentWash" Color="#E6F2F1" />
+    <SolidColorBrush x:Key="ChartBar" Color="#118F80" />
+    <SolidColorBrush x:Key="Good" Color="#15803D" />
+    <SolidColorBrush x:Key="GoodWash" Color="#DCFCE7" />
+    <SolidColorBrush x:Key="Warning" Color="#B45309" />
+    <SolidColorBrush x:Key="WarningWash" Color="#FEF3C7" />
+    <SolidColorBrush x:Key="Critical" Color="#B91C1C" />
+    <SolidColorBrush x:Key="CriticalWash" Color="#FEE2E2" />
+</ResourceDictionary>

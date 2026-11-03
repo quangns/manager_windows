@@ -12,7 +12,21 @@ App chạy nền trên Windows 10/11 (x64) giúp:
    - App đọc thẳng file .xlsx để tìm nguyên nhân làm file nặng: vùng dữ liệu "ma", quá nhiều style, hàm tự tính lại (INDIRECT/OFFSET…), liên kết ngoài, ảnh lớn, Office 32-bit…
    - Từ đó app đưa ra cách xử lý cụ thể.
 
-Giao diện có tiếng Việt và tiếng Anh, chuyển được trong phần Cài đặt.
+Giao diện kiểu dashboard, có tiếng Việt và tiếng Anh. Chế độ sáng/tối tự theo Windows, hoặc chọn cố định trong phần Cài đặt.
+
+![Tổng quan – sáng](docs/design/preview/overview-light.png)
+
+## Thiết kế giao diện
+
+Giao diện được thiết kế bằng bộ skill [Google Stitch](https://github.com/google-labs-code/stitch-skills):
+
+| File | Nội dung |
+|---|---|
+| [`docs/design/DESIGN.md`](docs/design/DESIGN.md) | Hệ thống thiết kế, viết bằng skill `taste-design`: màu sáng/tối, font, thành phần, bố cục, những điều cấm. Đây là chuẩn duy nhất cho giao diện WPF. |
+| [`docs/design/stitch-prompts.md`](docs/design/stitch-prompts.md) | Prompt cho từng màn, viết bằng skill `enhance-prompt`. Dán vào [stitch.withgoogle.com](https://stitch.withgoogle.com) hoặc dùng skill `generate-design` (cần Stitch API key) để sinh bản vẽ. |
+| `docs/design/preview/` | Bản xem trước HTML của màn Tổng quan (sáng/tối), dùng số liệu minh hoạ |
+
+Font nhúng trong app: Be Vietnam Pro và JetBrains Mono (giấy phép OFL, xem `licenses/`). Biểu tượng: Segoe Fluent Icons trên Windows 11, Segoe MDL2 Assets trên Windows 10.
 
 ## Tải về
 
@@ -101,7 +115,7 @@ Mọi dữ liệu chỉ lưu trên máy, không gửi đi đâu.
 
 ## Phát triển
 
-Yêu cầu .NET 8 SDK. Code build và test được trên Linux (các project Windows nhờ `EnableWindowsTargeting`), nhưng app chỉ chạy được trên Windows.
+Yêu cầu .NET 10 SDK (LTS). Giao diện dùng bộ điều khiển Fluent của WPF (`ThemeMode`). Code build và test được trên Linux (các project Windows nhờ `EnableWindowsTargeting`), nhưng app chỉ chạy được trên Windows.
 
 ```bash
 dotnet test tests/ManagerWindows.Core.Tests      # 47 test: Core + Storage + IPC

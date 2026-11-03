@@ -2,396 +2,659 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:l="clr-namespace:ManagerWindows.App.Services"
-        xmlns:vm="clr-namespace:ManagerWindows.App.ViewModels"
-        Title="{l:T App_Title}" Width="1100" Height="720" MinWidth="900" MinHeight="560"
-        Icon="/Assets/app.ico" Background="{StaticResource Panel}"
-        WindowStartupLocation="CenterScreen" FontFamily="Segoe UI" FontSize="13">
+        xmlns:c="clr-namespace:ManagerWindows.App.Controls"
+        Title="{l:T App_Title}" Width="1240" Height="800" MinWidth="1000" MinHeight="640"
+        Icon="/Assets/app.ico" WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource Canvas}" Foreground="{DynamicResource Ink}"
+        FontFamily="{StaticResource UiFont}" FontSize="13">
+    <!-- Bố cục theo docs/design/DESIGN.md: sidebar 232px + vùng nội dung tối đa 1200px. -->
     <Window.Resources>
-        <Style x:Key="NavTab" TargetType="TabItem">
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="TabItem">
-                        <Border x:Name="Bd" Padding="16,10" Margin="0,0,0,2" CornerRadius="6" Background="Transparent">
-                            <ContentPresenter ContentSource="Header" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource Surface}" />
-                                <Setter Property="Foreground" Value="{StaticResource Accent}" />
-                                <Setter Property="FontWeight" Value="SemiBold" />
-                            </Trigger>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#ECEBE7" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Setter Property="Foreground" Value="{StaticResource Ink}" />
-            <Setter Property="Width" Value="190" />
+        <!-- Chân trang: thanh tải mảnh 2px + chữ trạng thái -->
+        <DataTemplate x:Key="StatusBar">
+            <StackPanel Margin="0,12,0,0">
+                <ProgressBar Style="{StaticResource BusyLine}" Visibility="{Binding Busy, Converter={StaticResource BoolVis}}" Margin="0,0,0,6" />
+                <TextBlock Text="{Binding Status}" Style="{StaticResource Muted}" />
+            </StackPanel>
+        </DataTemplate>
+
+        <!-- Thanh dung lượng đổi màu theo mức đầy: ok / warn (< 15%) / low (< 10%) -->
+        <Style x:Key="DriveMeter" TargetType="ProgressBar" BasedOn="{StaticResource Meter}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Level}" Value="warn">
+                    <Setter Property="Foreground" Value="{DynamicResource Warning}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Level}" Value="low">
+                    <Setter Property="Foreground" Value="{DynamicResource Critical}" />
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
 
-        <!-- Thanh trạng thái dùng chung cho các tab -->
-        <DataTemplate x:Key="StatusBar">
-            <Border BorderBrush="{StaticResource Hairline}" BorderThickness="0,1,0,0" Padding="0,8,0,0" Margin="0,8,0,0">
-                <StackPanel Orientation="Horizontal">
-                    <ProgressBar IsIndeterminate="True" Width="80" Height="6" Margin="0,0,10,0"
-                                 Visibility="{Binding Busy, Converter={StaticResource BoolVis}}" />
-                    <TextBlock Text="{Binding Status}" Style="{StaticResource Muted}" />
-                </StackPanel>
-            </Border>
-        </DataTemplate>
+        <!-- Biểu tượng và huy hiệu theo mức: critical / warn(ing) / ok / info -->
+        <Style x:Key="LevelIcon" TargetType="TextBlock" BasedOn="{StaticResource Icon}">
+            <Setter Property="Foreground" Value="{DynamicResource InkMuted}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Level}" Value="critical">
+                    <Setter Property="Foreground" Value="{DynamicResource Critical}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Level}" Value="warn">
+                    <Setter Property="Foreground" Value="{DynamicResource Warning}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Level}" Value="ok">
+                    <Setter Property="Foreground" Value="{DynamicResource Good}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="LevelBadge" TargetType="Border" BasedOn="{StaticResource BadgeNeutral}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Level}" Value="critical">
+                    <Setter Property="Background" Value="{DynamicResource CriticalWash}" />
+                    <Setter Property="TextElement.Foreground" Value="{DynamicResource Critical}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Level}" Value="warning">
+                    <Setter Property="Background" Value="{DynamicResource WarningWash}" />
+                    <Setter Property="TextElement.Foreground" Value="{DynamicResource Warning}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Khung trang: lề 32px, rộng tối đa 1200px -->
+        <Style x:Key="Page" TargetType="DockPanel">
+            <Setter Property="Margin" Value="32,28,32,16" />
+            <Setter Property="MaxWidth" Value="1200" />
+        </Style>
+        <Style x:Key="Gap" TargetType="FrameworkElement">
+            <Setter Property="Margin" Value="0,0,0,16" />
+        </Style>
     </Window.Resources>
 
-    <TabControl TabStripPlacement="Left" SelectedIndex="{Binding SelectedTab}" Background="{StaticResource Panel}"
-                BorderThickness="0" Padding="0" ItemContainerStyle="{StaticResource NavTab}">
-
-        <!-- ===================== TỔNG QUAN ===================== -->
-        <TabItem Header="{l:T Tab_Dashboard}" DataContext="{Binding Dashboard}">
-            <Grid Margin="20">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-                <DockPanel>
-                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-                        <Button Content="{l:T Btn_Refresh}" Command="{Binding RefreshCommand}" />
-                        <Button Content="{l:T Dash_QuickClean}" Style="{StaticResource Primary}" Command="{Binding QuickCleanCommand}"
-                                IsEnabled="{Binding Busy, Converter={StaticResource Not}}" />
-                    </StackPanel>
-                    <TextBlock Text="{l:T Tab_Dashboard}" Style="{StaticResource H1}" />
-                </DockPanel>
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                    <WrapPanel>
-                        <Border Style="{StaticResource Card}" Width="380">
-                            <StackPanel>
-                                <TextBlock Text="{l:T Dash_Drives}" FontWeight="SemiBold" Margin="0,0,0,8" />
-                                <ItemsControl ItemsSource="{Binding Drives}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <StackPanel Margin="0,0,0,10">
-                                                <DockPanel>
-                                                    <TextBlock Text="{Binding FreeText}" DockPanel.Dock="Right" Style="{StaticResource Muted}" />
-                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
-                                                </DockPanel>
-                                                <ProgressBar Value="{Binding UsedPercent, Mode=OneWay}" Maximum="100" Height="8" Margin="0,4,0,0"
-                                                             Foreground="{StaticResource Accent}" Background="{StaticResource Hairline}" BorderThickness="0" />
-                                                <TextBlock Text="{l:T Dash_LowSpace}" Foreground="{StaticResource Critical}" FontSize="12"
-                                                           Visibility="{Binding Low, Converter={StaticResource BoolVis}}" />
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-                        </Border>
-                        <Border Style="{StaticResource Card}" Width="300">
-                            <StackPanel>
-                                <TextBlock Text="{l:T Dash_TotalFreed}" Style="{StaticResource Muted}" />
-                                <TextBlock Text="{Binding TotalFreed}" FontSize="28" FontWeight="SemiBold" Margin="0,2,0,10" />
-                                <TextBlock Text="{l:T Dash_LastCleanup}" Style="{StaticResource Muted}" />
-                                <TextBlock Text="{Binding LastCleanup}" Margin="0,2,0,10" />
-                                <TextBlock Text="{l:T Dash_Service}" Style="{StaticResource Muted}" />
-                                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
-                                    <TextBlock Text="●  " Foreground="{StaticResource Good}" Visibility="{Binding ServiceOk, Converter={StaticResource BoolVis}}" />
-                                    <TextBlock Text="●  " Foreground="{StaticResource Warning}" Visibility="{Binding ServiceOk, Converter={StaticResource BoolVisInv}}" />
-                                    <TextBlock Text="{Binding ServiceStatus}" TextWrapping="Wrap" Width="240" />
+    <TabControl x:Name="Nav" SelectedIndex="{Binding SelectedTab}" ItemContainerStyle="{StaticResource NavItem}"
+                SelectionChanged="Nav_SelectionChanged" Background="Transparent" BorderThickness="0" Padding="0">
+        <TabControl.Template>
+            <ControlTemplate TargetType="TabControl">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="232" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <!-- Sidebar -->
+                    <Border Background="{DynamicResource Surface}" BorderBrush="{DynamicResource Hairline}" BorderThickness="0,0,1,0">
+                        <DockPanel Margin="12,20,12,16">
+                            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="10,0,0,24">
+                                <Image Source="/Assets/app.ico" Width="28" Height="28" Margin="0,0,10,0" />
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="Manager Windows" FontWeight="SemiBold" FontSize="14" Foreground="{DynamicResource Ink}" />
+                                    <TextBlock Text="{l:T App_Tagline}" FontSize="11.5" Foreground="{DynamicResource InkMuted}" />
                                 </StackPanel>
                             </StackPanel>
-                        </Border>
-                        <Border Style="{StaticResource Card}" Width="300">
-                            <StackPanel>
-                                <TextBlock Text="{l:T Dash_TopToday}" FontWeight="SemiBold" Margin="0,0,0,8" />
-                                <ItemsControl ItemsSource="{Binding TopToday}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <DockPanel Margin="0,0,0,6">
-                                                <TextBlock Text="{Binding ActiveText}" DockPanel.Dock="Right" Style="{StaticResource Muted}" />
-                                                <TextBlock Text="{Binding Name}" />
-                                            </DockPanel>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                            <!-- Trạng thái dịch vụ nền ở chân sidebar -->
+                            <Border DockPanel.Dock="Bottom" Background="{DynamicResource Raised}" CornerRadius="8" Padding="12,8">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Style="{StaticResource Icon}" FontSize="12" Text="&#xE73E;" Foreground="{DynamicResource Good}" Margin="0,0,8,0"
+                                               Visibility="{Binding Dashboard.ServiceOk, Converter={StaticResource BoolVis}}" />
+                                    <TextBlock Style="{StaticResource Icon}" FontSize="12" Text="&#xE7BA;" Foreground="{DynamicResource Warning}" Margin="0,0,8,0"
+                                               Visibility="{Binding Dashboard.ServiceOk, Converter={StaticResource BoolVisInv}}" />
+                                    <TextBlock Text="{Binding Dashboard.ServiceShort}" FontSize="12" Foreground="{DynamicResource InkMuted}" TextWrapping="Wrap" Width="160" />
+                                </StackPanel>
+                            </Border>
+                            <StackPanel IsItemsHost="True" />
+                        </DockPanel>
+                    </Border>
+                    <ContentPresenter x:Name="PageHost" Grid.Column="1" ContentSource="SelectedContent" />
+                </Grid>
+            </ControlTemplate>
+        </TabControl.Template>
+
+        <!-- ===================== TỔNG QUAN ===================== -->
+        <TabItem Tag="&#xE80F;" Header="{l:T Tab_Dashboard}" DataContext="{Binding Dashboard}">
+            <DockPanel Style="{StaticResource Page}">
+                <c:PageHeader DockPanel.Dock="Top" Title="{l:T Tab_Dashboard}" Subtitle="{l:T Dash_Subtitle}">
+                    <c:PageHeader.Actions>
+                        <StackPanel Orientation="Horizontal">
+                            <Button Style="{StaticResource Secondary}" Content="{l:T Btn_Refresh}" Command="{Binding RefreshCommand}" />
+                            <Button Style="{StaticResource Primary}" Content="{l:T Dash_QuickClean}" Command="{Binding QuickCleanCommand}"
+                                    IsEnabled="{Binding Busy, Converter={StaticResource Not}}" />
+                        </StackPanel>
+                    </c:PageHeader.Actions>
+                </c:PageHeader>
+                <ContentControl DockPanel.Dock="Bottom" Content="{Binding}" ContentTemplate="{StaticResource StatusBar}" />
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <!-- Lưới lệch 2:1 -->
+                        <Grid Style="{StaticResource Gap}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*" />
+                                <ColumnDefinition Width="16" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <TextBlock Text="{l:T Dash_Drives}" Style="{StaticResource CardTitle}" />
+                                    <!-- Ổ hệ thống nổi bật -->
+                                    <StackPanel DataContext="{Binding SystemDrive}" Margin="0,18,0,0">
+                                        <DockPanel>
+                                            <Border DockPanel.Dock="Right">
+                                                <Border.Style>
+                                                    <Style TargetType="Border" BasedOn="{StaticResource BadgeWarning}">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Level}" Value="warn">
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Style="{StaticResource BadgeIcon}" Text="&#xE7BA;" />
+                                                    <TextBlock Text="{l:T Dash_Warn}" />
+                                                </StackPanel>
+                                            </Border>
+                                            <Border DockPanel.Dock="Right">
+                                                <Border.Style>
+                                                    <Style TargetType="Border" BasedOn="{StaticResource BadgeCritical}">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Level}" Value="low">
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Style="{StaticResource BadgeIcon}" Text="&#xE783;" />
+                                                    <TextBlock Text="{l:T Dash_Low}" />
+                                                </StackPanel>
+                                            </Border>
+                                            <TextBlock Style="{StaticResource Overline}">
+                                                <Run Text="{Binding Name, Mode=OneWay}" /> <Run Text="{Binding Label, Mode=OneWay}" />
+                                            </TextBlock>
+                                        </DockPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                            <TextBlock Text="{Binding FreeText}" Style="{StaticResource BigNumber}" />
+                                            <TextBlock Text="{l:T Dash_FreeSuffix}" Style="{StaticResource Muted}" VerticalAlignment="Bottom" Margin="8,0,0,5" />
+                                        </StackPanel>
+                                        <TextBlock Style="{StaticResource Muted}" Margin="0,2,0,12">
+                                            <Run Text="{l:T Dash_Of}" /> <Run Text="{Binding TotalText, Mode=OneWay}" />
+                                        </TextBlock>
+                                        <ProgressBar Style="{StaticResource DriveMeter}" Height="10" Value="{Binding UsedRatio, Mode=OneWay}" />
+                                    </StackPanel>
+                                    <!-- Các ổ còn lại -->
+                                    <ItemsControl ItemsSource="{Binding OtherDrives}" Margin="0,20,0,0">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0,0,0,12">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="56" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Name}" FontWeight="Medium" VerticalAlignment="Center" />
+                                                    <ProgressBar Grid.Column="1" Style="{StaticResource DriveMeter}" Value="{Binding UsedRatio, Mode=OneWay}" VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="2" Style="{StaticResource Num}" Foreground="{DynamicResource InkMuted}" Margin="16,0,0,0">
+                                                        <Run Text="{Binding FreeText, Mode=OneWay}" /> / <Run Text="{Binding TotalText, Mode=OneWay}" />
+                                                    </TextBlock>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+                            <!-- Ba chỉ số xếp dọc -->
+                            <StackPanel Grid.Column="2">
+                                <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <TextBlock Text="{l:T Dash_TotalFreed}" Style="{StaticResource Overline}" />
+                                        <TextBlock Text="{Binding TotalFreed}" Style="{StaticResource BigNumber}" Margin="0,6,0,0" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <TextBlock Text="{l:T Dash_LastCleanup}" Style="{StaticResource Overline}" />
+                                        <TextBlock Text="{Binding LastCleanup}" Style="{StaticResource BigNumber}" Margin="0,6,0,0" TextWrapping="Wrap" />
+                                        <TextBlock Text="{Binding LastCleanupDetail}" Style="{StaticResource Muted}" Margin="0,2,0,0" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Style="{StaticResource Card}">
+                                    <StackPanel>
+                                        <TextBlock Text="{l:T Dash_TodayActive}" Style="{StaticResource Overline}" />
+                                        <TextBlock Text="{Binding TodayActive}" Style="{StaticResource BigNumber}" Margin="0,6,0,0" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
                             </StackPanel>
-                        </Border>
-                    </WrapPanel>
+                        </Grid>
+
+                        <!-- Lưới 3:2 -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="3*" />
+                                <ColumnDefinition Width="16" />
+                                <ColumnDefinition Width="2*" />
+                            </Grid.ColumnDefinitions>
+                            <!-- Thanh ngang một chuỗi số liệu: thời gian dùng hôm nay -->
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <TextBlock Text="{l:T Dash_TopToday}" Style="{StaticResource CardTitle}" Margin="0,0,0,14" />
+                                    <ItemsControl ItemsSource="{Binding TopToday}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0,0,0,10" Background="Transparent" ToolTip="{Binding ActiveText}">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="140" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                                    <ProgressBar Grid.Column="1" Style="{StaticResource Meter}" Foreground="{DynamicResource ChartBar}"
+                                                                 Background="Transparent" Value="{Binding Ratio, Mode=OneWay}" VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="2" Text="{Binding ActiveText}" Style="{StaticResource Num}"
+                                                               Foreground="{DynamicResource InkMuted}" MinWidth="90" Margin="12,0,0,0" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <!-- Trạng thái trống -->
+                                    <StackPanel Visibility="{Binding HasTopApps, Converter={StaticResource BoolVisInv}}" Margin="0,8">
+                                        <TextBlock Style="{StaticResource Icon}" Text="&#xE823;" FontSize="28" Foreground="{DynamicResource InkMuted}" HorizontalAlignment="Left" />
+                                        <TextBlock Text="{l:T Dash_NoAppsToday}" Style="{StaticResource Muted}" Margin="0,8,0,0" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="2" Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <TextBlock Text="{l:T Dash_Actions}" Style="{StaticResource CardTitle}" Margin="0,0,0,10" />
+                                    <ItemsControl ItemsSource="{Binding Actions}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border BorderBrush="{DynamicResource Hairline}" BorderThickness="0,0,0,1" Padding="0,10">
+                                                    <DockPanel>
+                                                        <TextBlock DockPanel.Dock="Left" Style="{StaticResource LevelIcon}" Text="{Binding Glyph}"
+                                                                   VerticalAlignment="Top" Margin="0,1,12,0" />
+                                                        <Button DockPanel.Dock="Right" Style="{StaticResource Link}" Content="{Binding ActionLabel}"
+                                                                Visibility="{Binding ActionLabel, Converter={StaticResource StrVis}}" VerticalAlignment="Top"
+                                                                Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                CommandParameter="{Binding Tab}" />
+                                                        <TextBlock Text="{Binding Text}" TextWrapping="Wrap" />
+                                                    </DockPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </StackPanel>
                 </ScrollViewer>
-                <ContentControl Grid.Row="2" Content="{Binding}" ContentTemplate="{StaticResource StatusBar}" />
-            </Grid>
+            </DockPanel>
         </TabItem>
 
         <!-- ===================== DỌN RÁC ===================== -->
-        <TabItem Header="{l:T Tab_Cleanup}" DataContext="{Binding Cleanup}">
-            <Grid Margin="20">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="2*" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-                <DockPanel>
-                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-                        <Button Content="{l:T Clean_Scan}" Command="{Binding ScanCommand}" IsEnabled="{Binding Busy, Converter={StaticResource Not}}" />
-                        <Button Content="{l:T Clean_Run}" Style="{StaticResource Primary}" Command="{Binding RunCommand}"
-                                IsEnabled="{Binding Busy, Converter={StaticResource Not}}" />
+        <TabItem Tag="&#xEA99;" Header="{l:T Tab_Cleanup}" DataContext="{Binding Cleanup}">
+            <DockPanel Style="{StaticResource Page}">
+                <c:PageHeader DockPanel.Dock="Top" Title="{l:T Tab_Cleanup}" Subtitle="{l:T Clean_Subtitle}">
+                    <c:PageHeader.Actions>
+                        <StackPanel Orientation="Horizontal">
+                            <Button Style="{StaticResource Secondary}" Content="{l:T Clean_Scan}" Command="{Binding ScanCommand}"
+                                    IsEnabled="{Binding Busy, Converter={StaticResource Not}}" />
+                            <Button Style="{StaticResource Primary}" Content="{l:T Clean_Run}" Command="{Binding RunCommand}"
+                                    IsEnabled="{Binding Busy, Converter={StaticResource Not}}" />
+                        </StackPanel>
+                    </c:PageHeader.Actions>
+                </c:PageHeader>
+                <ContentControl DockPanel.Dock="Bottom" Content="{Binding}" ContentTemplate="{StaticResource StatusBar}" />
+
+                <!-- Lịch dọn tự động -->
+                <Border DockPanel.Dock="Bottom" Style="{StaticResource Card}" Margin="0,16,0,0">
+                    <StackPanel>
+                        <WrapPanel VerticalAlignment="Center">
+                            <TextBlock Text="{l:T Clean_Schedule}" Style="{StaticResource CardTitle}" VerticalAlignment="Center" Margin="0,0,16,0" />
+                            <ComboBox ItemsSource="{Binding Frequencies}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                                      SelectedValue="{Binding Frequency}" Width="130" Margin="0,0,8,0" />
+                            <ComboBox ItemsSource="{Binding Days}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                                      SelectedValue="{Binding Day}" Width="120" Margin="0,0,8,0" />
+                            <TextBlock Text="{l:T Sched_Hour}" VerticalAlignment="Center" Margin="4,0,6,0" />
+                            <ComboBox ItemsSource="{Binding Hours}" SelectedItem="{Binding Hour}" Width="72" Margin="0,0,16,0" />
+                            <TextBlock Text="{l:T Sched_Idle}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                            <TextBox Text="{Binding IdleMinutes}" Width="56" VerticalContentAlignment="Center" Margin="0,0,16,0" />
+                            <CheckBox Content="{l:T Sched_SkipBattery}" IsChecked="{Binding SkipOnBattery}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <Button Style="{StaticResource Secondary}" Content="{l:T Btn_Save}" Command="{Binding SaveScheduleCommand}" />
+                        </WrapPanel>
+                        <TextBlock Text="{l:T Clean_AutoSkipsReview}" Style="{StaticResource Muted}" FontSize="12" Margin="0,10,0,0" />
                     </StackPanel>
-                    <TextBlock Text="{l:T Tab_Cleanup}" Style="{StaticResource H1}" />
-                </DockPanel>
-                <DataGrid Grid.Row="1" ItemsSource="{Binding Rules}">
-                    <DataGrid.Columns>
-                        <DataGridTemplateColumn Width="36">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <CheckBox IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Header="{l:T Col_Rule}" Width="*">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding Name}" />
-                                        <TextBlock Text="{l:T Risk_Review}" Foreground="{StaticResource Warning}" Margin="8,0,0,0" FontSize="12"
-                                                   Visibility="{Binding IsReview, Converter={StaticResource BoolVis}}" />
-                                    </StackPanel>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                        <DataGridTextColumn Header="{l:T Col_Scope}" Binding="{Binding ScopeText}" Width="110" IsReadOnly="True" />
-                        <DataGridTextColumn Header="{l:T Col_Files}" Binding="{Binding Files}" Width="90" IsReadOnly="True" />
-                        <DataGridTextColumn Header="{l:T Col_Estimate}" Binding="{Binding Estimate}" Width="110" IsReadOnly="True" />
-                        <DataGridTemplateColumn Width="170">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <Button Content="{Binding ReviewLabel}" Style="{StaticResource Link}"
-                                                Visibility="{Binding CanReview, Converter={StaticResource BoolVis}}"
-                                                Command="{Binding DataContext.ReviewCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                CommandParameter="{Binding}" />
-                                        <TextBlock Text="{l:T Clean_Reviewed}" Foreground="{StaticResource Good}" VerticalAlignment="Center"
-                                                   Visibility="{Binding Reviewed, Converter={StaticResource BoolVis}}" />
-                                    </StackPanel>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
+                </Border>
 
-                <WrapPanel Grid.Row="2" Margin="0,14,0,0" VerticalAlignment="Center">
-                    <TextBlock Text="{l:T Clean_Schedule}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,12,0" />
-                    <ComboBox ItemsSource="{Binding Frequencies}" DisplayMemberPath="Label" SelectedValuePath="Value"
-                              SelectedValue="{Binding Frequency}" Width="120" Margin="0,0,8,0" />
-                    <ComboBox ItemsSource="{Binding Days}" DisplayMemberPath="Label" SelectedValuePath="Value"
-                              SelectedValue="{Binding Day}" Width="110" Margin="0,0,8,0" />
-                    <TextBlock Text="{l:T Sched_Hour}" VerticalAlignment="Center" Margin="0,0,4,0" />
-                    <ComboBox ItemsSource="{Binding Hours}" SelectedItem="{Binding Hour}" Width="60" Margin="0,0,12,0" />
-                    <TextBlock Text="{l:T Sched_Idle}" VerticalAlignment="Center" Margin="0,0,4,0" />
-                    <TextBox Text="{Binding IdleMinutes}" Width="40" VerticalContentAlignment="Center" Margin="0,0,12,0" />
-                    <CheckBox Content="{l:T Sched_SkipBattery}" IsChecked="{Binding SkipOnBattery}" VerticalAlignment="Center" Margin="0,0,12,0" />
-                    <Button Content="{l:T Btn_Save}" Command="{Binding SaveScheduleCommand}" />
-                    <TextBlock Text="{l:T Clean_AutoSkipsReview}" Style="{StaticResource Muted}" Margin="0,6,0,0" Width="900" />
-                </WrapPanel>
-
-                <DockPanel Grid.Row="3" Margin="0,8,0,0">
-                    <TextBlock Text="{l:T Clean_History}" Style="{StaticResource H2}" DockPanel.Dock="Top" />
-                    <DataGrid ItemsSource="{Binding History}" IsReadOnly="True">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="{l:T Col_Time}" Binding="{Binding Time}" Width="150" />
-                            <DataGridTextColumn Header="{l:T Col_Trigger}" Binding="{Binding Trigger}" Width="120" />
-                            <DataGridTextColumn Header="{l:T Col_Freed}" Binding="{Binding Freed}" Width="110" />
-                            <DataGridTextColumn Header="{l:T Col_Deleted}" Binding="{Binding Deleted}" Width="90" />
-                            <DataGridTextColumn Header="{l:T Col_Skipped}" Binding="{Binding Failed}" Width="*" />
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </DockPanel>
-                <ContentControl Grid.Row="4" Content="{Binding}" ContentTemplate="{StaticResource StatusBar}" />
-            </Grid>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="2*" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" MinHeight="120" />
+                    </Grid.RowDefinitions>
+                    <Border Style="{StaticResource TableCard}">
+                        <DataGrid c:Table.Apply="True" ItemsSource="{Binding Rules}">
+                            <DataGrid.Columns>
+                                <DataGridTemplateColumn Width="44">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <CheckBox IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="{l:T Col_Rule}" Width="*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                                                <Border Style="{StaticResource BadgeWarning}" Margin="10,0,0,0"
+                                                        Visibility="{Binding IsReview, Converter={StaticResource BoolVis}}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Style="{StaticResource BadgeIcon}" Text="&#xE7BA;" />
+                                                        <TextBlock Text="{l:T Risk_Review}" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="{l:T Col_Scope}" Width="120">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border Style="{StaticResource BadgeNeutral}">
+                                                <TextBlock Text="{Binding ScopeText}" />
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="{l:T Col_Files}" Width="110">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Files}" Style="{StaticResource Num}" Margin="0,0,12,0" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="{l:T Col_Estimate}" Width="110">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Estimate}" Style="{StaticResource Num}" Margin="0,0,12,0" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Width="190">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Button Content="{Binding ReviewLabel}" Style="{StaticResource Link}"
+                                                        Visibility="{Binding CanReview, Converter={StaticResource BoolVis}}"
+                                                        Command="{Binding DataContext.ReviewCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                        CommandParameter="{Binding}" />
+                                                <Border Style="{StaticResource BadgeGood}" Visibility="{Binding Reviewed, Converter={StaticResource BoolVis}}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Style="{StaticResource BadgeIcon}" Text="&#xE73E;" />
+                                                        <TextBlock Text="{l:T Clean_Reviewed}" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+                    <TextBlock Grid.Row="1" Text="{l:T Clean_History}" Style="{StaticResource CardTitle}" Margin="0,20,0,10" />
+                    <Border Grid.Row="2" Style="{StaticResource TableCard}">
+                        <DataGrid c:Table.Apply="True" ItemsSource="{Binding History}" IsReadOnly="True">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="{l:T Col_Time}" Binding="{Binding Time}" Width="160" />
+                                <DataGridTextColumn Header="{l:T Col_Trigger}" Binding="{Binding Trigger}" Width="130" />
+                                <DataGridTextColumn Header="{l:T Col_Freed}" Binding="{Binding Freed}" Width="130" />
+                                <DataGridTextColumn Header="{l:T Col_Deleted}" Binding="{Binding Deleted}" Width="100" />
+                                <DataGridTextColumn Header="{l:T Col_Skipped}" Binding="{Binding Failed}" Width="*" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+                </Grid>
+            </DockPanel>
         </TabItem>
 
-        <!-- ===================== GỢI Ý DỌN ===================== -->
-        <TabItem Header="{l:T Tab_Suggestions}" DataContext="{Binding Suggestions}">
-            <Grid Margin="20">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-                <DockPanel>
-                    <Button Content="{l:T Sug_Scan}" Style="{StaticResource Primary}" Command="{Binding ScanCommand}" DockPanel.Dock="Right"
-                            IsEnabled="{Binding Busy, Converter={StaticResource Not}}" />
-                    <TextBlock Text="{l:T Tab_Suggestions}" Style="{StaticResource H1}" />
-                </DockPanel>
-                <StackPanel Grid.Row="1">
-                    <TextBlock Text="{l:T Sug_Note}" Style="{StaticResource Muted}" Margin="0,0,0,6" />
-                    <TextBlock Text="{l:T Sug_Roots}" Margin="0,0,0,4" />
-                    <TextBox Text="{Binding RootsText}" AcceptsReturn="True" Height="70" VerticalScrollBarVisibility="Auto" />
-                    <TextBlock Text="{l:T Sug_LastAccessOff}" Foreground="{StaticResource Warning}" Margin="0,6,0,0" TextWrapping="Wrap"
-                               Visibility="{Binding LastAccessOff, Converter={StaticResource BoolVis}}" />
-                </StackPanel>
-                <DockPanel Grid.Row="2" Margin="0,10,0,8">
+        <!-- ===================== GỢI Ý DỌN FILE ===================== -->
+        <TabItem Tag="&#xEA80;" Header="{l:T Tab_Suggestions}" DataContext="{Binding Suggestions}">
+            <DockPanel Style="{StaticResource Page}">
+                <c:PageHeader DockPanel.Dock="Top" Title="{l:T Tab_Suggestions}" Subtitle="{l:T Sug_Note}">
+                    <c:PageHeader.Actions>
+                        <Button Style="{StaticResource Primary}" Content="{l:T Sug_Scan}" Command="{Binding ScanCommand}"
+                                IsEnabled="{Binding Busy, Converter={StaticResource Not}}" />
+                    </c:PageHeader.Actions>
+                </c:PageHeader>
+                <ContentControl DockPanel.Dock="Bottom" Content="{Binding}" ContentTemplate="{StaticResource StatusBar}" />
+                <Border DockPanel.Dock="Top" Style="{StaticResource Card}" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="{l:T Sug_Roots}" FontWeight="Medium" Margin="0,0,0,6" />
+                        <TextBox Text="{Binding RootsText}" AcceptsReturn="True" Height="76" VerticalScrollBarVisibility="Auto"
+                                 FontFamily="{StaticResource MonoFont}" FontSize="12.5" />
+                        <Border Style="{StaticResource BadgeWarning}" Margin="0,10,0,0"
+                                Visibility="{Binding LastAccessOff, Converter={StaticResource BoolVis}}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Style="{StaticResource BadgeIcon}" Text="&#xE7BA;" />
+                                <TextBlock Text="{l:T Sug_LastAccessOff}" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,12">
                     <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-                        <Button Content="{l:T Sug_SelectAll}" Command="{Binding SelectAllVisibleCommand}" />
-                        <Button Content="{l:T Sug_Recycle}" Style="{StaticResource Primary}" Command="{Binding RecycleSelectedCommand}"
+                        <Button Style="{StaticResource Secondary}" Content="{l:T Sug_SelectAll}" Command="{Binding SelectAllVisibleCommand}" />
+                        <Button Style="{StaticResource Primary}" Content="{l:T Sug_Recycle}" Command="{Binding RecycleSelectedCommand}"
                                 IsEnabled="{Binding Busy, Converter={StaticResource Not}}" />
                     </StackPanel>
                     <ComboBox ItemsSource="{Binding Kinds}" DisplayMemberPath="Label" SelectedValuePath="Value"
-                              SelectedValue="{Binding KindFilter}" Width="200" HorizontalAlignment="Left" />
-                    <TextBlock Text="{Binding SelectedSummary}" VerticalAlignment="Center" Margin="12,0" Style="{StaticResource Muted}" />
+                              SelectedValue="{Binding KindFilter}" Width="200" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding SelectedSummary}" VerticalAlignment="Center" Margin="16,0" Style="{StaticResource Muted}" />
                 </DockPanel>
-                <DataGrid Grid.Row="3" ItemsSource="{Binding View}" EnableRowVirtualization="True">
-                    <DataGrid.Columns>
-                        <DataGridTemplateColumn Width="36">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <CheckBox IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                        <DataGridTextColumn Header="{l:T Col_Kind}" Binding="{Binding KindText}" Width="140" IsReadOnly="True" />
-                        <DataGridTextColumn Header="{l:T Col_Path}" Binding="{Binding Path}" Width="*" IsReadOnly="True" />
-                        <DataGridTextColumn Header="{l:T Col_Size}" Binding="{Binding SizeText}" Width="90" IsReadOnly="True" SortMemberPath="Size" />
-                        <DataGridTextColumn Header="{l:T Col_LastUsed}" Binding="{Binding LastUsed}" Width="110" IsReadOnly="True" />
-                        <DataGridTemplateColumn Width="110">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Button Content="{l:T Sug_OpenFolder}" Style="{StaticResource Link}"
-                                            Command="{Binding DataContext.OpenFolderCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                            CommandParameter="{Binding}" />
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
-                <ContentControl Grid.Row="4" Content="{Binding}" ContentTemplate="{StaticResource StatusBar}" />
-            </Grid>
+                <Border Style="{StaticResource TableCard}">
+                    <DataGrid c:Table.Apply="True" ItemsSource="{Binding View}" EnableRowVirtualization="True">
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Width="44">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="{l:T Col_Kind}" Width="150">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border Style="{StaticResource BadgeNeutral}">
+                                            <TextBlock Text="{Binding KindText}" />
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="{l:T Col_Path}" Binding="{Binding Path}" Width="*" IsReadOnly="True" />
+                            <DataGridTemplateColumn Header="{l:T Col_Size}" Width="100" SortMemberPath="Size">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding SizeText}" Style="{StaticResource Num}" Margin="0,0,12,0" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="{l:T Col_LastUsed}" Binding="{Binding LastUsed}" Width="120" IsReadOnly="True" />
+                            <DataGridTemplateColumn Width="120">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="{l:T Sug_OpenFolder}" Style="{StaticResource Link}"
+                                                Command="{Binding DataContext.OpenFolderCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+            </DockPanel>
         </TabItem>
 
-        <!-- ===================== DI CHUYỂN DATA ===================== -->
-        <TabItem Header="{l:T Tab_Relocation}" DataContext="{Binding Relocation}">
-            <Grid Margin="20">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="2*" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-                <DockPanel>
-                    <Button Content="{l:T Reloc_Detect}" Style="{StaticResource Primary}" Command="{Binding DetectCommand}" DockPanel.Dock="Right"
-                            IsEnabled="{Binding Busy, Converter={StaticResource Not}}" />
-                    <TextBlock Text="{l:T Tab_Relocation}" Style="{StaticResource H1}" />
-                </DockPanel>
-                <StackPanel Grid.Row="1" Margin="0,0,0,10">
-                    <TextBlock Text="{l:T Reloc_Intro}" Style="{StaticResource Muted}" Margin="0,0,0,8" />
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{l:T Reloc_TargetRoot}" VerticalAlignment="Center" Margin="0,0,8,0" />
-                        <TextBox Text="{Binding TargetRoot}" Width="320" VerticalContentAlignment="Center" Margin="0,0,8,0" />
-                        <Button Content="{l:T Reloc_Browse}" Command="{Binding BrowseCommand}" />
-                    </StackPanel>
-                </StackPanel>
-                <DataGrid Grid.Row="2" ItemsSource="{Binding Folders}" SelectedItem="{Binding SelectedFolder}" IsReadOnly="True">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="{l:T Col_App}" Binding="{Binding AppName}" Width="170" />
-                        <DataGridTextColumn Header="{l:T Col_Path}" Binding="{Binding Path}" Width="*" />
-                        <DataGridTextColumn Header="{l:T Col_Size}" Binding="{Binding SizeText}" Width="90" />
-                        <DataGridTextColumn Header="{l:T Col_Status}" Binding="{Binding StatusText}" Width="200" />
-                        <DataGridTemplateColumn Width="110">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Button Content="{l:T Reloc_Move}" Style="{StaticResource Link}"
-                                            Visibility="{Binding CanMove, Converter={StaticResource BoolVis}}"
-                                            Command="{Binding DataContext.MoveCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                            CommandParameter="{Binding}" />
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
-                <Border Grid.Row="3" Style="{StaticResource Card}" Margin="0,8,0,0"
-                        Visibility="{Binding SelectedFolder.Note, Converter={StaticResource StrVis}, FallbackValue=Collapsed}">
-                    <TextBlock Text="{Binding SelectedFolder.Note}" TextWrapping="Wrap" />
+        <!-- ===================== DI CHUYỂN DATA APP ===================== -->
+        <TabItem Tag="&#xE8DE;" Header="{l:T Tab_Relocation}" DataContext="{Binding Relocation}">
+            <DockPanel Style="{StaticResource Page}">
+                <c:PageHeader DockPanel.Dock="Top" Title="{l:T Tab_Relocation}" Subtitle="{l:T Reloc_Intro}">
+                    <c:PageHeader.Actions>
+                        <Button Style="{StaticResource Primary}" Content="{l:T Reloc_Detect}" Command="{Binding DetectCommand}"
+                                IsEnabled="{Binding Busy, Converter={StaticResource Not}}" />
+                    </c:PageHeader.Actions>
+                </c:PageHeader>
+                <ContentControl DockPanel.Dock="Bottom" Content="{Binding}" ContentTemplate="{StaticResource StatusBar}" />
+                <Border DockPanel.Dock="Top" Style="{StaticResource Card}" Margin="0,0,0,16" Padding="20,14">
+                    <DockPanel>
+                        <TextBlock Text="{l:T Reloc_TargetRoot}" FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <Button DockPanel.Dock="Right" Style="{StaticResource Secondary}" Content="{l:T Reloc_Browse}" Command="{Binding BrowseCommand}" />
+                        <TextBox Text="{Binding TargetRoot}" VerticalContentAlignment="Center" FontFamily="{StaticResource MonoFont}" FontSize="12.5" />
+                    </DockPanel>
                 </Border>
-                <TextBlock Grid.Row="4" Text="{l:T Reloc_History}" Style="{StaticResource H2}" />
-                <DataGrid Grid.Row="5" ItemsSource="{Binding Records}" IsReadOnly="True">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="{l:T Col_Source}" Binding="{Binding Source}" Width="*" />
-                        <DataGridTextColumn Header="{l:T Col_Target}" Binding="{Binding Target}" Width="*" />
-                        <DataGridTextColumn Header="{l:T Col_Size}" Binding="{Binding SizeText}" Width="80" />
-                        <DataGridTextColumn Header="{l:T Col_State}" Binding="{Binding StateText}" Width="150" />
-                        <DataGridTemplateColumn Header="{l:T Col_Health}" Width="130">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding HealthText}" VerticalAlignment="Center">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding HealthBad}" Value="True">
-                                                        <Setter Property="Foreground" Value="{StaticResource Critical}" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Width="250">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal">
-                                        <Button Content="{l:T Reloc_Resume}" Style="{StaticResource Link}"
-                                                Visibility="{Binding CanResume, Converter={StaticResource BoolVis}}"
-                                                Command="{Binding DataContext.ResumeCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                CommandParameter="{Binding}" />
-                                        <Button Content="{l:T Reloc_Rollback}" Style="{StaticResource Link}"
-                                                Visibility="{Binding CanRollback, Converter={StaticResource BoolVis}}"
-                                                Command="{Binding DataContext.RollbackCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                CommandParameter="{Binding}" />
-                                        <Button Content="{l:T Reloc_DeleteBackup}" Style="{StaticResource Link}"
-                                                Visibility="{Binding CanDeleteBackup, Converter={StaticResource BoolVis}}"
-                                                Command="{Binding DataContext.DeleteBackupCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                CommandParameter="{Binding}" />
-                                    </StackPanel>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
-                <ContentControl Grid.Row="6" Content="{Binding}" ContentTemplate="{StaticResource StatusBar}" />
-            </Grid>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="3*" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="2*" MinHeight="120" />
+                    </Grid.RowDefinitions>
+                    <Border Style="{StaticResource TableCard}">
+                        <DataGrid c:Table.Apply="True" ItemsSource="{Binding Folders}" SelectedItem="{Binding SelectedFolder}" IsReadOnly="True">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="{l:T Col_App}" Binding="{Binding AppName}" Width="180" />
+                                <DataGridTextColumn Header="{l:T Col_Path}" Binding="{Binding Path}" Width="*" />
+                                <DataGridTemplateColumn Header="{l:T Col_Size}" Width="100">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding SizeText}" Style="{StaticResource Num}" Margin="0,0,12,0" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="{l:T Col_Status}" Width="230">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Grid VerticalAlignment="Center">
+                                                <Border Style="{StaticResource BadgeGood}" Visibility="{Binding IsLinked, Converter={StaticResource BoolVis}}"
+                                                        ToolTip="{Binding StatusText}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Style="{StaticResource BadgeIcon}" Text="&#xE73E;" />
+                                                        <TextBlock Text="{Binding StatusText}" TextTrimming="CharacterEllipsis" MaxWidth="180" />
+                                                    </StackPanel>
+                                                </Border>
+                                                <Border Style="{StaticResource BadgeNeutral}" Visibility="{Binding IsManual, Converter={StaticResource BoolVis}}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Style="{StaticResource BadgeIcon}" Text="&#xE946;" />
+                                                        <TextBlock Text="{Binding StatusText}" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Width="100">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Content="{l:T Reloc_Move}" Style="{StaticResource Link}"
+                                                    Visibility="{Binding CanMove, Converter={StaticResource BoolVis}}"
+                                                    Command="{Binding DataContext.MoveCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+                    <!-- Ghi chú của app đang chọn -->
+                    <Border Grid.Row="1" Style="{StaticResource Card}" Margin="0,12,0,0" Padding="16,12"
+                            Visibility="{Binding SelectedFolder.Note, Converter={StaticResource StrVis}, FallbackValue=Collapsed}">
+                        <DockPanel>
+                            <TextBlock Style="{StaticResource Icon}" Text="&#xE946;" Foreground="{DynamicResource Accent}" VerticalAlignment="Top" Margin="0,1,12,0" />
+                            <TextBlock Text="{Binding SelectedFolder.Note}" TextWrapping="Wrap" />
+                        </DockPanel>
+                    </Border>
+                    <TextBlock Grid.Row="2" Text="{l:T Reloc_History}" Style="{StaticResource CardTitle}" Margin="0,20,0,10" />
+                    <Border Grid.Row="3" Style="{StaticResource TableCard}">
+                        <DataGrid c:Table.Apply="True" ItemsSource="{Binding Records}" IsReadOnly="True">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="{l:T Col_Source}" Binding="{Binding Source}" Width="*" />
+                                <DataGridTextColumn Header="{l:T Col_Target}" Binding="{Binding Target}" Width="*" />
+                                <DataGridTemplateColumn Header="{l:T Col_Size}" Width="90">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding SizeText}" Style="{StaticResource Num}" Margin="0,0,12,0" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="{l:T Col_State}" Binding="{Binding StateText}" Width="160" />
+                                <DataGridTemplateColumn Header="{l:T Col_Health}" Width="150">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Grid VerticalAlignment="Center">
+                                                <Border Style="{StaticResource BadgeGood}" Visibility="{Binding HealthOk, Converter={StaticResource BoolVis}}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Style="{StaticResource BadgeIcon}" Text="&#xE73E;" />
+                                                        <TextBlock Text="{Binding HealthText}" />
+                                                    </StackPanel>
+                                                </Border>
+                                                <Border Style="{StaticResource BadgeCritical}" Visibility="{Binding HealthBad, Converter={StaticResource BoolVis}}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Style="{StaticResource BadgeIcon}" Text="&#xE783;" />
+                                                        <TextBlock Text="{Binding HealthText}" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Width="260">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Button Content="{l:T Reloc_Resume}" Style="{StaticResource Link}"
+                                                        Visibility="{Binding CanResume, Converter={StaticResource BoolVis}}"
+                                                        Command="{Binding DataContext.ResumeCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                        CommandParameter="{Binding}" />
+                                                <Button Content="{l:T Reloc_Rollback}" Style="{StaticResource Link}"
+                                                        Visibility="{Binding CanRollback, Converter={StaticResource BoolVis}}"
+                                                        Command="{Binding DataContext.RollbackCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                        CommandParameter="{Binding}" />
+                                                <Button Content="{l:T Reloc_DeleteBackup}" Style="{StaticResource Link}"
+                                                        Visibility="{Binding CanDeleteBackup, Converter={StaticResource BoolVis}}"
+                                                        Command="{Binding DataContext.DeleteBackupCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                        CommandParameter="{Binding}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+                </Grid>
+            </DockPanel>
         </TabItem>
 
         <!-- ===================== THỐNG KÊ SỬ DỤNG ===================== -->
-        <TabItem Header="{l:T Tab_Usage}" DataContext="{Binding Usage}">
-            <Grid Margin="20">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-                <DockPanel>
-                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-                        <ComboBox ItemsSource="{Binding Periods}" DisplayMemberPath="Label" SelectedValuePath="Value"
-                                  SelectedValue="{Binding PeriodDays}" Width="130" Margin="0,0,8,0" />
-                        <Button Content="{l:T Btn_Refresh}" Command="{Binding RefreshCommand}" />
-                    </StackPanel>
-                    <TextBlock Text="{l:T Tab_Usage}" Style="{StaticResource H1}" />
-                </DockPanel>
+        <TabItem Tag="&#xE823;" Header="{l:T Tab_Usage}" DataContext="{Binding Usage}">
+            <DockPanel Style="{StaticResource Page}">
+                <c:PageHeader DockPanel.Dock="Top" Title="{l:T Tab_Usage}" Subtitle="{l:T Usage_Subtitle}">
+                    <c:PageHeader.Actions>
+                        <StackPanel Orientation="Horizontal">
+                            <ComboBox ItemsSource="{Binding Periods}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                                      SelectedValue="{Binding PeriodDays}" Width="140" VerticalAlignment="Center" />
+                            <Button Style="{StaticResource Secondary}" Content="{l:T Btn_Refresh}" Command="{Binding RefreshCommand}" />
+                        </StackPanel>
+                    </c:PageHeader.Actions>
+                </c:PageHeader>
+                <StackPanel DockPanel.Dock="Bottom">
+                    <TextBlock Text="{l:T Usage_NoLaunches}" Style="{StaticResource Muted}" Margin="0,10,0,0"
+                               Visibility="{Binding LaunchesAvailable, Converter={StaticResource BoolVisInv}}" />
+                    <ContentControl Content="{Binding}" ContentTemplate="{StaticResource StatusBar}" />
+                </StackPanel>
 
-                <!-- Biểu đồ cột một chuỗi: thời gian dùng máy theo giờ trong ngày. Không cần chú giải (tiêu đề đã nêu). -->
-                <Border Grid.Row="1" Style="{StaticResource Card}" Margin="0,0,0,12">
+                <!-- Biểu đồ cột một chuỗi: thời gian dùng máy theo giờ (không cần chú giải: tiêu đề đã nêu) -->
+                <Border DockPanel.Dock="Top" Style="{StaticResource Card}" Margin="0,0,0,16">
                     <StackPanel>
-                        <DockPanel Margin="0,0,0,8">
+                        <DockPanel Margin="0,0,0,14">
                             <TextBlock Text="{Binding TotalText}" DockPanel.Dock="Right" Style="{StaticResource Muted}" />
-                            <TextBlock Text="{l:T Usage_Hourly}" FontWeight="SemiBold" />
+                            <TextBlock Text="{l:T Usage_Hourly}" Style="{StaticResource CardTitle}" />
                         </DockPanel>
-                        <ItemsControl ItemsSource="{Binding Hours}" Height="160">
+                        <ItemsControl ItemsSource="{Binding Hours}" Height="162">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <UniformGrid Rows="1" />
@@ -399,18 +662,18 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <!-- Vùng hover cao hết biểu đồ để dễ trỏ chuột vào cột thấp -->
+                                    <!-- Vùng nhận chuột cao hết biểu đồ để dễ trỏ vào cột thấp -->
                                     <Grid Background="Transparent" ToolTip="{Binding Tooltip}" ToolTipService.InitialShowDelay="0">
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="*" />
                                             <RowDefinition Height="1" />
-                                            <RowDefinition Height="18" />
+                                            <RowDefinition Height="20" />
                                         </Grid.RowDefinitions>
                                         <Border Height="{Binding Height}" VerticalAlignment="Bottom" Margin="1,0"
-                                                Background="{StaticResource Accent}" CornerRadius="4,4,0,0" />
-                                        <Border Grid.Row="1" Background="{StaticResource Hairline}" />
-                                        <TextBlock Grid.Row="2" Text="{Binding Label}" FontSize="11" HorizontalAlignment="Left"
-                                                   Foreground="{StaticResource InkMuted}" Margin="0,3,0,0" />
+                                                Background="{DynamicResource ChartBar}" CornerRadius="4,4,0,0" />
+                                        <Border Grid.Row="1" Background="{DynamicResource Hairline}" />
+                                        <TextBlock Grid.Row="2" Text="{Binding Label}" FontFamily="{StaticResource MonoFont}" FontSize="11"
+                                                   HorizontalAlignment="Left" Foreground="{DynamicResource InkMuted}" Margin="0,4,0,0" />
                                     </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -418,146 +681,218 @@
                     </StackPanel>
                 </Border>
 
-                <DataGrid Grid.Row="2" ItemsSource="{Binding Apps}" IsReadOnly="True">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="{l:T Col_App}" Binding="{Binding Name}" Width="180" />
-                        <DataGridTextColumn Header="{l:T Col_ActiveTime}" Binding="{Binding ActiveText}" Width="140" SortMemberPath="ActiveSeconds" />
-                        <DataGridTextColumn Header="{l:T Col_Launches}" Binding="{Binding Launches}" Width="100" />
-                        <DataGridTextColumn Header="{l:T Col_Sessions}" Binding="{Binding Sessions}" Width="100" />
-                        <DataGridTextColumn Header="{l:T Col_Path}" Binding="{Binding Exe}" Width="*" />
-                        <DataGridTemplateColumn Width="120">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Button Content="{l:T Usage_Pin}" Style="{StaticResource Link}"
-                                            Command="{Binding DataContext.PinCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                            CommandParameter="{Binding}" />
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
-                <StackPanel Grid.Row="3">
-                    <TextBlock Text="{l:T Usage_NoLaunches}" Style="{StaticResource Muted}" Margin="0,6,0,0"
-                               Visibility="{Binding LaunchesAvailable, Converter={StaticResource BoolVisInv}}" />
-                    <ContentControl Content="{Binding}" ContentTemplate="{StaticResource StatusBar}" />
-                </StackPanel>
-            </Grid>
+                <Border Style="{StaticResource TableCard}">
+                    <DataGrid c:Table.Apply="True" ItemsSource="{Binding Apps}" IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="{l:T Col_App}" Binding="{Binding Name}" Width="180" />
+                            <DataGridTemplateColumn Header="{l:T Col_ActiveTime}" Width="140" SortMemberPath="ActiveSeconds">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding ActiveText}" Style="{StaticResource Num}" Margin="0,0,12,0" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="{l:T Col_Launches}" Width="110" SortMemberPath="Launches">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Launches}" Style="{StaticResource Num}" Margin="0,0,12,0" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="{l:T Col_Sessions}" Width="100" SortMemberPath="Sessions">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Sessions}" Style="{StaticResource Num}" Margin="0,0,12,0" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="{l:T Col_Path}" Width="*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Exe}" Foreground="{DynamicResource InkMuted}" VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis" ToolTip="{Binding Exe}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Width="130">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="{l:T Usage_Pin}" Style="{StaticResource Link}"
+                                                Command="{Binding DataContext.PinCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+            </DockPanel>
         </TabItem>
 
         <!-- ===================== ƯU TIÊN & EXCEL ===================== -->
-        <TabItem Header="{l:T Tab_Priority}" DataContext="{Binding Priority}">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <StackPanel Margin="20">
-                    <DockPanel>
-                        <Button Content="{l:T Btn_Save}" Style="{StaticResource Primary}" Command="{Binding SaveCommand}" DockPanel.Dock="Right" />
-                        <TextBlock Text="{l:T Tab_Priority}" Style="{StaticResource H1}" />
-                    </DockPanel>
-                    <TextBlock Text="{l:T Prio_Intro}" Style="{StaticResource Muted}" Margin="0,0,0,10" />
-                    <CheckBox Content="{l:T Prio_Enabled}" IsChecked="{Binding Enabled}" Margin="0,0,0,8" />
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                        <TextBlock Text="{l:T Prio_TopN}" VerticalAlignment="Center" Margin="0,0,8,0" />
-                        <TextBox Text="{Binding TopUsedCount}" Width="40" VerticalContentAlignment="Center" />
+        <TabItem Tag="&#xE945;" Header="{l:T Tab_Priority}" DataContext="{Binding Priority}">
+            <DockPanel Style="{StaticResource Page}">
+                <c:PageHeader DockPanel.Dock="Top" Title="{l:T Tab_Priority}" Subtitle="{l:T Prio_Intro}">
+                    <c:PageHeader.Actions>
+                        <Button Style="{StaticResource Primary}" Content="{l:T Btn_Save}" Command="{Binding SaveCommand}" />
+                    </c:PageHeader.Actions>
+                </c:PageHeader>
+                <ContentControl DockPanel.Dock="Bottom" Content="{Binding}" ContentTemplate="{StaticResource StatusBar}" />
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel MaxWidth="900" HorizontalAlignment="Left">
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                            <StackPanel>
+                                <TextBlock Text="{l:T Prio_Section}" Style="{StaticResource CardTitle}" Margin="0,0,0,4" />
+                                <c:SettingRow Title="{l:T Prio_Enabled}">
+                                    <CheckBox IsChecked="{Binding Enabled}" />
+                                </c:SettingRow>
+                                <c:SettingRow Title="{l:T Prio_TopN}">
+                                    <TextBox Text="{Binding TopUsedCount}" Width="64" VerticalContentAlignment="Center" />
+                                </c:SettingRow>
+                                <c:SettingRow Title="{l:T Prio_AllowHigh}" BorderThickness="0">
+                                    <CheckBox IsChecked="{Binding AllowHigh}" />
+                                </c:SettingRow>
+                                <Grid Margin="0,12,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition Width="16" />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="{l:T Prio_Pinned}" FontWeight="Medium" Margin="0,0,0,6" TextWrapping="Wrap" />
+                                        <TextBox Text="{Binding PinnedText}" AcceptsReturn="True" Height="100" VerticalScrollBarVisibility="Auto"
+                                                 FontFamily="{StaticResource MonoFont}" FontSize="12.5" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="{l:T Prio_Background}" FontWeight="Medium" Margin="0,0,0,6" TextWrapping="Wrap" />
+                                        <TextBox Text="{Binding BackgroundText}" AcceptsReturn="True" Height="100" VerticalScrollBarVisibility="Auto"
+                                                 FontFamily="{StaticResource MonoFont}" FontSize="12.5" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Text="{l:T Prio_Managed}" Style="{StaticResource CardTitle}" Margin="0,4,0,10" />
+                        <Border Style="{StaticResource TableCard}" Margin="0,0,0,16">
+                            <DataGrid c:Table.Apply="True" ItemsSource="{Binding Managed}" IsReadOnly="True" MaxHeight="220" MinHeight="80">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="{l:T Col_App}" Binding="{Binding Name}" Width="*" />
+                                    <DataGridTemplateColumn Header="PID" Width="90">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Pid}" Style="{StaticResource Num}" Margin="0,0,12,0" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="{l:T Col_Original}" Binding="{Binding Original}" Width="160" />
+                                    <DataGridTextColumn Header="{l:T Col_Applied}" Binding="{Binding Applied}" Width="160" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
+
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                            <StackPanel>
+                                <TextBlock Text="{l:T Excel_Section}" Style="{StaticResource CardTitle}" Margin="0,0,0,4" />
+                                <c:SettingRow Title="{l:T Excel_Enabled}">
+                                    <CheckBox IsChecked="{Binding ExcelEnabled}" />
+                                </c:SettingRow>
+                                <c:SettingRow Title="{l:T Excel_Threshold}">
+                                    <TextBox Text="{Binding HeavyFileMb}" Width="64" VerticalContentAlignment="Center" />
+                                </c:SettingRow>
+                                <DockPanel Margin="0,14,0,0">
+                                    <Button DockPanel.Dock="Right" Style="{StaticResource Secondary}" Content="{l:T Excel_Analyze}"
+                                            Command="{Binding PickAndAnalyzeCommand}" IsEnabled="{Binding Busy, Converter={StaticResource Not}}" />
+                                    <TextBlock Style="{StaticResource Icon}" Text="&#xE8A5;" Foreground="{DynamicResource InkMuted}" Margin="0,0,10,0" />
+                                    <TextBlock Text="{Binding ExcelStatus}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                </DockPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Báo cáo phân tích file Excel -->
+                        <Border Style="{StaticResource Card}" Visibility="{Binding ReportTitle, Converter={StaticResource StrVis}}">
+                            <StackPanel>
+                                <TextBlock Text="{Binding ReportTitle}" Style="{StaticResource CardTitle}" />
+                                <TextBlock Text="{Binding ReportSummary}" Style="{StaticResource Muted}" FontFamily="{StaticResource MonoFont}" FontSize="12"
+                                           Margin="0,4,0,12" />
+                                <ItemsControl ItemsSource="{Binding ExcelSuggestions}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border BorderBrush="{DynamicResource Hairline}" BorderThickness="0,1,0,0" Padding="0,10">
+                                                <DockPanel>
+                                                    <Border DockPanel.Dock="Left" Style="{StaticResource LevelBadge}" Width="104" Margin="0,0,14,0" VerticalAlignment="Top">
+                                                        <TextBlock Text="{Binding Severity}" HorizontalAlignment="Center" />
+                                                    </Border>
+                                                    <TextBlock Text="{Binding Text}" TextWrapping="Wrap" />
+                                                </DockPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
-                    <CheckBox Content="{l:T Prio_AllowHigh}" IsChecked="{Binding AllowHigh}" Margin="0,0,0,10" />
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition />
-                            <ColumnDefinition Width="16" />
-                            <ColumnDefinition />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel>
-                            <TextBlock Text="{l:T Prio_Pinned}" Margin="0,0,0,4" />
-                            <TextBox Text="{Binding PinnedText}" AcceptsReturn="True" Height="90" VerticalScrollBarVisibility="Auto" />
-                        </StackPanel>
-                        <StackPanel Grid.Column="2">
-                            <TextBlock Text="{l:T Prio_Background}" Margin="0,0,0,4" />
-                            <TextBox Text="{Binding BackgroundText}" AcceptsReturn="True" Height="90" VerticalScrollBarVisibility="Auto" />
-                        </StackPanel>
-                    </Grid>
-
-                    <TextBlock Text="{l:T Prio_Managed}" Style="{StaticResource H2}" />
-                    <DataGrid ItemsSource="{Binding Managed}" IsReadOnly="True" MaxHeight="180">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="{l:T Col_App}" Binding="{Binding Name}" Width="*" />
-                            <DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="80" />
-                            <DataGridTextColumn Header="{l:T Col_Original}" Binding="{Binding Original}" Width="140" />
-                            <DataGridTextColumn Header="{l:T Col_Applied}" Binding="{Binding Applied}" Width="140" />
-                        </DataGrid.Columns>
-                    </DataGrid>
-
-                    <TextBlock Text="{l:T Excel_Section}" Style="{StaticResource H2}" Margin="0,20,0,6" />
-                    <CheckBox Content="{l:T Excel_Enabled}" IsChecked="{Binding ExcelEnabled}" Margin="0,0,0,8" />
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                        <TextBlock Text="{l:T Excel_Threshold}" VerticalAlignment="Center" Margin="0,0,8,0" />
-                        <TextBox Text="{Binding HeavyFileMb}" Width="50" VerticalContentAlignment="Center" />
-                    </StackPanel>
-                    <TextBlock Text="{Binding ExcelStatus}" Margin="0,0,0,8" TextWrapping="Wrap" />
-                    <Button Content="{l:T Excel_Analyze}" Command="{Binding PickAndAnalyzeCommand}" HorizontalAlignment="Left"
-                            IsEnabled="{Binding Busy, Converter={StaticResource Not}}" />
-
-                    <Border Style="{StaticResource Card}" Margin="0,12,0,0"
-                            Visibility="{Binding ReportTitle, Converter={StaticResource StrVis}}">
-                        <StackPanel>
-                            <TextBlock Text="{Binding ReportTitle}" FontWeight="SemiBold" FontSize="14" />
-                            <TextBlock Text="{Binding ReportSummary}" Style="{StaticResource Muted}" Margin="0,4,0,10" />
-                            <ItemsControl ItemsSource="{Binding ExcelSuggestions}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <DockPanel Margin="0,0,0,8">
-                                            <TextBlock Text="{Binding Severity}" Width="90" FontWeight="SemiBold" DockPanel.Dock="Left">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock">
-                                                        <Setter Property="Foreground" Value="{StaticResource InkMuted}" />
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding Critical}" Value="True">
-                                                                <Setter Property="Foreground" Value="{StaticResource Critical}" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                            <TextBlock Text="{Binding Text}" TextWrapping="Wrap" />
-                                        </DockPanel>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </Border>
-                    <ContentControl Content="{Binding}" ContentTemplate="{StaticResource StatusBar}" />
-                </StackPanel>
-            </ScrollViewer>
+                </ScrollViewer>
+            </DockPanel>
         </TabItem>
 
         <!-- ===================== CÀI ĐẶT ===================== -->
-        <TabItem Header="{l:T Tab_Settings}" DataContext="{Binding Settings}">
-            <StackPanel Margin="20" MaxWidth="640" HorizontalAlignment="Left">
-                <TextBlock Text="{l:T Tab_Settings}" Style="{StaticResource H1}" />
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                    <TextBlock Text="{l:T Set_Language}" VerticalAlignment="Center" Width="220" />
-                    <ComboBox ItemsSource="{Binding Languages}" DisplayMemberPath="Label" SelectedValuePath="Value"
-                              SelectedValue="{Binding Language}" Width="160" />
-                </StackPanel>
-                <CheckBox Content="{l:T Set_StartWithWindows}" IsChecked="{Binding StartWithWindows}" Margin="0,0,0,10" />
-                <CheckBox Content="{l:T Set_UsageEnabled}" IsChecked="{Binding UsageEnabled}" Margin="0,0,0,10" />
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                    <TextBlock Text="{l:T Set_Retention}" VerticalAlignment="Center" Width="220" />
-                    <TextBox Text="{Binding RetentionDays}" Width="60" VerticalContentAlignment="Center" />
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-                    <TextBlock Text="{l:T Set_BackupKeep}" VerticalAlignment="Center" Width="220" />
-                    <TextBox Text="{Binding BackupKeepDays}" Width="60" VerticalContentAlignment="Center" />
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
-                    <Button Content="{l:T Btn_Save}" Style="{StaticResource Primary}" Command="{Binding SaveCommand}" />
-                    <Button Content="{l:T Set_OpenData}" Command="{Binding OpenDataFolderCommand}" />
-                </StackPanel>
-                <TextBlock Text="{l:T Set_Privacy}" Style="{StaticResource Muted}" Margin="0,0,0,8" />
-                <TextBlock Style="{StaticResource Muted}">
-                    <Run Text="Manager Windows " /><Run Text="{Binding Version, Mode=OneWay}" />
-                </TextBlock>
-                <TextBlock Text="{Binding DataDir}" Style="{StaticResource Muted}" />
-                <ContentControl Content="{Binding}" ContentTemplate="{StaticResource StatusBar}" />
-            </StackPanel>
+        <TabItem Tag="&#xE713;" Header="{l:T Tab_Settings}" DataContext="{Binding Settings}">
+            <DockPanel Style="{StaticResource Page}">
+                <c:PageHeader DockPanel.Dock="Top" Title="{l:T Tab_Settings}" Subtitle="{l:T Set_Subtitle}">
+                    <c:PageHeader.Actions>
+                        <Button Style="{StaticResource Primary}" Content="{l:T Btn_Save}" Command="{Binding SaveCommand}" />
+                    </c:PageHeader.Actions>
+                </c:PageHeader>
+                <ContentControl DockPanel.Dock="Bottom" Content="{Binding}" ContentTemplate="{StaticResource StatusBar}" />
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel MaxWidth="760" HorizontalAlignment="Left">
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                            <StackPanel>
+                                <TextBlock Text="{l:T Set_Appearance}" Style="{StaticResource CardTitle}" Margin="0,0,0,4" />
+                                <c:SettingRow Title="{l:T Set_Language}">
+                                    <ComboBox ItemsSource="{Binding Languages}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                                              SelectedValue="{Binding Language}" Width="180" />
+                                </c:SettingRow>
+                                <c:SettingRow Title="{l:T Set_Theme}" Description="{l:T Set_ThemeDesc}" BorderThickness="0">
+                                    <ComboBox ItemsSource="{Binding Themes}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                                              SelectedValue="{Binding Theme}" Width="180" />
+                                </c:SettingRow>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                            <StackPanel>
+                                <TextBlock Text="{l:T Set_Behaviour}" Style="{StaticResource CardTitle}" Margin="0,0,0,4" />
+                                <c:SettingRow Title="{l:T Set_StartWithWindows}">
+                                    <CheckBox IsChecked="{Binding StartWithWindows}" />
+                                </c:SettingRow>
+                                <c:SettingRow Title="{l:T Set_UsageEnabled}">
+                                    <CheckBox IsChecked="{Binding UsageEnabled}" />
+                                </c:SettingRow>
+                                <c:SettingRow Title="{l:T Set_Retention}">
+                                    <TextBox Text="{Binding RetentionDays}" Width="72" VerticalContentAlignment="Center" />
+                                </c:SettingRow>
+                                <c:SettingRow Title="{l:T Set_BackupKeep}" BorderThickness="0">
+                                    <TextBox Text="{Binding BackupKeepDays}" Width="72" VerticalContentAlignment="Center" />
+                                </c:SettingRow>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <TextBlock Text="{l:T Set_Data}" Style="{StaticResource CardTitle}" Margin="0,0,0,10" />
+                                <TextBlock Text="{l:T Set_Privacy}" Style="{StaticResource Muted}" Margin="0,0,0,10" />
+                                <DockPanel>
+                                    <Button DockPanel.Dock="Right" Style="{StaticResource Secondary}" Content="{l:T Set_OpenData}" Command="{Binding OpenDataFolderCommand}" />
+                                    <TextBlock Text="{Binding DataDir}" FontFamily="{StaticResource MonoFont}" FontSize="12" VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis" ToolTip="{Binding DataDir}" />
+                                </DockPanel>
+                                <TextBlock Style="{StaticResource Muted}" Margin="0,12,0,0">
+                                    <Run Text="Manager Windows" /> <Run Text="{Binding Version, Mode=OneWay}" />
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
         </TabItem>
     </TabControl>
 </Window>

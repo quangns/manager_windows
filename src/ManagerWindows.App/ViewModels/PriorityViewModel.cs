@@ -10,7 +10,8 @@ namespace ManagerWindows.App.ViewModels;
 
 public sealed record ManagedRow(string Name, int Pid, string Original, string Applied);
 
-public sealed record SuggestionText(string Severity, string Text, bool Critical);
+/// <summary>Level: critical | warning | info, quyết định màu huy hiệu.</summary>
+public sealed record SuggestionText(string Severity, string Text, string Level);
 
 public sealed partial class PriorityViewModel : ViewModelBase
 {
@@ -103,7 +104,7 @@ public sealed partial class PriorityViewModel : ViewModelBase
         ExcelSuggestions.Clear();
         foreach (var s in report.Suggestions.OrderByDescending(s => s.Severity))
             ExcelSuggestions.Add(new SuggestionText(Loc.Instance["Severity_" + s.Severity], Loc.F("ExcelS_" + s.Code, s.Args),
-                s.Severity == Severity.Critical));
+                s.Severity.ToString().ToLowerInvariant()));
         Status = "";
     });
 }

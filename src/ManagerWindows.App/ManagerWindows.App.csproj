@@ -1,13 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net10.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
     <AssemblyName>ManagerWindows.App</AssemblyName>
     <RootNamespace>ManagerWindows.App</RootNamespace>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>false</SelfContained>
+    <!-- ThemeMode (giao diện Fluent sáng/tối của WPF) vẫn đánh dấu thử nghiệm trong .NET 10 -->
+    <NoWarn>$(NoWarn);WPF0001</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
@@ -21,6 +23,8 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Assets\app.ico" />
+    <Resource Include="Assets\Fonts\*.ttf" />
+    <None Include="Assets\Fonts\OFL-*.txt" CopyToOutputDirectory="PreserveNewest" Link="licenses\%(Filename)%(Extension)" />
     <EmbeddedResource Include="Lang\*.json" />
     <!-- Để rules nằm ngoài file exe (bản portable một file) cho người dùng sửa được -->
     <None Include="..\..\rules\*.json" Link="rules\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" ExcludeFromSingleFile="true" />

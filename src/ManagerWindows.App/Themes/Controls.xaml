@@ -1,0 +1,282 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:c="clr-namespace:ManagerWindows.App.Controls"
+                    xmlns:cv="clr-namespace:ManagerWindows.App.Converters">
+    <!--
+      Style dùng chung theo docs/design/DESIGN.md. Mọi màu lấy bằng DynamicResource từ Palette.*.xaml
+      để đổi sáng/tối tức thì. Điều khiển chuẩn (TextBox, ComboBox, CheckBox, DataGrid) giữ style Fluent của WPF.
+    -->
+    <cv:NotConverter x:Key="Not" />
+    <cv:BoolToVisibilityConverter x:Key="BoolVis" />
+    <cv:BoolToVisibilityConverter x:Key="BoolVisInv" Invert="True" />
+    <cv:StringToVisibilityConverter x:Key="StrVis" />
+
+    <FontFamily x:Key="UiFont">pack://application:,,,/Assets/Fonts/#Be Vietnam Pro</FontFamily>
+    <FontFamily x:Key="MonoFont">pack://application:,,,/Assets/Fonts/#JetBrains Mono</FontFamily>
+    <FontFamily x:Key="IconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+
+    <!-- ===== Chữ ===== -->
+    <Style x:Key="Icon" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource IconFont}" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style x:Key="PageTitle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="22" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource Ink}" />
+    </Style>
+    <Style x:Key="CardTitle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource Ink}" />
+    </Style>
+    <!-- Nhãn nhỏ phía trên số liệu -->
+    <Style x:Key="Overline" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Foreground" Value="{DynamicResource InkMuted}" />
+    </Style>
+    <Style x:Key="Muted" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource InkMuted}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+    <Style x:Key="BigNumber" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+        <Setter Property="FontSize" Value="28" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Foreground" Value="{DynamicResource Ink}" />
+    </Style>
+    <Style x:Key="Num" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+        <Setter Property="FontSize" Value="12.5" />
+        <Setter Property="HorizontalAlignment" Value="Right" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <!-- ===== Nút: nền phẳng, bo 8px, không glow ===== -->
+    <Style x:Key="BtnBase" TargetType="Button">
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="MinHeight" Value="34" />
+        <Setter Property="Padding" Value="16,0" />
+        <Setter Property="Margin" Value="8,0,0,0" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="{TemplateBinding Padding}"
+                            MinHeight="{TemplateBinding MinHeight}" SnapsToDevicePixels="True">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                          TextElement.Foreground="{TemplateBinding Foreground}" RecognizesAccessKey="True" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Accent}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Bd" Property="Opacity" Value="0.45" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="Primary" TargetType="Button" BasedOn="{StaticResource BtnBase}">
+        <Setter Property="Background" Value="{DynamicResource Accent}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
+        <Setter Property="Foreground" Value="{DynamicResource AccentOn}" />
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{DynamicResource AccentHover}" />
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter Property="Background" Value="{DynamicResource AccentPressed}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+    <Style x:Key="Secondary" TargetType="Button" BasedOn="{StaticResource BtnBase}">
+        <Setter Property="Background" Value="{DynamicResource Raised}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Hairline}" />
+        <Setter Property="Foreground" Value="{DynamicResource Ink}" />
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{DynamicResource Hairline}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+    <!-- Nút dạng liên kết trong bảng -->
+    <Style x:Key="Link" TargetType="Button" BasedOn="{StaticResource BtnBase}">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource Accent}" />
+        <Setter Property="MinHeight" Value="26" />
+        <Setter Property="Padding" Value="8,0" />
+        <Setter Property="Margin" Value="0,0,4,0" />
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{DynamicResource AccentWash}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- ===== Thẻ ===== -->
+    <Style x:Key="Card" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource Surface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Hairline}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="20" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+    </Style>
+    <!-- Thẻ chứa bảng: không đệm để bảng chạm viền, bo góc giữ nguyên -->
+    <Style x:Key="TableCard" TargetType="Border" BasedOn="{StaticResource Card}">
+        <Setter Property="Padding" Value="4,4,4,0" />
+    </Style>
+
+    <!-- ===== Huy hiệu (viên thuốc): luôn có biểu tượng + chữ, không dùng màu một mình ===== -->
+    <Style x:Key="BadgeBase" TargetType="Border">
+        <Setter Property="CornerRadius" Value="11" />
+        <Setter Property="Padding" Value="8,2,10,2" />
+        <Setter Property="MinHeight" Value="22" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="TextElement.FontSize" Value="12" />
+        <Setter Property="TextElement.FontWeight" Value="Medium" />
+    </Style>
+    <Style x:Key="BadgeGood" TargetType="Border" BasedOn="{StaticResource BadgeBase}">
+        <Setter Property="Background" Value="{DynamicResource GoodWash}" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource Good}" />
+    </Style>
+    <Style x:Key="BadgeWarning" TargetType="Border" BasedOn="{StaticResource BadgeBase}">
+        <Setter Property="Background" Value="{DynamicResource WarningWash}" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource Warning}" />
+    </Style>
+    <Style x:Key="BadgeCritical" TargetType="Border" BasedOn="{StaticResource BadgeBase}">
+        <Setter Property="Background" Value="{DynamicResource CriticalWash}" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource Critical}" />
+    </Style>
+    <Style x:Key="BadgeNeutral" TargetType="Border" BasedOn="{StaticResource BadgeBase}">
+        <Setter Property="Background" Value="{DynamicResource Raised}" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource InkMuted}" />
+    </Style>
+    <Style x:Key="BadgeIcon" TargetType="TextBlock" BasedOn="{StaticResource Icon}">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Margin" Value="0,0,6,0" />
+    </Style>
+
+    <!-- ===== Thanh dung lượng / thanh ngang biểu đồ ===== -->
+    <Style x:Key="Meter" TargetType="ProgressBar">
+        <Setter Property="Height" Value="8" />
+        <Setter Property="Minimum" Value="0" />
+        <Setter Property="Maximum" Value="1" />
+        <Setter Property="Background" Value="{DynamicResource Raised}" />
+        <Setter Property="Foreground" Value="{DynamicResource Accent}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ProgressBar">
+                    <Grid SnapsToDevicePixels="True">
+                        <Border x:Name="PART_Track" CornerRadius="4" Background="{TemplateBinding Background}" />
+                        <Border x:Name="PART_Indicator" CornerRadius="4" Background="{TemplateBinding Foreground}" HorizontalAlignment="Left" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <!-- Thanh trạng thái đang tải: mảnh 2px, không dùng vòng xoay -->
+    <Style x:Key="BusyLine" TargetType="ProgressBar">
+        <Setter Property="Height" Value="2" />
+        <Setter Property="IsIndeterminate" Value="True" />
+        <Setter Property="Foreground" Value="{DynamicResource Accent}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+
+    <!-- ===== Đầu trang ===== -->
+    <Style TargetType="c:PageHeader">
+        <Setter Property="Margin" Value="0,0,0,20" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="c:PageHeader">
+                    <DockPanel>
+                        <ContentPresenter Content="{TemplateBinding Actions}" DockPanel.Dock="Right" VerticalAlignment="Center" />
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="{TemplateBinding Title}" Style="{StaticResource PageTitle}" />
+                            <TextBlock Text="{TemplateBinding Subtitle}" Style="{StaticResource Muted}" Margin="0,4,24,0" />
+                        </StackPanel>
+                    </DockPanel>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ===== Dòng thiết lập ===== -->
+    <Style TargetType="c:SettingRow">
+        <Setter Property="Padding" Value="0,12" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Hairline}" />
+        <Setter Property="BorderThickness" Value="0,0,0,1" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="c:SettingRow">
+                    <Border BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
+                                <TextBlock Text="{TemplateBinding Title}" FontWeight="Medium" Foreground="{DynamicResource Ink}" TextWrapping="Wrap" />
+                                <TextBlock Text="{TemplateBinding Description}" Style="{StaticResource Muted}" FontSize="12" Margin="0,2,0,0">
+                                    <TextBlock.Visibility>
+                                        <Binding Path="Description" RelativeSource="{RelativeSource TemplatedParent}"
+                                                 Converter="{StaticResource StrVis}" />
+                                    </TextBlock.Visibility>
+                                </TextBlock>
+                            </StackPanel>
+                            <ContentPresenter Grid.Column="1" VerticalAlignment="Center" />
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ===== Điều hướng bên trái (TabItem) ===== -->
+    <Style x:Key="NavItem" TargetType="TabItem">
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TabItem">
+                    <Border x:Name="Bd" Height="40" Margin="0,0,0,2" CornerRadius="8" Background="Transparent">
+                        <Grid>
+                            <Border x:Name="Bar" Width="3" CornerRadius="2" HorizontalAlignment="Left" Margin="0,10"
+                                    Background="{DynamicResource Accent}" Visibility="Collapsed" />
+                            <StackPanel Orientation="Horizontal" Margin="14,0,8,0">
+                                <TextBlock x:Name="Ic" Style="{StaticResource Icon}" Width="20" Margin="0,0,12,0"
+                                           Text="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}"
+                                           Foreground="{DynamicResource InkMuted}" />
+                                <ContentPresenter x:Name="Hd" ContentSource="Header" VerticalAlignment="Center"
+                                                  TextElement.Foreground="{DynamicResource Ink}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Raised}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentWash}" />
+                            <Setter TargetName="Bar" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="Ic" Property="Foreground" Value="{DynamicResource Accent}" />
+                            <Setter TargetName="Hd" Property="TextElement.Foreground" Value="{DynamicResource Accent}" />
+                            <Setter TargetName="Hd" Property="TextElement.FontWeight" Value="SemiBold" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

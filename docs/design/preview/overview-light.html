@@ -1,0 +1,50 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Manager Windows – Tổng quan (light)</title>
+<style>
+@font-face{font-family:"Be Vietnam Pro";src:url("../../../src/ManagerWindows.App/Assets/Fonts/BeVietnamPro-Regular.ttf");font-weight:400}
+@font-face{font-family:"Be Vietnam Pro";src:url("../../../src/ManagerWindows.App/Assets/Fonts/BeVietnamPro-Medium.ttf");font-weight:500}
+@font-face{font-family:"Be Vietnam Pro";src:url("../../../src/ManagerWindows.App/Assets/Fonts/BeVietnamPro-SemiBold.ttf");font-weight:600}
+@font-face{font-family:"JetBrains Mono";src:url("../../../src/ManagerWindows.App/Assets/Fonts/JetBrainsMono-Medium.ttf");font-weight:500}
+.light{--canvas:#FAFAFA;--surface:#FFFFFF;--raised:#F4F4F5;--ink:#18181B;--muted:#71717A;--line:#E4E4E7;--accent:#0F766E;--on:#FFF;--wash:#E6F2F1;--chart:#118F80;--good:#15803D;--goodw:#DCFCE7;--warn:#B45309;--warnw:#FEF3C7;--crit:#B91C1C;--critw:#FEE2E2}
+.dark{--canvas:#09090B;--surface:#18181B;--raised:#27272A;--ink:#FAFAFA;--muted:#A1A1AA;--line:#2E2E33;--accent:#2A9D8F;--on:#09090B;--wash:#12302D;--chart:#2A9D8F;--good:#4ADE80;--goodw:#0F2A1A;--warn:#FBBF24;--warnw:#2E2109;--crit:#F87171;--critw:#2F1313}
+*{box-sizing:border-box} body{margin:0;width:1240px;height:800px;display:grid;grid-template-columns:232px 1fr;background:var(--canvas);color:var(--ink);font:13px/1.45 "Be Vietnam Pro";}
+.ic{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+aside{background:var(--surface);border-right:1px solid var(--line);padding:20px 12px 16px;display:flex;flex-direction:column}
+.brand{display:flex;gap:10px;align-items:center;margin:0 0 24px 10px} .logo{width:28px;height:28px;border-radius:6px;background:#2a78d6;color:#fff;font-weight:600;display:grid;place-items:center}
+.brand b{font-size:14px;font-weight:600;display:block} .brand small{font-size:11.5px;color:var(--muted)}
+.nav{height:40px;display:flex;align-items:center;gap:12px;padding:0 14px;border-radius:8px;margin-bottom:2px;position:relative} .nav .ic{color:var(--muted)}
+.nav.sel{background:var(--wash);color:var(--accent);font-weight:600} .nav.sel .ic{color:var(--accent)} .nav.sel::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:2px;background:var(--accent)}
+.pill{margin-top:auto;background:var(--raised);border-radius:8px;padding:8px 12px;display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted)} .pill .ic{color:var(--good);width:13px}
+main{padding:28px 32px 16px;overflow:hidden} header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+h1{font-size:22px;font-weight:600;margin:0} .muted{color:var(--muted)}
+.btn{height:34px;padding:0 16px;border-radius:8px;font:500 13px "Be Vietnam Pro";border:1px solid var(--line);background:var(--raised);color:var(--ink);margin-left:8px} .btn.pri{background:var(--accent);border-color:var(--accent);color:var(--on)}
+.grid{display:grid;gap:16px;margin-bottom:16px} .g21{grid-template-columns:2fr 1fr} .g32{grid-template-columns:3fr 2fr}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px} .ct{font-size:15px;font-weight:600}
+.over{font-size:12px;font-weight:500;color:var(--muted)} .big{font:500 28px "JetBrains Mono";letter-spacing:-.5px} .num{font:500 12.5px "JetBrains Mono"}
+.track{height:8px;border-radius:4px;background:var(--raised);overflow:hidden} .fill{height:100%;border-radius:4px;background:var(--accent)}
+.badge{display:inline-flex;gap:6px;align-items:center;height:22px;padding:0 10px 0 8px;border-radius:11px;font-size:12px;font-weight:500} .badge .ic{width:11px;height:11px}
+.b-warn{background:var(--warnw);color:var(--warn)}
+.drv{display:grid;grid-template-columns:56px 1fr auto;gap:16px;align-items:center;margin-top:12px}
+.stack>.card+.card{margin-top:16px}
+.bar-row{display:grid;grid-template-columns:140px 1fr 110px;align-items:center;margin-bottom:12px} .bar-row .fill{background:var(--chart)} .bar-row .track{background:transparent} .bar-row .num{text-align:right}
+.act{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)} .act:last-child{border:0} .act p{margin:0;flex:1}
+.act .ic{margin-top:2px} .lvl-warn{color:var(--warn)} .lvl-info{color:var(--muted)} .link{color:var(--accent);font-weight:500;white-space:nowrap}
+.status{font-size:12px;color:var(--muted);margin-top:4px} .sample{position:absolute;right:16px;bottom:10px;font-size:11px;color:var(--muted)}
+</style></head><body class="light">
+<aside><div class="brand"><div class="logo">M</div><div><b>Manager Windows</b><small>Dọn ổ C &amp; ưu tiên tài nguyên</small></div></div>
+<div class="nav sel"><svg class="ic " viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Tổng quan</span></div><div class="nav "><svg class="ic " viewBox="0 0 24 24"><path d="M14 3l7 7M11 6l7 7-6 8H6l-3-3 8-6z"/></svg><span>Dọn rác</span></div><div class="nav "><svg class="ic " viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5V16h8v-2.5A6 6 0 0 0 12 3z"/></svg><span>Gợi ý dọn file</span></div><div class="nav "><svg class="ic " viewBox="0 0 24 24"><path d="M3 6h7l2 2h9v11H3zM12 13h6M15 10l3 3-3 3"/></svg><span>Di chuyển data app</span></div><div class="nav "><svg class="ic " viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Thống kê sử dụng</span></div><div class="nav "><svg class="ic " viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg><span>Ưu tiên & Excel</span></div><div class="nav "><svg class="ic " viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg><span>Cài đặt</span></div><div class="pill"><svg class="ic " viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg>Dịch vụ nền đang chạy</div></aside>
+<main><header><div><h1>Tổng quan</h1><div class="muted" style="margin-top:4px">Ổ đĩa, dung lượng đã dọn và việc nên làm</div></div>
+<div><button class="btn">Làm mới</button><button class="btn pri">Dọn rác ngay</button></div></header>
+<div class="grid g21"><div class="card"><div class="ct">Ổ đĩa</div>
+<div style="display:flex;justify-content:space-between;margin-top:18px"><span class="over">C: Windows</span><span class="badge b-warn"><svg class="ic " viewBox="0 0 24 24"><path d="M12 3l10 18H2zM12 10v5M12 18v.5"/></svg>Sắp đầy</span></div>
+<div style="display:flex;align-items:baseline;gap:8px;margin-top:6px"><span class="big">31,4 GB</span><span class="muted">trống</span></div>
+<div class="muted" style="margin:2px 0 12px">trên tổng 237,8 GB</div><div class="track" style="height:10px"><div class="fill" style="width:86.8%;background:var(--warn)"></div></div>
+<div style="margin-top:20px"><div class="drv"><b style="font-weight:500">D:</b><div class="track"><div class="fill" style="width:41%"></div></div><span class="num muted">275,1 GB / 465,7 GB</span></div></div></div>
+<div class="stack"><div class="card"><div class="over">Đã dọn tổng cộng</div><div class="big" style="margin-top:6px">18,6 GB</div></div>
+<div class="card"><div class="over">Lần dọn gần nhất</div><div class="big" style="margin-top:6px">02/11 12:05</div><div class="muted">giải phóng 2,3 GB</div></div>
+<div class="card"><div class="over">Dùng máy hôm nay</div><div class="big" style="margin-top:6px">7 giờ 40 phút</div></div></div></div>
+<div class="grid g32"><div class="card"><div class="ct" style="margin-bottom:14px">Dùng nhiều nhất hôm nay</div><div class="bar-row" title="3 giờ 12 phút"><span class="name">Excel</span><div class="track"><div class="fill" style="width:100%"></div></div><span class="num muted">3 giờ 12 phút</span></div><div class="bar-row" title="1 giờ 59 phút"><span class="name">Zalo</span><div class="track"><div class="fill" style="width:62%"></div></div><span class="num muted">1 giờ 59 phút</span></div><div class="bar-row" title="1 giờ 32 phút"><span class="name">Microsoft Edge</span><div class="track"><div class="fill" style="width:48%"></div></div><span class="num muted">1 giờ 32 phút</span></div><div class="bar-row" title="40 phút"><span class="name">Microsoft Teams</span><div class="track"><div class="fill" style="width:21%"></div></div><span class="num muted">40 phút</span></div><div class="bar-row" title="17 phút"><span class="name">Explorer</span><div class="track"><div class="fill" style="width:9%"></div></div><span class="num muted">17 phút</span></div></div>
+<div class="card"><div class="ct" style="margin-bottom:4px">Việc nên làm</div>
+<div class="act"><svg class="ic lvl-warn" viewBox="0 0 24 24"><path d="M12 3l10 18H2zM12 10v5M12 18v.5"/></svg><p>Ổ C: chỉ còn 31,4 GB trống.</p><span class="link">Quét dọn</span></div>
+<div class="act"><svg class="ic lvl-info" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14"/></svg><p>Có 1 bản backup (6,2 GB) đã giữ đủ lâu, có thể xoá để lấy lại dung lượng.</p><span class="link">Xem</span></div></div></div>
+<div class="status">Đã giải phóng 2,3 GB: xoá 4.812 file, bỏ qua 37 file đang dùng.</div></main>
+<div class="sample">Bản xem trước HTML theo DESIGN.md · số liệu minh hoạ</div></body></html>

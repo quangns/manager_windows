@@ -14,7 +14,15 @@ public sealed partial class SettingsViewModel : ViewModelBase
         new("en", "English"),
     ];
 
+    public List<Option<string>> Themes { get; } =
+    [
+        new("auto", Loc.Instance["Theme_Auto"]),
+        new("light", Loc.Instance["Theme_Light"]),
+        new("dark", Loc.Instance["Theme_Dark"]),
+    ];
+
     [ObservableProperty] private string _language;
+    [ObservableProperty] private string _theme;
     [ObservableProperty] private bool _startWithWindows;
     [ObservableProperty] private bool _usageEnabled;
     [ObservableProperty] private int _retentionDays;
@@ -31,6 +39,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
     {
         var c = Host.Config;
         _language = c.Language;
+        _theme = c.Theme;
         _startWithWindows = c.StartWithWindows;
         _usageEnabled = c.Usage.Enabled;
         _retentionDays = c.Usage.RetentionDays;
@@ -43,12 +52,15 @@ public sealed partial class SettingsViewModel : ViewModelBase
         var c = Host.Config;
         var langChanged = c.Language != Language;
         c.Language = Language;
+        var themeChanged = c.Theme != Theme;
+        c.Theme = Theme;
         c.StartWithWindows = StartWithWindows;
         c.Usage.Enabled = UsageEnabled;
         c.Usage.RetentionDays = Math.Clamp(RetentionDays, 7, 3650);
         c.Relocation.BackupKeepDays = Math.Clamp(BackupKeepDays, 1, 365);
         Host.SaveConfig();
         Status = Loc.Instance["Saved"];
+        if (themeChanged) ThemeManager.Apply(Theme);
         if (langChanged)
         {
             Loc.Instance.SetLanguage(Language);

@@ -1,5 +1,7 @@
 using System.ComponentModel;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media.Animation;
 
 namespace ManagerWindows.App.Views;
 
@@ -25,5 +27,13 @@ public partial class MainWindow : Window
             Hide();
         }
         base.OnClosing(e);
+    }
+
+    /// <summary>Đổi trang: nội dung mờ dần 150ms (chỉ đổi opacity, theo DESIGN.md mục 6).</summary>
+    private void Nav_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (e.OriginalSource != Nav) return;
+        if (Nav.Template?.FindName("PageHost", Nav) is UIElement host)
+            host.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(150)));
     }
 }

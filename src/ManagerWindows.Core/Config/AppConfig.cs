@@ -41,6 +41,8 @@ public sealed class AppConfig
 {
     /// <summary>"auto" (theo Windows), "vi" hoặc "en".</summary>
     public string Language { get; set; } = "auto";
+    /// <summary>"auto" (theo Windows), "light" hoặc "dark".</summary>
+    public string Theme { get; set; } = "auto";
     public bool StartWithWindows { get; set; } = true;
     public CleanupConfig Cleanup { get; set; } = new();
     public RelocationConfig Relocation { get; set; } = new();

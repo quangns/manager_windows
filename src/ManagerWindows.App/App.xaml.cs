@@ -53,6 +53,7 @@ public partial class App : Application
 
         _host = new AppHost();
         Loc.Instance.SetLanguage(_host.Config.Language);
+        ThemeManager.Apply(_host.Config.Theme);
         _host.Notify += (title, message, tab) => Dispatcher.BeginInvoke(() => ShowBalloon(title, message, tab));
         _host.Priority.ExcelHeavy += file => Dispatcher.BeginInvoke(() => OnExcelHeavy(file));
         SettingsViewModel.LanguageChanged += RebuildWindow;

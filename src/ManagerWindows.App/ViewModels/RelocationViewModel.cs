@@ -14,6 +14,7 @@ public sealed class FolderRow(DetectedFolder f)
     public string SizeText => Fmt.Bytes(Folder.Bytes);
     public bool IsManual => Folder.Profile?.Method == RelocationMethod.Manual;
     public bool CanMove => !Folder.IsLinked && !IsManual;
+    public bool IsLinked => Folder.IsLinked;
     public string StatusText => Folder.IsLinked
         ? Loc.F("Reloc_Linked", ("target", Folder.LinkTarget))
         : IsManual ? Loc.Instance["Reloc_Manual"] : "";
@@ -28,6 +29,7 @@ public sealed class RecordRow(RelocationRecord r, RelocationHealth health)
     public string SizeText => Fmt.Bytes(Record.Bytes);
     public string StateText => Loc.Instance["State_" + Record.State] + (Record.Error != null ? $" — {Record.Error}" : "");
     public string HealthText => health == RelocationHealth.NotApplicable ? "" : Loc.Instance["Health_" + health];
+    public bool HealthOk => health == RelocationHealth.Healthy;
     public bool HealthBad => health is RelocationHealth.TargetMissing or RelocationHealth.LinkMissing or RelocationHealth.LinkWrongTarget;
     public bool CanRollback => Record.State is not RelocationState.RolledBack;
     public bool CanDeleteBackup => Record.State == RelocationState.Completed && health == RelocationHealth.Healthy;
