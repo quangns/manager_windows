@@ -4,3 +4,8 @@ dist/
 *.user
 .vs/
 TestResults/
+
+# Không bao giờ commit token/credential (token GitHub để ngoài repo: /workspace/.pnpm-store/github_token.txt)
+*github_token*
+.pnpm-store/
+*.pat
