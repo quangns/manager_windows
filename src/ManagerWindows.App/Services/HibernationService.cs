@@ -185,6 +185,29 @@ public sealed class HibernationService : BackgroundLoop
         Log.Info("hibernation", $"sleep {name}: {done.Count} tiến trình, {ramBefore / 1048576} MB");
     }
 
+    /// <summary>App có được đưa vào danh sách không bao giờ ngủ không (chặn tiến trình hệ thống và chính app này).</summary>
+    public static bool CanExclude(string name) =>
+        !ProtectedProcesses.IsProtected(name) && !name.Equals("ManagerWindows.App", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Thêm app vào danh sách không bao giờ ngủ (lưu ngay) và đánh thức nếu nó đang ngủ.</summary>
+    public bool Exclude(string name)
+    {
+        if (name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) name = name[..^4];
+        if (!CanExclude(name)) return false;
+        var o = _host.Config.Hibernation;
+        if (!o.Excluded.Contains(name, StringComparer.OrdinalIgnoreCase))
+        {
+            o.Excluded = [.. o.Excluded, name]; // danh sách mới: luồng nền đang đọc danh sách cũ
+            _host.SaveConfig();
+        }
+        if (IsAsleep(name)) Wake(name, "excluded");
+        ExcludedChanged?.Invoke();
+        return true;
+    }
+
+    /// <summary>Danh sách không bao giờ ngủ vừa đổi (tab Ngủ đông nạp lại).</summary>
+    public event Action? ExcludedChanged;
+
     public void Wake(string name, string reason)
     {
         SleepingApp? app;

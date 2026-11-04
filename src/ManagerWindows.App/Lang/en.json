@@ -402,5 +402,7 @@
   "Hib_AddByNameHint": "Type a process name (e.g. zalo, chrome.exe) and press Enter",
   "Hib_ProcessName": "Process",
   "Hib_Remove": "Remove",
-  "Hib_Unexcluded": "Removed {app} from the never-hibernate list."
+  "Hib_Unexcluded": "Removed {app} from the never-hibernate list.",
+  "Proc_NeverHibernate": "Never hibernate",
+  "Proc_CannotNeverHibernate": "{app} is a system process or Manager Windows itself; no need to add it."
 }

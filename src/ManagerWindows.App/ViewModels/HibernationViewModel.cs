@@ -46,6 +46,7 @@ public sealed partial class HibernationViewModel : ViewModelBase
 
     public void Start()
     {
+        LoadExcluded(); // có thể vừa thêm từ tab Tiến trình
         Refresh();
         _timer.Start();
     }
@@ -127,16 +128,8 @@ public sealed partial class HibernationViewModel : ViewModelBase
     /// <summary>Thêm app vào danh sách không bao giờ ngủ (lưu ngay) và đánh thức nếu nó đang ngủ.</summary>
     private void AddExcluded(string name, string display)
     {
-        if (name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) name = name[..^4];
-        var o = Host.Config.Hibernation;
-        if (!o.Excluded.Contains(name, StringComparer.OrdinalIgnoreCase))
-        {
-            o.Excluded = [.. o.Excluded, name]; // danh sách mới: luồng nền đang đọc danh sách cũ
-            Host.SaveConfig();
-        }
-        if (Host.Hibernation.IsAsleep(name)) Host.Hibernation.Wake(name, "excluded");
+        Status = Host.Hibernation.Exclude(name) ? Loc.F("Hib_Excluded", ("app", display)) : Loc.Instance["Hib_PickerInvalid"];
         LoadExcluded();
-        Status = Loc.F("Hib_Excluded", ("app", display));
     }
 
     [RelayCommand]
@@ -190,7 +183,7 @@ public sealed partial class HibernationViewModel : ViewModelBase
     [RelayCommand]
     private void Picked(int pid)
     {
-        if (pid == Environment.ProcessId || AppOf(pid) is not { } a || ManagerWindows.Core.Priority.ProtectedProcesses.IsProtected(a.Name))
+        if (pid == Environment.ProcessId || AppOf(pid) is not { } a || !HibernationService.CanExclude(a.Name))
         {
             PickerText = Loc.Instance["Hib_PickerHint"];
             Status = Loc.Instance["Hib_PickerInvalid"];

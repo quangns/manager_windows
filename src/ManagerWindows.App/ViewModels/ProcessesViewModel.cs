@@ -374,6 +374,16 @@ public sealed partial class ProcessesViewModel : ViewModelBase
         Status = Loc.F("Proc_Ignored", ("app", row.DisplayName));
     }
 
+    /// <summary>Chuột phải → không bao giờ cho app này ngủ đông.</summary>
+    [RelayCommand]
+    private void NeverHibernate(ProcessRow? row)
+    {
+        if (row == null) return;
+        Status = Host.Hibernation.Exclude(row.Name)
+            ? Loc.F("Hib_Excluded", ("app", row.DisplayName))
+            : Loc.F("Proc_CannotNeverHibernate", ("app", row.DisplayName));
+    }
+
     [RelayCommand]
     private void SaveAlerts()
     {

@@ -402,5 +402,7 @@
   "Hib_AddByNameHint": "Gõ tên tiến trình (vd: zalo, chrome.exe) rồi Enter",
   "Hib_ProcessName": "Tiến trình",
   "Hib_Remove": "Bỏ khỏi danh sách",
-  "Hib_Unexcluded": "Đã bỏ {app} khỏi danh sách không bao giờ ngủ."
+  "Hib_Unexcluded": "Đã bỏ {app} khỏi danh sách không bao giờ ngủ.",
+  "Proc_NeverHibernate": "Không bao giờ cho ngủ đông",
+  "Proc_CannotNeverHibernate": "{app} là tiến trình hệ thống hoặc chính Manager Windows, không cần thêm."
 }

@@ -952,7 +952,7 @@
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
                         </DataGrid.Columns>
-                        <!-- Chuột phải: bỏ qua cảnh báo chạy ngầm cho app này -->
+                        <!-- Chuột phải: bỏ qua cảnh báo chạy ngầm / không bao giờ cho ngủ đông -->
                         <DataGrid.RowStyle>
                             <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
                                 <Setter Property="ContextMenu">
@@ -960,6 +960,9 @@
                                         <ContextMenu>
                                             <MenuItem Header="{l:T Proc_IgnoreAlerts}"
                                                       Command="{Binding PlacementTarget.Tag.IgnoreAlertsCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                      CommandParameter="{Binding}" />
+                                            <MenuItem Header="{l:T Proc_NeverHibernate}" IsEnabled="{Binding CanAct}"
+                                                      Command="{Binding PlacementTarget.Tag.NeverHibernateCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                       CommandParameter="{Binding}" />
                                         </ContextMenu>
                                     </Setter.Value>
