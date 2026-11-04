@@ -738,8 +738,12 @@
             <DockPanel Style="{StaticResource Page}">
                 <c:PageHeader DockPanel.Dock="Top" Title="{l:T Tab_Processes}" Subtitle="{l:T Proc_Subtitle}">
                     <c:PageHeader.Actions>
-                        <Button Style="{StaticResource Primary}" Content="{l:T Proc_FreeMemory}" Command="{Binding FreeMemoryCommand}"
-                                IsEnabled="{Binding Busy, Converter={StaticResource Not}}" ToolTip="{l:T Proc_FreeMemoryHint}" />
+                        <StackPanel Orientation="Horizontal">
+                            <Button Style="{StaticResource Secondary}" Content="{l:T Left_Open}" Command="{Binding OpenLeftoversCommand}"
+                                    ToolTip="{l:T Left_Subtitle}" />
+                            <Button Style="{StaticResource Primary}" Content="{l:T Proc_FreeMemory}" Command="{Binding FreeMemoryCommand}"
+                                    IsEnabled="{Binding Busy, Converter={StaticResource Not}}" ToolTip="{l:T Proc_FreeMemoryHint}" />
+                        </StackPanel>
                     </c:PageHeader.Actions>
                 </c:PageHeader>
                 <ContentControl DockPanel.Dock="Bottom" Content="{Binding}" ContentTemplate="{StaticResource StatusBar}" />

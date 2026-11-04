@@ -155,3 +155,77 @@ public class RestartTests
         Assert.Equal([new LaunchCommand("C:\\App\\app.exe", "")], plan);
     }
 }
+
+public class LeftoverTests
+{
+    private static readonly DateTime Now = new(2026, 11, 4, 18, 0, 0, DateTimeKind.Utc);
+    private const int Me = 1, Self = 999;
+
+    private static ProcInfo P(int pid, int parent, string name, double ageMin = 120, bool window = false, bool hung = false,
+        int session = Me, double cpuSec = 60, long wsMb = 50, string? path = null) =>
+        new(pid, parent, name, path ?? $@"C:\Apps\{name}.exe", session, Now.AddMinutes(-ageMin), window, hung,
+            TimeSpan.FromSeconds(cpuSec), wsMb << 20);
+
+    private static List<LeftoverGroup> Detect(params ProcInfo[] all) =>
+        LeftoverDetector.Detect(all, Me, Self, Now, new LeftoverOptions(), @"C:\Windows");
+
+    [Fact]
+    public void Finds_orphans_and_groups_them()
+    {
+        var r = Detect(
+            P(10, 1, "explorer", ageMin: 600, window: true),
+            P(20, 10, "Code", window: true),
+            P(21, 20, "node"),                 // cha (Code) còn sống → không phải mồ côi
+            P(30, 777, "node", wsMb: 300),     // cha đã thoát
+            P(31, 777, "node", wsMb: 200),
+            P(40, 888, "conhost", path: @"C:\Windows\System32\conhost.exe"));
+
+        var node = r.Single(g => g.Name == "node");
+        Assert.Equal([30, 31], node.Pids);
+        Assert.Equal(LeftoverReason.Orphan, node.Reasons);
+        Assert.Equal(500L << 20, node.WorkingSetBytes);
+        Assert.Contains(r, g => g.Name == "conhost");
+        Assert.DoesNotContain(r, g => g.Name == "Code" || g.Name == "explorer");
+    }
+
+    [Fact]
+    public void Detects_reused_parent_pid()
+    {
+        // PID 50 giờ là một tiến trình mới chạy 5 phút trước, còn con đã chạy 2 giờ → cha thật đã thoát.
+        var r = Detect(P(50, 10, "notepad", ageMin: 5, window: true), P(60, 50, "helper", ageMin: 120));
+        Assert.Equal("helper", Assert.Single(r).Name);
+    }
+
+    [Fact]
+    public void Skips_young_windowed_protected_other_session_self_and_ignored()
+    {
+        var opt = new LeftoverOptions { Ignored = ["OneDrive"] };
+        var r = LeftoverDetector.Detect([
+            P(1, 500, "setup", ageMin: 3),                 // mới chạy
+            P(2, 500, "Spotify", window: true),            // có cửa sổ
+            P(3, 500, "svchost"),                          // được bảo vệ
+            P(4, 500, "remote", session: 2),               // phiên khác
+            P(Self, 500, "ManagerWindows.App"),            // chính app
+            P(5, 500, "OneDrive"),                         // người dùng bỏ qua
+            P(6, 0, "Idle-root"),                          // cha là 0: tiến trình gốc hệ thống
+        ], Me, Self, Now, opt, @"C:\Windows");
+        Assert.Empty(r);
+    }
+
+    [Fact]
+    public void Flags_hung_windows_and_idle_background_hogs()
+    {
+        var r = Detect(
+            P(10, 1, "explorer", ageMin: 600, window: true),
+            P(70, 10, "EXCEL", window: true, hung: true, ageMin: 2),          // treo: báo cả khi mới chạy
+            P(80, 10, "Updater", ageMin: 300, cpuSec: 1, wsMb: 400),          // 5 giờ, 1 giây CPU, 400 MB
+            P(81, 10, "Busy", ageMin: 300, cpuSec: 3000, wsMb: 400),          // vẫn làm việc → không báo
+            P(82, 10, "Small", ageMin: 300, cpuSec: 1, wsMb: 20),             // ít RAM → không báo
+            P(83, 10, "SysHelper", ageMin: 300, cpuSec: 1, wsMb: 400, path: @"C:\Windows\System32\SysHelper.exe"));
+
+        Assert.Equal("EXCEL", r[0].Name); // treo lên đầu
+        Assert.Equal(LeftoverReason.NotResponding, r[0].Reasons);
+        Assert.Equal(LeftoverReason.IdleBackground, r.Single(g => g.Name == "Updater").Reasons);
+        Assert.DoesNotContain(r, g => g.Name is "Busy" or "Small" or "SysHelper");
+    }
+}

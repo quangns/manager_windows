@@ -273,6 +273,21 @@ public sealed partial class ProcessesViewModel : ViewModelBase
         await SampleAsync();
     });
 
+    /// <summary>Mở cửa sổ kiểm tra tiến trình sót (mồ côi, treo, chạy ngầm lâu không hoạt động).</summary>
+    [RelayCommand]
+    private async Task OpenLeftoversAsync()
+    {
+        var vm = new LeftoversViewModel();
+        var window = new LeftoversWindow
+        {
+            DataContext = vm,
+            Owner = Application.Current.Windows.OfType<MainWindow>().FirstOrDefault(w => w.IsVisible),
+        };
+        _ = vm.ScanCommand.ExecuteAsync(null);
+        window.ShowDialog();
+        await SampleAsync();
+    }
+
     /// <summary>Khởi động lại app: đóng nhẹ, quá 10 giây mới buộc dừng, rồi mở lại bằng lệnh khởi động cũ.</summary>
     [RelayCommand]
     private Task RestartAppAsync(ProcessRow? row) => RunBusyAsync(async () =>

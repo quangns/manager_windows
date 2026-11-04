@@ -78,6 +78,13 @@ public static class Fmt
         return i == 0 ? $"{b} B" : $"{v:0.#} {units[i]}";
     }
 
+    /// <summary>Thời gian đã chạy: "3 ngày 2 giờ", "5 giờ 10 phút", "12 phút".</summary>
+    public static string Age(TimeSpan t)
+    {
+        if (t.TotalDays >= 1) return Loc.F("Age_DH", ("d", (int)t.TotalDays), ("h", t.Hours));
+        return Duration(Math.Max(t.TotalSeconds, 60));
+    }
+
     public static string Duration(double seconds)
     {
         var t = TimeSpan.FromSeconds(seconds);

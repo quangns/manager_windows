@@ -51,6 +51,7 @@ public sealed class AppConfig
     public PriorityOptions Priority { get; set; } = new();
     public ExcelOptions Excel { get; set; } = new();
     public MonitorOptions Monitor { get; set; } = new();
+    public LeftoverOptions Leftovers { get; set; } = new();
 }
 
 public sealed class ConfigStore(string path)

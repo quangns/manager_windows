@@ -31,6 +31,7 @@ public sealed class AppHost
     public PriorityController Priority { get; }
     public RelocationService Relocation { get; }
     public BackgroundWatcher BackgroundWatcher { get; }
+    public LeftoverWatcher LeftoverWatcher { get; }
 
     /// <summary>Hiện thông báo ở khay hệ thống (tiêu đề, nội dung, tab cần mở khi bấm vào).</summary>
     public event Action<string, string, string?>? Notify;
@@ -59,6 +60,7 @@ public sealed class AppHost
         Priority = new PriorityController(this);
         Relocation = new RelocationService(this);
         BackgroundWatcher = new BackgroundWatcher(this);
+        LeftoverWatcher = new LeftoverWatcher(this);
     }
 
     /// <summary>
@@ -116,6 +118,7 @@ public sealed class AppHost
         Scheduler.Start();
         Priority.Start();
         BackgroundWatcher.Start();
+        LeftoverWatcher.Start();
         Relocation.StartHealthChecks();
     }
 
@@ -125,6 +128,7 @@ public sealed class AppHost
         Scheduler.Stop();
         Priority.Stop();
         BackgroundWatcher.Stop();
+        LeftoverWatcher.Stop();
         Relocation.Stop();
     }
 }

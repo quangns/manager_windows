@@ -252,9 +252,10 @@ public partial class App : Application
     private void OnBalloonClicked()
     {
         var file = _pendingExcelFile;
-        ShowMain(_pendingTab);
+        ShowMain(_pendingTab == "leftovers" ? "processes" : _pendingTab);
         // Cảnh báo app chạy ngầm: mở thẳng bộ lọc "Chạy ngầm".
         if (_pendingTab == "processes") _vm?.Processes.Start(ProcessFilter.Background);
+        if (_pendingTab == "leftovers") _ = _vm?.Processes.OpenLeftoversCommand.ExecuteAsync(null);
         if (file != null && File.Exists(file)) _ = _vm!.Priority.AnalyzeAsync(file!);
     }
 
