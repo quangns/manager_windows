@@ -40,8 +40,10 @@ public sealed class PartitionProgressWindow : Window
         FontSize = 13;
         _bar.SetResourceReference(StyleProperty, "Meter");
         _detail.SetResourceReference(TextBlock.ForegroundProperty, "InkMuted");
-        var warn = new TextBlock { Text = Loc.Instance["Part_ProgressWarn"], TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 12, 0, 0), FontSize = 12 };
-        warn.SetResourceReference(TextBlock.ForegroundProperty, "Warning");
+        var warn = Controls.RiskBox.Create(
+            [Loc.Instance["Risk_RunPower"], Loc.Instance["Risk_RunDrive"], Loc.Instance["Risk_RunPause"]],
+            Loc.Instance["Risk_RunTitle"]);
+        warn.Margin = new Thickness(0, 14, 0, 0);
         _stop = new Button { Content = Loc.Instance["Part_Pause"], HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 16, 0, 0) };
         _stop.SetResourceReference(StyleProperty, "Secondary");
         _stop.Click += (_, _) => Pause();

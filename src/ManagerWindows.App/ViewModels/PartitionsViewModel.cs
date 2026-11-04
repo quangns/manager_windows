@@ -295,11 +295,26 @@ public sealed partial class PartitionsViewModel : ViewModelBase
         _ => s.Kind.ToString(),
     };
 
+    /// <summary>Rủi ro cụ thể của kế hoạch: dời (chép sector), gộp (chép file + xoá), phân vùng Recovery…</summary>
+    private static List<string> RisksFor(IReadOnlyCollection<PlanStep> steps, DiskSegment seg)
+    {
+        var keys = new List<string>();
+        var move = steps.Any(s => s.Kind == StepKind.Move);
+        var merge = steps.Any(s => s.Kind == StepKind.CopyFiles);
+        if (merge) keys.AddRange(["Risk_MergeDelete", "Risk_MergeSkip", "Risk_MergeApps", "Risk_MergeSpace"]);
+        if (move) keys.AddRange(["Risk_Power", "Risk_BadSector", "Risk_Locked", "Risk_Letter"]);
+        if (move && seg.Partition?.Kind == PartitionKind.Recovery) keys.Add("Risk_Recovery");
+        if (steps.Any(s => s.Kind is StepKind.Shrink or StepKind.Extend)) keys.Add("Risk_Resize");
+        keys.Add("Risk_Untested");
+        return keys.Select(k => Loc.Instance[k]).ToList();
+    }
+
     /// <summary>Xác nhận kế hoạch (liệt kê từng bước, bắt tick đã sao lưu + gõ chữ xác nhận) rồi chạy với cửa sổ tiến độ.</summary>
     private async Task ConfirmAndRunAsync(string title, string intro, List<PlanStep> steps)
     {
         var lines = string.Join("\n", steps.Select((s, i) => $"{i + 1}. {Describe(s)}"));
         var dlg = new PartitionDialog(title, $"{intro}\n\n{lines}", danger: true);
+        dlg.AddRisks(RisksFor(steps, Selected!.Segment));
         if (steps.Any(s => s.Kind == StepKind.Move)) dlg.AddNote(Loc.Instance["Part_MoveNote"]);
         dlg.RequireCheck(Loc.Instance["Part_BackupCheck"]);
         dlg.RequireTyping(Loc.Instance["Part_AgreeWord"]);
@@ -441,6 +456,7 @@ public sealed partial class PartitionsViewModel : ViewModelBase
     {
         if (Selected?.Segment is not { Partition: { } p } seg) return;
         var dlg = new PartitionDialog(Loc.Instance["Part_ActDelete"], Loc.F("Part_DeleteWarn", ("part", Describe(seg))), danger: true);
+        dlg.AddRisks([Loc.Instance["Risk_Erase"], Loc.Instance["Risk_EraseApps"], Loc.Instance["Risk_WrongDisk"]]);
         dlg.RequireTyping(Loc.Instance["Part_ConfirmWord"]);
         if (dlg.ShowDialog() != true) return;
         await Run(Loc.F("Part_WhatDelete", ("part", Describe(seg))), () => StorageApi.Delete(p.Disk, p.Number));
@@ -450,6 +466,7 @@ public sealed partial class PartitionsViewModel : ViewModelBase
     {
         if (Selected?.Segment is not { Partition: { } p } seg) return;
         var dlg = new PartitionDialog(Loc.Instance["Part_ActFormat"], Loc.F("Part_FormatWarn", ("part", Describe(seg))), danger: true);
+        dlg.AddRisks([Loc.Instance["Risk_Erase"], Loc.Instance["Risk_EraseApps"], Loc.Instance["Risk_WrongDisk"]]);
         var fs = dlg.AddChoice(Loc.Instance["Part_FileSystem"], FileSystems.Select(f => new Option<string>(f, f)), p.FileSystem is "exFAT" or "FAT32" ? p.FileSystem : "NTFS");
         var label = dlg.AddText(Loc.Instance["Part_LabelField"], p.Label ?? Loc.Instance["Part_DefaultLabel"]);
         dlg.RequireTyping(Loc.Instance["Part_ConfirmWord"]);

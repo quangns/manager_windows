@@ -25,7 +25,7 @@ public sealed class PartitionDialog : Window
     public PartitionDialog(string title, string message, bool danger = false)
     {
         Title = title;
-        Width = 520;
+        Width = 580;
         SizeToContent = SizeToContent.Height;
         ResizeMode = ResizeMode.NoResize;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
@@ -55,11 +55,14 @@ public sealed class PartitionDialog : Window
         var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 18, 0, 0) };
         buttons.Children.Add(cancel);
         buttons.Children.Add(_ok);
-        var root = new StackPanel { Margin = new Thickness(24, 20, 24, 20) };
-        root.Children.Add(_body);
-        root.Children.Add(_error);
+        var root = new DockPanel { Margin = new Thickness(24, 20, 24, 20) };
+        DockPanel.SetDock(buttons, Dock.Bottom);
+        DockPanel.SetDock(_error, Dock.Bottom);
         root.Children.Add(buttons);
+        root.Children.Add(_error);
+        root.Children.Add(new ScrollViewer { Content = _body, VerticalScrollBarVisibility = ScrollBarVisibility.Auto });
         Content = root;
+        MaxHeight = SystemParameters.WorkArea.Height * 0.92;
     }
 
     private TextBlock Label(string text)
@@ -68,6 +71,9 @@ public sealed class PartitionDialog : Window
         _body.Children.Add(t);
         return t;
     }
+
+    /// <summary>Khung rủi ro nổi bật (đặt ngay dưới mô tả thao tác, trước các ô nhập).</summary>
+    public void AddRisks(IEnumerable<string> risks) => _body.Children.Add(Controls.RiskBox.Create(risks));
 
     public void AddNote(string text)
     {
