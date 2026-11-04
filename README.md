@@ -4,6 +4,7 @@ App chạy nền trên Windows 10/11 (x64) giúp:
 
 1. **Dọn rác định kỳ**: file tạm, cache Windows Update, cache trình duyệt/Teams/Zalo, dump lỗi, Thùng rác…
 2. **Gợi ý dọn file**: file lâu không dùng, file lớn, bộ cài cũ trong Downloads, file trùng nhau. App chỉ gợi ý, không bao giờ tự xoá.
+   - **Dung lượng ổ đĩa** (kiểu TreeSize): quét cả ổ hoặc một thư mục, cây thư mục xếp từ lớn đến bé kèm % so với thư mục cha, số file/thư mục, danh sách 500 file lớn nhất; chuột phải để mở trong Explorer, quét riêng thư mục, chuyển vào Thùng rác (chặn thư mục hệ thống và junction).
 3. **Chuyển data app khỏi ổ C** (Zalo, Telegram, Chrome/Edge, backup iPhone…). Data được chuyển sang ổ khác, đường dẫn cũ trên ổ C giữ nguyên nhờ *junction* nên app vẫn chạy bình thường. Có Hoàn tác.
 4. **Theo dõi tần suất dùng app**: thời gian dùng thật (không tính lúc máy rảnh), số lần mở, biểu đồ theo giờ.
 5. **Ưu tiên tài nguyên**: app dùng nhiều nhất hoặc app được ghim được ưu tiên CPU; app nền (OneDrive, updater…) bị hạ ưu tiên và chạy chế độ tiết kiệm (EcoQoS).
@@ -11,7 +12,7 @@ App chạy nền trên Windows 10/11 (x64) giúp:
    - Xem app nào đang chiếm CPU, RAM, ổ đĩa (gộp tiến trình theo app), phân loại Ứng dụng / Chạy ngầm / Hệ thống.
    - Chẩn đoán lag: khi ổ đĩa, CPU hoặc RAM quá tải, chỉ ra app dùng nhiều nhất.
    - Khởi động lại app; kiểm tra tiến trình sót (mồ côi, treo, chạy ngầm lâu không hoạt động) và dừng các mục được chọn.
-   - Ngủ đông app không dùng (mặc định 15 phút, tắt sẵn): tạm dừng app cùng tiến trình chạy ngầm của nó, trả RAM/CPU; bấm vào app là chạy tiếp đúng trạng thái cũ. Không áp dụng cho app nhắn tin, nhạc, app đang phát âm thanh/đang làm việc.
+   - Ngủ đông app không dùng (mặc định 15 phút, tắt sẵn): tạm dừng app cùng tiến trình chạy ngầm của nó, trả RAM/CPU; bấm vào app là chạy tiếp đúng trạng thái cũ. Không áp dụng cho app chat, mail, điều khiển từ xa, VPN, bộ gõ, nhạc, app đang phát âm thanh/đang làm việc; thêm app vào danh sách bằng cách kéo tâm ngắm lên cửa sổ app hoặc chuột phải ở tab Tiến trình.
    - End task, giải phóng RAM từng app hoặc toàn máy (kèm xả bộ nhớ đệm standby qua dịch vụ nền).
    - Cảnh báo ở khay khi một app chạy ngầm dùng nhiều CPU/RAM liên tục.
 7. **Excel nặng**:

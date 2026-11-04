@@ -16,7 +16,7 @@ public sealed class RecycleBinDeleter : IFileDeleter
         {
             wFunc = FO_DELETE,
             pFrom = Path.GetFullPath(path) + "\0\0",
-            fFlags = FOF_ALLOWUNDO | FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI,
+            fFlags = FOF_ALLOWUNDO | FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI | FOF_WANTNUKEWARNING,
         };
         var rc = SHFileOperation(ref op);
         if (rc != 0 || op.fAnyOperationsAborted)

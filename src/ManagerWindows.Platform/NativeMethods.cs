@@ -142,6 +142,8 @@ internal static partial class NativeMethods
     internal const ushort FOF_NOCONFIRMATION = 0x10;
     internal const ushort FOF_ALLOWUNDO = 0x40;
     internal const ushort FOF_NOERRORUI = 0x400;
+    /// <summary>Hỏi lại nếu mục quá lớn cho Thùng rác và sẽ bị xoá vĩnh viễn (thay vì xoá âm thầm).</summary>
+    internal const ushort FOF_WANTNUKEWARNING = 0x4000;
 
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
     internal static extern int SHFileOperation(ref SHFILEOPSTRUCT op);

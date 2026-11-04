@@ -494,6 +494,269 @@
             </DockPanel>
         </TabItem>
 
+        <!-- ===================== DUNG LƯỢNG (kiểu TreeSize) ===================== -->
+        <TabItem Tag="&#xEB05;" Header="{l:T Tab_DiskUsage}" DataContext="{Binding DiskUsage}">
+            <DockPanel Style="{StaticResource Page}">
+                <c:PageHeader DockPanel.Dock="Top" Title="{l:T Tab_DiskUsage}" Subtitle="{l:T Disk_Subtitle}">
+                    <c:PageHeader.Actions>
+                        <StackPanel Orientation="Horizontal">
+                            <Button Style="{StaticResource Secondary}" Content="{l:T Disk_Stop}" Command="{Binding StopCommand}"
+                                    Visibility="{Binding Busy, Converter={StaticResource BoolVis}}" />
+                            <Button Style="{StaticResource Primary}" Content="{l:T Disk_Scan}" Command="{Binding ScanCommand}"
+                                    IsEnabled="{Binding Busy, Converter={StaticResource Not}}" />
+                        </StackPanel>
+                    </c:PageHeader.Actions>
+                </c:PageHeader>
+                <ContentControl DockPanel.Dock="Bottom" Content="{Binding}" ContentTemplate="{StaticResource StatusBar}" />
+
+                <!-- Chọn ổ / thư mục -->
+                <Border DockPanel.Dock="Top" Style="{StaticResource Card}" Margin="0,0,0,16">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ComboBox ItemsSource="{Binding Drives}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                                  SelectedValue="{Binding SelectedDrive}" Width="280" VerticalAlignment="Center" ToolTip="{l:T Disk_PickDrive}" />
+                        <TextBox Grid.Column="1" Text="{Binding RootPath, UpdateSourceTrigger=PropertyChanged}" Margin="12,0"
+                                 FontFamily="{StaticResource MonoFont}" FontSize="12.5" VerticalAlignment="Center" ToolTip="{l:T Disk_PathHint}">
+                            <TextBox.InputBindings>
+                                <KeyBinding Key="Return" Command="{Binding ScanCommand}" />
+                            </TextBox.InputBindings>
+                        </TextBox>
+                        <Button Grid.Column="2" Style="{StaticResource Secondary}" Content="{l:T Disk_Browse}" Command="{Binding BrowseCommand}" />
+                    </Grid>
+                </Border>
+
+                <!-- Tổng quan kết quả -->
+                <Grid DockPanel.Dock="Top" Margin="0,0,0,16" Visibility="{Binding HasResult, Converter={StaticResource BoolVis}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="2*" />
+                    </Grid.ColumnDefinitions>
+                    <Border Style="{StaticResource Card}" Padding="16,12">
+                        <StackPanel>
+                            <TextBlock Text="{l:T Disk_Total}" Style="{StaticResource Overline}" />
+                            <TextBlock Text="{Binding TotalText}" Style="{StaticResource BigNumber}" FontSize="22" />
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Column="2" Style="{StaticResource Card}" Padding="16,12">
+                        <StackPanel>
+                            <TextBlock Text="{l:T Disk_Files}" Style="{StaticResource Overline}" />
+                            <TextBlock Text="{Binding FilesText}" Style="{StaticResource BigNumber}" FontSize="22" />
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Column="4" Style="{StaticResource Card}" Padding="16,12">
+                        <StackPanel>
+                            <TextBlock Text="{l:T Disk_Dirs}" Style="{StaticResource Overline}" />
+                            <TextBlock Text="{Binding DirsText}" Style="{StaticResource BigNumber}" FontSize="22" />
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Column="6" Style="{StaticResource Card}" Padding="16,12">
+                        <StackPanel VerticalAlignment="Center">
+                            <StackPanel Visibility="{Binding IsDriveRoot, Converter={StaticResource BoolVis}}">
+                                <ProgressBar Style="{StaticResource Meter}" Value="{Binding DriveRatio, Mode=OneWay}" />
+                                <TextBlock Text="{Binding DriveText}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,8,0,0" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                <TextBlock Text="{l:T Disk_Elapsed}" Style="{StaticResource Muted}" />
+                                <TextBlock Text="{Binding ElapsedText}" Style="{StaticResource Muted}" Margin="4,0,0,0" />
+                            </StackPanel>
+                            <TextBlock Text="{Binding ErrorsText}" Foreground="{DynamicResource Warning}" TextWrapping="Wrap" Margin="0,4,0,0"
+                                       Visibility="{Binding HasErrors, Converter={StaticResource BoolVis}}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- Chọn kiểu xem -->
+                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10" Visibility="{Binding HasResult, Converter={StaticResource BoolVis}}">
+                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                        <Button Style="{StaticResource Secondary}" Content="{l:T Disk_ViewTree}" Command="{Binding ShowTreeCommand}" />
+                        <Button Style="{StaticResource Secondary}" Content="{l:T Disk_ViewFiles}" Command="{Binding ShowFilesCommand}" />
+                    </StackPanel>
+                    <TextBlock Text="{l:T Disk_TreeTitle}" Style="{StaticResource CardTitle}" VerticalAlignment="Center"
+                               Visibility="{Binding ShowTopFiles, Converter={StaticResource BoolVisInv}}" />
+                    <TextBlock Text="{l:T Disk_FilesTitle}" Style="{StaticResource CardTitle}" VerticalAlignment="Center"
+                               Visibility="{Binding ShowTopFiles, Converter={StaticResource BoolVis}}" />
+                </DockPanel>
+
+                <Grid>
+                    <!-- Chưa quét -->
+                    <Border Style="{StaticResource Card}" VerticalAlignment="Top" Visibility="{Binding HasResult, Converter={StaticResource BoolVisInv}}">
+                        <DockPanel>
+                            <TextBlock Style="{StaticResource Icon}" Text="&#xEB05;" Foreground="{DynamicResource Accent}" VerticalAlignment="Top" Margin="0,1,12,0" />
+                            <TextBlock Text="{l:T Disk_Intro}" TextWrapping="Wrap" />
+                        </DockPanel>
+                    </Border>
+
+                    <!-- Cây thư mục: lớn đến bé, bấm mũi tên / nhấp đúp để mở -->
+                    <Border Style="{StaticResource TableCard}" Visibility="{Binding TreeVisible, Converter={StaticResource BoolVis}}">
+                        <DataGrid x:Name="DiskTree" c:Table.Apply="True" ItemsSource="{Binding Rows}" IsReadOnly="True" CanUserSortColumns="False"
+                                  EnableRowVirtualization="True" VirtualizingPanel.VirtualizationMode="Recycling">
+                            <DataGrid.InputBindings>
+                                <MouseBinding Gesture="LeftDoubleClick" Command="{Binding ToggleCommand}"
+                                              CommandParameter="{Binding SelectedItem, ElementName=DiskTree}" />
+                                <KeyBinding Key="Return" Command="{Binding ToggleCommand}"
+                                            CommandParameter="{Binding SelectedItem, ElementName=DiskTree}" />
+                            </DataGrid.InputBindings>
+                            <DataGrid.Columns>
+                                <DataGridTemplateColumn Header="{l:T Disk_ColName}" Width="*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" Margin="{Binding Indent}" VerticalAlignment="Center">
+                                                <Button Style="{StaticResource Link}" Width="22" Padding="0" Focusable="False"
+                                                        Command="{Binding DataContext.ToggleCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                        CommandParameter="{Binding}">
+                                                    <TextBlock Style="{StaticResource Icon}" Text="{Binding Chevron}" FontSize="10" Foreground="{DynamicResource InkMuted}" />
+                                                </Button>
+                                                <TextBlock Style="{StaticResource Icon}" Text="{Binding Glyph}" FontSize="13" Foreground="{DynamicResource Accent}" Margin="2,0,8,0" />
+                                                <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" ToolTip="{Binding FullPath}" />
+                                                <TextBlock Text="{Binding Note}" Style="{StaticResource Muted}" FontSize="11.5" Margin="8,0,0,0"
+                                                           Visibility="{Binding Note, Converter={StaticResource StrVis}}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="{l:T Disk_ColShare}" Width="170">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Grid VerticalAlignment="Center" Margin="0,0,12,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="58" />
+                                                </Grid.ColumnDefinitions>
+                                                <ProgressBar Style="{StaticResource Meter}" Height="6" Background="Transparent"
+                                                             Foreground="{DynamicResource ChartBar}" Value="{Binding Ratio, Mode=OneWay}" />
+                                                <TextBlock Grid.Column="1" Text="{Binding PercentText}" Style="{StaticResource Num}" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="{l:T Col_Size}" Width="100">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding SizeText}" Style="{StaticResource Num}" FontWeight="Medium" Margin="0,0,12,0" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="{l:T Disk_Files}" Width="90">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding FilesText}" Style="{StaticResource Num}" Margin="0,0,12,0" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="{l:T Disk_Dirs}" Width="90">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding DirsText}" Style="{StaticResource Num}" Margin="0,0,12,0" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="{l:T Disk_ColModified}" Binding="{Binding LastWriteText}" Width="110" />
+                            </DataGrid.Columns>
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                    <Setter Property="ContextMenu">
+                                        <Setter.Value>
+                                            <ContextMenu>
+                                                <MenuItem Header="{l:T Disk_OpenExplorer}"
+                                                          Command="{Binding PlacementTarget.Tag.OpenInExplorerCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                          CommandParameter="{Binding}" />
+                                                <MenuItem Header="{l:T Disk_CopyPath}"
+                                                          Command="{Binding PlacementTarget.Tag.CopyPathCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                          CommandParameter="{Binding}" />
+                                                <MenuItem Header="{l:T Disk_ScanHere}" IsEnabled="{Binding IsDir}"
+                                                          Command="{Binding PlacementTarget.Tag.ScanHereCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                          CommandParameter="{Binding}" />
+                                                <Separator />
+                                                <MenuItem Header="{l:T Disk_Recycle}" IsEnabled="{Binding IsMore, Converter={StaticResource Not}}"
+                                                          Command="{Binding PlacementTarget.Tag.RecycleCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                          CommandParameter="{Binding}" />
+                                            </ContextMenu>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Setter Property="Tag" Value="{Binding DataContext, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
+                                </Style>
+                            </DataGrid.RowStyle>
+                        </DataGrid>
+                    </Border>
+
+                    <!-- File lớn nhất -->
+                    <Border Style="{StaticResource TableCard}" Visibility="{Binding FilesVisible, Converter={StaticResource BoolVis}}">
+                        <DataGrid c:Table.Apply="True" ItemsSource="{Binding TopFiles}" IsReadOnly="True" CanUserSortColumns="False"
+                                  EnableRowVirtualization="True">
+                            <DataGrid.Columns>
+                                <DataGridTemplateColumn Header="{l:T Disk_ColName}" Width="*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel VerticalAlignment="Center" ToolTip="{Binding Path}">
+                                                <TextBlock Text="{Binding Name}" FontWeight="Medium" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding Folder}" Foreground="{DynamicResource InkMuted}" FontFamily="{StaticResource MonoFont}"
+                                                           FontSize="11.5" TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="{l:T Col_Size}" Width="200">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Grid VerticalAlignment="Center" Margin="0,0,12,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="80" />
+                                                </Grid.ColumnDefinitions>
+                                                <ProgressBar Style="{StaticResource Meter}" Height="6" Background="Transparent"
+                                                             Foreground="{DynamicResource ChartBar}" Value="{Binding Ratio, Mode=OneWay}" />
+                                                <TextBlock Grid.Column="1" Text="{Binding SizeText}" Style="{StaticResource Num}" FontWeight="Medium" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="{l:T Disk_ColModified}" Binding="{Binding LastWriteText}" Width="110" />
+                                <DataGridTemplateColumn Width="120">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Content="{l:T Sug_OpenFolder}" Style="{StaticResource Link}"
+                                                    Command="{Binding DataContext.OpenInExplorerCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                    <Setter Property="ContextMenu">
+                                        <Setter.Value>
+                                            <ContextMenu>
+                                                <MenuItem Header="{l:T Disk_OpenExplorer}"
+                                                          Command="{Binding PlacementTarget.Tag.OpenInExplorerCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                          CommandParameter="{Binding}" />
+                                                <MenuItem Header="{l:T Disk_CopyPath}"
+                                                          Command="{Binding PlacementTarget.Tag.CopyPathCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                          CommandParameter="{Binding}" />
+                                                <Separator />
+                                                <MenuItem Header="{l:T Disk_Recycle}"
+                                                          Command="{Binding PlacementTarget.Tag.RecycleCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                          CommandParameter="{Binding}" />
+                                            </ContextMenu>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Setter Property="Tag" Value="{Binding DataContext, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
+                                </Style>
+                            </DataGrid.RowStyle>
+                        </DataGrid>
+                    </Border>
+                </Grid>
+            </DockPanel>
+        </TabItem>
+
         <!-- ===================== DI CHUYỂN DATA APP ===================== -->
         <TabItem Tag="&#xE8DE;" Header="{l:T Tab_Relocation}" DataContext="{Binding Relocation}">
             <DockPanel Style="{StaticResource Page}">
