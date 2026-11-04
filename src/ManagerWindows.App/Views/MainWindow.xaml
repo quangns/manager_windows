@@ -3,20 +3,13 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:l="clr-namespace:ManagerWindows.App.Services"
         xmlns:c="clr-namespace:ManagerWindows.App.Controls"
+        xmlns:v="clr-namespace:ManagerWindows.App.Views"
         Title="{l:T App_Title}" Width="1240" Height="800" MinWidth="1000" MinHeight="640"
         Icon="/Assets/app.ico" WindowStartupLocation="CenterScreen"
         Background="{DynamicResource Canvas}" Foreground="{DynamicResource Ink}"
         FontFamily="{StaticResource UiFont}" FontSize="13">
     <!-- Bố cục theo docs/design/DESIGN.md: sidebar 232px + vùng nội dung tối đa 1200px. -->
     <Window.Resources>
-        <!-- Chân trang: thanh tải mảnh 2px + chữ trạng thái -->
-        <DataTemplate x:Key="StatusBar">
-            <StackPanel Margin="0,12,0,0">
-                <ProgressBar Style="{StaticResource BusyLine}" Visibility="{Binding Busy, Converter={StaticResource BoolVis}}" Margin="0,0,0,6" />
-                <TextBlock Text="{Binding Status}" Style="{StaticResource Muted}" />
-            </StackPanel>
-        </DataTemplate>
-
         <!-- Thanh dung lượng đổi màu theo mức đầy: ok / warn (< 15%) / low (< 10%) -->
         <Style x:Key="DriveMeter" TargetType="ProgressBar" BasedOn="{StaticResource Meter}">
             <Style.Triggers>
@@ -57,11 +50,6 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Khung trang: lề 32px, rộng tối đa 1200px -->
-        <Style x:Key="Page" TargetType="DockPanel">
-            <Setter Property="Margin" Value="32,28,32,16" />
-            <Setter Property="MaxWidth" Value="1200" />
-        </Style>
         <Style x:Key="Gap" TargetType="FrameworkElement">
             <Setter Property="Margin" Value="0,0,0,16" />
         </Style>
@@ -755,6 +743,11 @@
                     </Border>
                 </Grid>
             </DockPanel>
+        </TabItem>
+
+        <!-- ===================== PHÂN VÙNG Ổ ĐĨA ===================== -->
+        <TabItem Tag="&#xEDA2;" Header="{l:T Tab_Partitions}" DataContext="{Binding Partitions}">
+            <v:PartitionsView />
         </TabItem>
 
         <!-- ===================== DI CHUYỂN DATA APP ===================== -->

@@ -20,7 +20,8 @@ App chạy nền trên Windows 10/11 (x64) giúp:
    - App đọc thẳng file .xlsx để tìm nguyên nhân làm file nặng: vùng dữ liệu "ma", quá nhiều style, hàm tự tính lại (INDIRECT/OFFSET…), liên kết ngoài, ảnh lớn, Office 32-bit…
    - Từ đó app đưa ra cách xử lý cụ thể.
 
-8. **Công cụ** (phím tắt toàn cục, tự cấu hình):
+8. **Phân vùng ổ đĩa** (tương tự MiniTool Partition Wizard, phần Windows hỗ trợ an toàn): sơ đồ đĩa theo tỉ lệ; thu nhỏ / mở rộng (NTFS, ReFS), tạo phân vùng từ vùng trống, xoá, format (NTFS / exFAT / FAT32), đổi ký tự ổ, đổi nhãn, kiểm tra lỗi (chkdsk /scan), khởi tạo đĩa mới (GPT/MBR). Thay đổi chạy trong cửa sổ riêng quyền Administrator (UAC), không qua dịch vụ nền. Chặn thao tác phá dữ liệu trên phân vùng Windows, EFI, MSR, Recovery và phân vùng đang chứa app; xoá/format phải gõ chữ xác nhận. Không hỗ trợ di chuyển/gộp phân vùng, mở rộng sang trái, chuyển MBR↔GPT khi còn dữ liệu.
+9. **Công cụ** (phím tắt toàn cục, tự cấu hình):
    - Chụp màn hình: khoanh vùng tự do hoặc bấm chọn cửa sổ (`Ctrl+Alt+A`), chụp cửa sổ đang dùng (`Ctrl+Alt+W`), toàn màn hình (`Ctrl+Alt+F`). Trình chỉnh sửa có khung, elip, mũi tên, tô sáng, che kín, đánh số thứ tự, 8 màu, 3 độ dày nét; sao chép/lưu PNG.
    - Ghim cửa sổ app khác luôn trên cùng: phím tắt `Ctrl+Alt+T`, kéo tâm ngắm thả lên cửa sổ, hoặc chọn trong danh sách.
    - Mini monitor CPU / GPU / RAM / ổ đĩa luôn trên cùng, nền trong suốt; chọn chỉ số, ngang/dọc, 3 cỡ, khoá vị trí + click xuyên (`Ctrl+Alt+M`).

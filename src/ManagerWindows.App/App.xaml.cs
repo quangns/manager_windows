@@ -50,6 +50,12 @@ public partial class App : Application
             RunRollbackAll();
             return;
         }
+        // Cửa sổ quản lý phân vùng chạy quyền Admin (mở từ tab Phân vùng): không chạy nền, không giữ khoá một phiên.
+        if (e.Args.Contains("--partitions"))
+        {
+            RunPartitionsOnly();
+            return;
+        }
 
         if (!AcquireSingleInstance()) return;
         InstanceInfo.Current().Write();
@@ -149,6 +155,17 @@ public partial class App : Application
     {
         using (var ev = new EventWaitHandle(false, EventResetMode.AutoReset, ShowEventName)) ev.Set();
         Shutdown();
+    }
+
+    private void RunPartitionsOnly()
+    {
+        var host = new AppHost(); // chỉ để đọc ngôn ngữ, giao diện, thư mục log; không Start dịch vụ nền nào
+        Loc.Instance.SetLanguage(host.Config.Language);
+        ThemeManager.Apply(host.Config.Theme);
+        Log.Info("partition", "mở cửa sổ quản lý phân vùng (quyền Admin)");
+        var w = new PartitionWindow();
+        w.Closed += (_, _) => Shutdown();
+        w.Show();
     }
 
     private void RunRollbackAll()

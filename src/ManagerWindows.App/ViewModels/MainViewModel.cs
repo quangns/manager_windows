@@ -4,12 +4,13 @@ namespace ManagerWindows.App.ViewModels;
 
 public sealed partial class MainViewModel : ObservableObject
 {
-    public static readonly string[] Tabs = ["dashboard", "cleanup", "suggestions", "diskusage", "relocation", "usage", "processes", "hibernation", "priority", "tools", "settings"];
+    public static readonly string[] Tabs = ["dashboard", "cleanup", "suggestions", "diskusage", "partitions", "relocation", "usage", "processes", "hibernation", "priority", "tools", "settings"];
 
     public DashboardViewModel Dashboard { get; } = new();
     public CleanupViewModel Cleanup { get; } = new();
     public SuggestionsViewModel Suggestions { get; } = new();
     public DiskUsageViewModel DiskUsage { get; } = new();
+    public PartitionsViewModel Partitions { get; } = new();
     public RelocationViewModel Relocation { get; } = new();
     public UsageViewModel Usage { get; } = new();
     public ProcessesViewModel Processes { get; } = new();
@@ -49,6 +50,7 @@ public sealed partial class MainViewModel : ObservableObject
         {
             case "dashboard": _ = Dashboard.RefreshCommand.ExecuteAsync(null); break;
             case "diskusage": DiskUsage.LoadDrives(); break;
+            case "partitions": _ = Partitions.RefreshCommand.ExecuteAsync(null); break;
             case "relocation": Relocation.LoadRecords(); break;
             case "usage": _ = Usage.RefreshCommand.ExecuteAsync(null); break;
             case "priority": _ = Priority.LoadAppsCommand.ExecuteAsync(null); break;
