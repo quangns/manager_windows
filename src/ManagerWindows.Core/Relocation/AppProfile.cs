@@ -28,8 +28,11 @@ public sealed class AppProfile
     public static List<AppProfile> Load(string jsonPath)
     {
         using var s = File.OpenRead(jsonPath);
-        return JsonSerializer.Deserialize<List<AppProfile>>(s, RuleLoader.JsonOptions) ?? new();
+        return Parse(s);
     }
+
+    public static List<AppProfile> Parse(Stream json) =>
+        JsonSerializer.Deserialize<List<AppProfile>>(json, RuleLoader.JsonOptions) ?? new();
 }
 
 public sealed record DetectedFolder(AppProfile? Profile, string Path, long Bytes, bool IsLinked, string? LinkTarget);

@@ -35,10 +35,17 @@ public sealed record InstanceInfo(string Path, string Version, bool Portable, in
         $"{Version} · {Loc.Instance[Portable ? "Edition_Portable" : "Edition_Installed"]}\n{Path}";
 }
 
-/// <summary>Bản đang chạy: phiên bản và loại (portable có file portable.txt cạnh exe).</summary>
+/// <summary>
+/// Bản đang chạy: phiên bản và loại. Bản portable build với cờ PORTABLE (một file exe);
+/// vẫn nhận file portable.txt cạnh exe của các bản portable cũ (0.1.x–0.3.0).
+/// </summary>
 public static class Edition
 {
+#if PORTABLE
+    public static bool IsPortable => true;
+#else
     public static bool IsPortable { get; } = File.Exists(Path.Combine(AppContext.BaseDirectory, "portable.txt"));
+#endif
 
     public static string Version { get; } = typeof(Edition).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
 

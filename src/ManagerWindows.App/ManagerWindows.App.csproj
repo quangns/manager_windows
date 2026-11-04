@@ -8,6 +8,8 @@
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>false</SelfContained>
+    <!-- dotnet publish -p:PortableBuild=true: bản portable một file exe (dữ liệu cạnh exe, không cần portable.txt) -->
+    <DefineConstants Condition="'$(PortableBuild)' == 'true'">$(DefineConstants);PORTABLE</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
@@ -19,12 +21,21 @@
     <ProjectReference Include="..\ManagerWindows.Storage\ManagerWindows.Storage.csproj" />
     <ProjectReference Include="..\ManagerWindows.Ipc\ManagerWindows.Ipc.csproj" />
   </ItemGroup>
+  <!-- Nhãn loại bản trong assembly để script đóng gói kiểm tra không lẫn bản portable/cài đặt -->
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>ManagerWindowsEdition</_Parameter1>
+      <_Parameter2 Condition="'$(PortableBuild)' == 'true'">portable</_Parameter2>
+      <_Parameter2 Condition="'$(PortableBuild)' != 'true'">installed</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
   <ItemGroup>
     <Resource Include="Assets\app.ico" />
     <Resource Include="Assets\Fonts\*.ttf" />
-    <None Include="Assets\Fonts\OFL-*.txt" CopyToOutputDirectory="PreserveNewest" Link="licenses\%(Filename)%(Extension)" />
+    <None Include="Assets\Fonts\OFL-*.txt" CopyToOutputDirectory="PreserveNewest" Link="licenses\%(Filename)%(Extension)" ExcludeFromSingleFile="true" />
     <EmbeddedResource Include="Lang\*.json" />
-    <!-- Để rules nằm ngoài file exe (bản portable một file) cho người dùng sửa được -->
+    <!-- Luật dọn rác: nhúng sẵn trong exe (bản portable chỉ có một file); nếu cạnh exe có thư mục rules thì dùng file đó (sửa được) -->
+    <EmbeddedResource Include="..\..\rules\*.json" LogicalName="rules/%(Filename)%(Extension)" />
     <None Include="..\..\rules\*.json" Link="rules\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
   </ItemGroup>
 </Project>

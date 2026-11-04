@@ -14,7 +14,7 @@ public sealed class AppHost
     public static AppHost Current { get; private set; } = null!;
 
     public string DataDir { get; }
-    /// <summary>Bản portable: có file portable.txt cạnh exe, dữ liệu lưu trong thư mục data bên cạnh.</summary>
+    /// <summary>Bản portable (xem <see cref="Edition"/>): dữ liệu lưu trong thư mục data cạnh exe.</summary>
     public bool IsPortable { get; }
     public ConfigStore ConfigStore { get; }
     public AppConfig Config { get; private set; }
@@ -51,15 +51,25 @@ public sealed class AppHost
         Relocations = new RelocationRepository(Db);
         Usage = new UsageRepository(Db);
 
-        var rulesDir = Path.Combine(AppContext.BaseDirectory, "rules");
-        Rules = RuleLoader.Load(Path.Combine(rulesDir, "cleanup-rules.json"));
-        Profiles = AppProfile.Load(Path.Combine(rulesDir, "app-profiles.json"));
+        using (var rules = OpenRules("cleanup-rules.json")) Rules = RuleLoader.Parse(rules);
+        using (var profiles = OpenRules("app-profiles.json")) Profiles = AppProfile.Parse(profiles);
 
         UsageTracker = new UsageTracker(this);
         Scheduler = new CleanupScheduler(this);
         Priority = new PriorityController(this);
         Relocation = new RelocationService(this);
         BackgroundWatcher = new BackgroundWatcher(this);
+    }
+
+    /// <summary>
+    /// File luật: ưu tiên thư mục rules cạnh exe (người dùng sửa được); bản portable một file thì dùng bản nhúng trong exe.
+    /// </summary>
+    private static Stream OpenRules(string fileName)
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "rules", fileName);
+        if (File.Exists(path)) return File.OpenRead(path);
+        return typeof(AppHost).Assembly.GetManifestResourceStream("rules/" + fileName)
+               ?? throw new FileNotFoundException("Thiếu file luật", fileName);
     }
 
     private static (string Dir, bool Portable) ResolveDataDir()

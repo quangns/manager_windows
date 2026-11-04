@@ -1,0 +1,57 @@
+MANAGER WINDOWS — BẢN PORTABLE (không cần cài đặt)
+==================================================
+
+CÁCH CHẠY
+  1. Chép file ManagerWindows.App.exe vào chỗ bất kỳ, ví dụ D:\Tools\ManagerWindows\.
+     Không cần quyền admin. Nên để exe trong một thư mục riêng vì app sẽ tạo thư mục "data" cạnh nó.
+  2. Nhấp đúp ManagerWindows.App.exe. Lần chạy đầu có thể mất vài giây (app giải nén thư viện vào thư mục tạm).
+  3. Biểu tượng Manager Windows nằm ở khay hệ thống (góc phải thanh taskbar). Bấm vào để mở cửa sổ.
+     Góc trên bên trái cửa sổ hiện phiên bản, ví dụ "v0.3.1 · Bản portable".
+  4. Muốn tự chạy khi đăng nhập Windows: Cài đặt > "Tự chạy khi đăng nhập Windows".
+
+Windows SmartScreen có thể cảnh báo vì file chưa ký số: bấm "More info" > "Run anyway".
+
+DỮ LIỆU
+  - Cấu hình, thống kê, log nằm trong thư mục "data" cạnh exe. Nếu thư mục đó không ghi được
+    (vd. để exe trong Program Files) thì app dùng %LOCALAPPDATA%\ManagerWindows.
+  - Cập nhật bản mới: thoát app (chuột phải biểu tượng ở khay > Thoát), chép exe mới đè lên exe cũ.
+    Thư mục "data" được giữ nguyên.
+
+KHÁC BẢN CÀI ĐẶT
+  Bản portable không có dịch vụ nền, nên:
+  - không dọn được thư mục hệ thống (C:\Windows\Temp, cache Windows Update);
+  - không đếm số lần mở app;
+  - nút "Giải phóng RAM" không xả được bộ nhớ đệm standby, và không end task / đổi ưu tiên được app chạy quyền admin.
+  Muốn đủ tính năng hãy dùng bản cài đặt (ManagerWindows-<phiên bản>-win-x64.zip, chạy install.cmd).
+
+  Mỗi lúc chỉ chạy được một bản Manager Windows. Nếu bản cài đặt đang chạy dưới khay, mở bản portable
+  sẽ hỏi có đóng bản kia không.
+
+TRƯỚC KHI XOÁ APP
+  Nếu đã chuyển data app (Zalo, Telegram…) sang ổ khác, hãy mở app > Di chuyển data app > Hoàn tác,
+  hoặc chạy:  ManagerWindows.App.exe --rollback-all
+  Không hoàn tác thì Zalo… vẫn chạy bình thường vì junction vẫn còn.
+
+TUỲ CHỈNH LUẬT DỌN RÁC (nâng cao)
+  Luật dọn rác và danh sách app chuyển data được nhúng sẵn trong exe. Muốn sửa, tạo thư mục "rules"
+  cạnh exe và đặt vào đó cleanup-rules.json / app-profiles.json (lấy mẫu trong mã nguồn của dự án).
+
+
+MANAGER WINDOWS — PORTABLE EDITION (no installation)
+====================================================
+  1. Copy ManagerWindows.App.exe anywhere (ideally its own folder; a "data" folder is created next to it).
+  2. Double-click it. The first start may take a few seconds while libraries are unpacked to a temp folder.
+  3. The icon lives in the system tray. Settings > "Start when signing in to Windows" to autostart.
+  - Data (settings, stats, logs) is stored in the "data" folder next to the exe.
+  - Update: exit the app from the tray, then overwrite the exe. The "data" folder is kept.
+  - No background service: system folders aren't cleaned, app launches aren't counted, standby memory
+    isn't purged. Use the installer edition for full features.
+  - Before deleting the app, undo moved app data: Move app data > Undo, or run
+    ManagerWindows.App.exe --rollback-all
+
+
+GIẤY PHÉP FONT / FONT LICENSES
+==============================
+App nhúng font Be Vietnam Pro và JetBrains Mono, phát hành theo SIL Open Font License 1.1 (toàn văn bên dưới).
+The app embeds the Be Vietnam Pro and JetBrains Mono fonts, licensed under the SIL Open Font License 1.1 (full text below).
+
