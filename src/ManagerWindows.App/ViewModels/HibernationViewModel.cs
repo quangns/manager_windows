@@ -8,6 +8,9 @@ using ManagerWindows.Core.Monitoring;
 
 namespace ManagerWindows.App.ViewModels;
 
+/// <summary>Một app trong danh sách không bao giờ ngủ đông.</summary>
+public sealed record ExcludedRow(string Name, string DisplayName);
+
 public sealed record SleepingRow(string Name, string DisplayName, string SinceText, string RamText, int Count);
 
 /// <summary>Một app trong danh sách theo dõi: đã không dùng bao lâu và vì sao có/không được cho ngủ.</summary>
@@ -17,12 +20,15 @@ public sealed partial class HibernationViewModel : ViewModelBase
 {
     public ObservableCollection<SleepingRow> Sleeping { get; } = new();
     public ObservableCollection<WatchRow> Watch { get; } = new();
+    public ObservableCollection<ExcludedRow> Excluded { get; } = new();
 
     [ObservableProperty] private bool _enabled;
     [ObservableProperty] private int _idleMinutes;
     [ObservableProperty] private bool _onlyMinimized;
     [ObservableProperty] private int _minRamMb;
-    [ObservableProperty] private string _excludedText;
+    [ObservableProperty] private string _newExcludedName = "";
+    /// <summary>Dòng chữ cạnh tâm ngắm: đang trỏ vào app nào / vừa thêm app nào.</summary>
+    [ObservableProperty] private string _pickerText = "";
     [ObservableProperty] private bool _hasSleeping;
     [ObservableProperty] private string _sleepingSummary = "";
 
@@ -32,7 +38,8 @@ public sealed partial class HibernationViewModel : ViewModelBase
     {
         var o = Host.Config.Hibernation;
         (_enabled, _idleMinutes, _onlyMinimized, _minRamMb) = (o.Enabled, o.IdleMinutes, o.OnlyMinimized, o.MinRamMb);
-        _excludedText = TextList.Join(o.Excluded);
+        LoadExcluded();
+        _pickerText = Loc.Instance["Hib_PickerHint"];
         _timer.Tick += (_, _) => Refresh();
         Host.Hibernation.Changed += () => Application.Current.Dispatcher.BeginInvoke(Refresh);
     }
@@ -103,19 +110,94 @@ public sealed partial class HibernationViewModel : ViewModelBase
         Refresh();
     });
 
-    /// <summary>Thêm app vào danh sách không bao giờ ngủ đông.</summary>
+    private void LoadExcluded()
+    {
+        Excluded.Clear();
+        foreach (var n in Host.Config.Hibernation.Excluded.OrderBy(n => n, StringComparer.OrdinalIgnoreCase))
+            Excluded.Add(new ExcludedRow(n, RunningApps.Describe(n, ProcessPathOf(n))));
+    }
+
+    private static string? ProcessPathOf(string name)
+    {
+        var procs = System.Diagnostics.Process.GetProcessesByName(name);
+        try { return procs.Length > 0 ? ManagerWindows.Platform.SystemInfo.ProcessPath(procs[0].Id) : null; }
+        finally { foreach (var p in procs) p.Dispose(); }
+    }
+
+    /// <summary>Thêm app vào danh sách không bao giờ ngủ (lưu ngay) và đánh thức nếu nó đang ngủ.</summary>
+    private void AddExcluded(string name, string display)
+    {
+        if (name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) name = name[..^4];
+        var o = Host.Config.Hibernation;
+        if (!o.Excluded.Contains(name, StringComparer.OrdinalIgnoreCase))
+        {
+            o.Excluded = [.. o.Excluded, name]; // danh sách mới: luồng nền đang đọc danh sách cũ
+            Host.SaveConfig();
+        }
+        if (Host.Hibernation.IsAsleep(name)) Host.Hibernation.Wake(name, "excluded");
+        LoadExcluded();
+        Status = Loc.F("Hib_Excluded", ("app", display));
+    }
+
     [RelayCommand]
     private void Exclude(WatchRow? row)
     {
+        if (row != null) AddExcluded(row.Name, row.DisplayName);
+    }
+
+    [RelayCommand]
+    private void AddExcludedByName()
+    {
+        var name = NewExcludedName.Trim();
+        if (name.Length == 0) return;
+        AddExcluded(name, name);
+        NewExcludedName = "";
+    }
+
+    [RelayCommand]
+    private void RemoveExcluded(ExcludedRow? row)
+    {
         if (row == null) return;
         var o = Host.Config.Hibernation;
-        if (!o.Excluded.Contains(row.Name, StringComparer.OrdinalIgnoreCase))
+        o.Excluded = o.Excluded.Where(n => !n.Equals(row.Name, StringComparison.OrdinalIgnoreCase)).ToList();
+        Host.SaveConfig();
+        LoadExcluded();
+        Status = Loc.F("Hib_Unexcluded", ("app", row.DisplayName));
+    }
+
+    /// <summary>Tên app của tiến trình (null nếu không đọc được); kèm tên hiển thị.</summary>
+    private static (string Name, string Display)? AppOf(int pid)
+    {
+        if (pid <= 0) return null;
+        try
         {
-            o.Excluded = [.. o.Excluded, row.Name];
-            Host.SaveConfig();
+            using var p = System.Diagnostics.Process.GetProcessById(pid);
+            return (p.ProcessName, RunningApps.Describe(p.ProcessName, ManagerWindows.Platform.SystemInfo.ProcessPath(pid)));
         }
-        ExcludedText = TextList.Join(o.Excluded);
-        Status = Loc.F("Hib_Excluded", ("app", row.DisplayName));
+        catch (Exception) { return null; }
+    }
+
+    /// <summary>Đang kéo tâm ngắm: hiện app dưới con trỏ.</summary>
+    [RelayCommand]
+    private void PickHover(int pid)
+    {
+        PickerText = pid == Environment.ProcessId ? Loc.Instance["Hib_PickerSelf"]
+            : AppOf(pid) is { } a ? Loc.F("Hib_PickerOver", ("app", a.Display), ("name", a.Name))
+            : Loc.Instance["Hib_PickerNone"];
+    }
+
+    /// <summary>Thả tâm ngắm lên cửa sổ app: thêm app đó vào danh sách không bao giờ ngủ.</summary>
+    [RelayCommand]
+    private void Picked(int pid)
+    {
+        if (pid == Environment.ProcessId || AppOf(pid) is not { } a || ManagerWindows.Core.Priority.ProtectedProcesses.IsProtected(a.Name))
+        {
+            PickerText = Loc.Instance["Hib_PickerHint"];
+            Status = Loc.Instance["Hib_PickerInvalid"];
+            return;
+        }
+        AddExcluded(a.Name, a.Display);
+        PickerText = Loc.F("Hib_PickerAdded", ("app", a.Display));
     }
 
     [RelayCommand]
@@ -126,7 +208,6 @@ public sealed partial class HibernationViewModel : ViewModelBase
         o.IdleMinutes = Math.Clamp(IdleMinutes, 1, 1440);
         o.OnlyMinimized = OnlyMinimized;
         o.MinRamMb = Math.Clamp(MinRamMb, 0, 100_000);
-        o.Excluded = TextList.Split(ExcludedText).Select(n => n.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? n[..^4] : n).ToList();
         Host.SaveConfig();
         IdleMinutes = o.IdleMinutes;
         if (!o.Enabled) Host.Hibernation.WakeAll("disabled");

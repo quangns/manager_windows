@@ -76,6 +76,20 @@ public static class WindowInfo
     }
 
     public static int ForegroundPid() => PidOf(GetForegroundWindow());
+
+    [StructLayout(LayoutKind.Sequential)] private struct POINT { public int X, Y; }
+    [DllImport("user32.dll")] private static extern bool GetCursorPos(out POINT p);
+    [DllImport("user32.dll")] private static extern IntPtr WindowFromPoint(POINT p);
+    [DllImport("user32.dll")] private static extern IntPtr GetAncestor(IntPtr hwnd, uint flags);
+
+    /// <summary>Tiến trình sở hữu cửa sổ (cấp cao nhất) đang nằm dưới con trỏ chuột — dùng cho "kéo để chọn app".</summary>
+    public static int PidAtCursor()
+    {
+        if (!GetCursorPos(out var p)) return 0;
+        var hwnd = WindowFromPoint(p);
+        var root = GetAncestor(hwnd, 2 /* GA_ROOT */);
+        return PidOf(root != IntPtr.Zero ? root : hwnd);
+    }
 }
 
 /// <summary>

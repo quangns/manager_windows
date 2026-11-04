@@ -1009,10 +1009,72 @@
                                 <c:SettingRow Title="{l:T Hib_MinRam}" BorderThickness="0">
                                     <TextBox Text="{Binding MinRamMb}" Width="72" />
                                 </c:SettingRow>
-                                <TextBlock Text="{l:T Hib_ExcludedLabel}" FontWeight="Medium" Margin="0,12,0,6" />
-                                <TextBox Text="{Binding ExcludedText}" AcceptsReturn="True" Height="90" VerticalScrollBarVisibility="Auto"
-                                         FontFamily="{StaticResource MonoFont}" FontSize="12.5" ToolTip="{l:T Proc_IgnoredHint}" />
                             </StackPanel>
+                        </Border>
+
+                        <!-- Không bao giờ ngủ: kéo tâm ngắm thả lên cửa sổ app (kiểu EVKey) hoặc gõ tên -->
+                        <DockPanel Margin="0,4,0,4">
+                            <TextBlock Text="{Binding Excluded.Count}" DockPanel.Dock="Right" Style="{StaticResource Muted}" VerticalAlignment="Center" />
+                            <TextBlock Text="{l:T Hib_ExcludedLabel}" Style="{StaticResource CardTitle}" />
+                        </DockPanel>
+                        <TextBlock Text="{l:T Hib_ExcludedDesc}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,10" />
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                            <DockPanel>
+                                <Grid DockPanel.Dock="Top" Margin="0,0,0,14">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <c:WindowPicker PickedCommand="{Binding PickedCommand}" HoverCommand="{Binding PickHoverCommand}" />
+                                    <StackPanel Grid.Column="1" Margin="14,0,16,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{l:T Hib_PickerTitle}" FontWeight="Medium" />
+                                        <TextBlock Text="{Binding PickerText}" Style="{StaticResource Muted}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBox Text="{Binding NewExcludedName, UpdateSourceTrigger=PropertyChanged}" Width="170"
+                                                 FontFamily="{StaticResource MonoFont}" FontSize="12.5" ToolTip="{l:T Hib_AddByNameHint}">
+                                            <TextBox.InputBindings>
+                                                <KeyBinding Key="Return" Command="{Binding AddExcludedByNameCommand}" />
+                                            </TextBox.InputBindings>
+                                        </TextBox>
+                                        <Button Style="{StaticResource Secondary}" Content="{l:T Hib_AddByName}" Command="{Binding AddExcludedByNameCommand}" Margin="8,0,0,0" />
+                                    </StackPanel>
+                                </Grid>
+                                <Border Style="{StaticResource TableCard}">
+                                    <DataGrid c:Table.Apply="True" ItemsSource="{Binding Excluded}" IsReadOnly="True" MinHeight="320" MaxHeight="520">
+                                        <DataGrid.Columns>
+                                            <DataGridTemplateColumn Header="{l:T Col_App}" Width="*">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                            <TextBlock Style="{StaticResource Icon}" Text="&#xE72E;" FontSize="12" Foreground="{DynamicResource Accent}" Margin="0,0,8,0" />
+                                                            <TextBlock Text="{Binding DisplayName}" FontWeight="Medium" />
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                            <DataGridTemplateColumn Header="{l:T Hib_ProcessName}" Width="220">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding Name}" Foreground="{DynamicResource InkMuted}" FontFamily="{StaticResource MonoFont}"
+                                                                   FontSize="12" VerticalAlignment="Center" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                            <DataGridTemplateColumn Width="110">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <Button Content="{l:T Hib_Remove}" Style="{StaticResource Link}"
+                                                                Command="{Binding DataContext.RemoveExcludedCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                                CommandParameter="{Binding}" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </Border>
+                            </DockPanel>
                         </Border>
 
                         <!-- Đang ngủ đông -->
