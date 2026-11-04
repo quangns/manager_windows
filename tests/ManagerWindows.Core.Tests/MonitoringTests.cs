@@ -116,3 +116,42 @@ public class MonitoringTests
         Assert.Equal(1500, g.IoBytesPerSec);
     }
 }
+
+public class RestartTests
+{
+    [Theory]
+    [InlineData("\"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe\" --profile-directory=\"Profile 1\"",
+        "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe", "--profile-directory=\"Profile 1\"")]
+    [InlineData("C:\\Windows\\system32\\notepad.exe C:\\a b.txt", "C:\\Windows\\system32\\notepad.exe", "C:\\a b.txt")]
+    [InlineData("C:\\Program Files\\App X\\app.exe", "C:\\Program Files\\App X\\app.exe", "")]
+    [InlineData("explorer.exe", "explorer.exe", "")]
+    [InlineData("\"C:\\x\\EXCEL.EXE\"", "C:\\x\\EXCEL.EXE", "")]
+    public void Splits_command_line(string cmd, string file, string args)
+    {
+        var r = RestartPlanner.Split(cmd);
+        Assert.Equal(file, r.FileName);
+        Assert.Equal(args, r.Arguments);
+    }
+
+    [Fact]
+    public void Restarts_only_root_processes()
+    {
+        var chrome = "\"C:\\Chrome\\chrome.exe\"";
+        var plan = RestartPlanner.Plan([
+            new(100, 50, chrome, "C:\\Chrome\\chrome.exe"),                  // gốc (cha là explorer)
+            new(101, 100, chrome + " --type=renderer", "C:\\Chrome\\chrome.exe"),
+            new(102, 100, chrome + " --type=gpu-process", "C:\\Chrome\\chrome.exe"),
+            new(103, 101, chrome + " --type=utility", "C:\\Chrome\\chrome.exe"),
+        ]);
+        var only = Assert.Single(plan);
+        Assert.Equal("C:\\Chrome\\chrome.exe", only.FileName);
+        Assert.Equal("", only.Arguments);
+    }
+
+    [Fact]
+    public void Falls_back_to_executable_path_when_command_line_unknown()
+    {
+        var plan = RestartPlanner.Plan([new(7, 1, null, "C:\\App\\app.exe"), new(8, 2, "", null)]);
+        Assert.Equal([new LaunchCommand("C:\\App\\app.exe", "")], plan);
+    }
+}

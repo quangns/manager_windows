@@ -316,5 +316,14 @@
   "Lag_Disk": "Ổ {disk} bận {percent}%. Đọc ghi nhiều nhất: {apps}.",
   "Lag_Cpu": "CPU dùng {percent}%. Nhiều nhất: {apps}.",
   "Lag_Memory": "RAM đã dùng {percent}%, Windows phải đẩy bớt sang ổ đĩa. Nhiều nhất: {apps}.",
-  "Lag_NoApp": "không xác định được app (có thể do Windows hoặc driver)"
+  "Lag_NoApp": "không xác định được app (có thể do Windows hoặc driver)",
+  "Proc_Restart": "Khởi động lại",
+  "Restart_Confirm": "Khởi động lại {app}?\n\nApp sẽ được đóng như khi bấm X (app có thể hỏi lưu), quá 10 giây chưa đóng sẽ bị buộc dừng, rồi mở lại.\nDữ liệu chưa lưu có thể mất.",
+  "Restart_Working": "Đang khởi động lại {app}…",
+  "Restart_Done": "Đã khởi động lại {app}.",
+  "Restart_DoneForced": "Đã khởi động lại {app} ({count} tiến trình phải buộc dừng).",
+  "Restart_Failed": "Không khởi động lại được {app}: {error}",
+  "Restart_NoCommand": "không đọc được lệnh khởi động của app (app chạy quyền admin hoặc đã thoát).",
+  "Restart_StillRunning": "app vẫn đang chạy sau khi đóng (có thể đang chờ bạn trả lời hộp thoại lưu file).",
+  "Restart_StartFailed": "đã đóng app nhưng không mở lại được; hãy mở lại thủ công."
 }

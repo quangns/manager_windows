@@ -24,6 +24,9 @@ public sealed partial class ProcessRow : ObservableObject
     public IReadOnlyList<int> Pids { get; set; } = [];
     public bool IsProtected => ProtectedProcesses.IsProtected(Name);
     public bool CanAct => !IsProtected;
+    /// <summary>Windows Explorer được khởi động lại (sửa taskbar/File Explorer bị đơ) dù không cho End task.</summary>
+    public bool CanRestart => (!IsProtected || Name.Equals("explorer", StringComparison.OrdinalIgnoreCase))
+                              && !Name.Equals("ManagerWindows.App", StringComparison.OrdinalIgnoreCase);
 
     [ObservableProperty] private string _displayName = "";
     [ObservableProperty] private ProcessKind _kind;
@@ -267,6 +270,24 @@ public sealed partial class ProcessesViewModel : ViewModelBase
             ? Loc.F("Proc_Ended", ("app", row.DisplayName), ("count", closed))
             : Loc.F("Proc_EndPartial", ("app", row.DisplayName), ("count", closed), ("failed", failed));
         Log.Info("processes", $"end task {row.Name}: {closed} ok, {failed} failed");
+        await SampleAsync();
+    });
+
+    /// <summary>Khởi động lại app: đóng nhẹ, quá 10 giây mới buộc dừng, rồi mở lại bằng lệnh khởi động cũ.</summary>
+    [RelayCommand]
+    private Task RestartAppAsync(ProcessRow? row) => RunBusyAsync(async () =>
+    {
+        if (row == null || !row.CanRestart) return;
+        if (!Confirm(Loc.F("Restart_Confirm", ("app", row.DisplayName))))
+        {
+            Status = "";
+            return;
+        }
+        Status = Loc.F("Restart_Working", ("app", row.DisplayName));
+        var r = await AppRestarter.RestartAsync(row.Name, row.Pids.ToList(), Host.Service);
+        Status = r.Error != null
+            ? Loc.F("Restart_Failed", ("app", row.DisplayName), ("error", r.Error))
+            : Loc.F(r.Killed > 0 ? "Restart_DoneForced" : "Restart_Done", ("app", row.DisplayName), ("count", r.Killed));
         await SampleAsync();
     });
 

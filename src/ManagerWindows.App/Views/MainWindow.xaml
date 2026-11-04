@@ -924,10 +924,15 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Width="300">
+                            <DataGridTemplateColumn Width="400">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Visibility="{Binding CanAct, Converter={StaticResource BoolVis}}">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Button Content="{l:T Proc_Restart}" Style="{StaticResource Link}"
+                                                    Visibility="{Binding CanRestart, Converter={StaticResource BoolVis}}"
+                                                    Command="{Binding DataContext.RestartAppCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}" />
+                                            <StackPanel Orientation="Horizontal" Visibility="{Binding CanAct, Converter={StaticResource BoolVis}}">
                                             <Button Content="{l:T Proc_Trim}" Style="{StaticResource Link}"
                                                     Command="{Binding DataContext.TrimAppCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                     CommandParameter="{Binding}" />
@@ -937,6 +942,7 @@
                                             <Button Content="{l:T Sug_OpenFolder}" Style="{StaticResource Link}"
                                                     Command="{Binding DataContext.OpenLocationCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                     CommandParameter="{Binding}" />
+                                            </StackPanel>
                                         </StackPanel>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>

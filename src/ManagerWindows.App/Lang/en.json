@@ -316,5 +316,14 @@
   "Lag_Disk": "Disk {disk} is {percent}% busy. Top readers/writers: {apps}.",
   "Lag_Cpu": "CPU at {percent}%. Top users: {apps}.",
   "Lag_Memory": "RAM {percent}% used, Windows is paging to disk. Top users: {apps}.",
-  "Lag_NoApp": "no single app (likely Windows itself or a driver)"
+  "Lag_NoApp": "no single app (likely Windows itself or a driver)",
+  "Proc_Restart": "Restart",
+  "Restart_Confirm": "Restart {app}?\n\nThe app is closed as if you clicked X (it may ask to save); if it hasn't closed after 10 seconds it is forced to stop, then reopened.\nUnsaved data may be lost.",
+  "Restart_Working": "Restarting {app}…",
+  "Restart_Done": "Restarted {app}.",
+  "Restart_DoneForced": "Restarted {app} ({count} processes had to be forced to stop).",
+  "Restart_Failed": "Couldn't restart {app}: {error}",
+  "Restart_NoCommand": "couldn't read the app's launch command (it runs as admin or has exited).",
+  "Restart_StillRunning": "the app is still running (it may be waiting for you to answer a save dialog).",
+  "Restart_StartFailed": "the app was closed but couldn't be reopened; please open it manually."
 }
