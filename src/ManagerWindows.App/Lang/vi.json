@@ -281,7 +281,7 @@
   "Proc_RamUsed": "{used} / {total}",
   "Proc_Count": "Tiến trình",
   "Proc_BackgroundApps": "App chạy ngầm",
-  "Proc_KindAll": "Tất cả",
+  "Proc_KindAll": "Tất cả (gồm hệ thống)",
   "Proc_Kind_App": "Ứng dụng",
   "Proc_Kind_Background": "Chạy ngầm",
   "Proc_Kind_System": "Hệ thống",
@@ -305,5 +305,6 @@
   "Proc_IgnoreAlerts": "Không cảnh báo app này",
   "Proc_Ignored": "Sẽ không cảnh báo {app} nữa.",
   "Proc_AlertCpuMsg": "{app} đang chạy ngầm dùng {cpu}% CPU liên tục {sec} giây. Mở tab Tiến trình để xem hoặc end task.",
-  "Proc_AlertRamMsg": "{app} đang chạy ngầm dùng {ram} RAM. Mở tab Tiến trình để giải phóng RAM hoặc end task."
+  "Proc_AlertRamMsg": "{app} đang chạy ngầm dùng {ram} RAM. Mở tab Tiến trình để giải phóng RAM hoặc end task.",
+  "Proc_FilterUserApps": "Ứng dụng & chạy ngầm"
 }

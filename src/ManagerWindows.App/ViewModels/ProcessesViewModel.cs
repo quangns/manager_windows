@@ -38,6 +38,9 @@ public sealed partial class ProcessRow : ObservableObject
     [ObservableProperty] private double _ramRatio;
 }
 
+/// <summary>Bộ lọc loại: mặc định ẩn tiến trình hệ thống, chỉ hiện khi chọn "Tất cả".</summary>
+public enum ProcessFilter { UserApps, App, Background, All }
+
 public sealed partial class ProcessesViewModel : ViewModelBase
 {
     private readonly ProcessMonitorSampler _sampler = new();
@@ -51,15 +54,15 @@ public sealed partial class ProcessesViewModel : ViewModelBase
     public ObservableCollection<ProcessRow> Rows { get; } = new();
     public ListCollectionView View { get; }
 
-    public List<Option<ProcessKind?>> Kinds { get; } =
+    public List<Option<ProcessFilter>> Kinds { get; } =
     [
-        new(null, Loc.Instance["Proc_KindAll"]),
-        new(ProcessKind.App, Loc.Instance["Proc_Kind_App"]),
-        new(ProcessKind.Background, Loc.Instance["Proc_Kind_Background"]),
-        new(ProcessKind.System, Loc.Instance["Proc_Kind_System"]),
+        new(ProcessFilter.UserApps, Loc.Instance["Proc_FilterUserApps"]),
+        new(ProcessFilter.App, Loc.Instance["Proc_Kind_App"]),
+        new(ProcessFilter.Background, Loc.Instance["Proc_Kind_Background"]),
+        new(ProcessFilter.All, Loc.Instance["Proc_KindAll"]),
     ];
 
-    [ObservableProperty] private ProcessKind? _kindFilter;
+    [ObservableProperty] private ProcessFilter _kindFilter = ProcessFilter.UserApps;
     [ObservableProperty] private string _search = "";
     [ObservableProperty] private double _cpuTotal;
     [ObservableProperty] private string _cpuTotalText = "";
@@ -79,7 +82,7 @@ public sealed partial class ProcessesViewModel : ViewModelBase
     {
         View = (ListCollectionView)CollectionViewSource.GetDefaultView(Rows);
         View.Filter = o => o is ProcessRow r
-            && (KindFilter == null || r.Kind == KindFilter)
+            && Matches(r.Kind)
             && (Search.Length == 0
                 || r.DisplayName.Contains(Search, StringComparison.OrdinalIgnoreCase)
                 || r.Name.Contains(Search, StringComparison.OrdinalIgnoreCase));
@@ -98,13 +101,21 @@ public sealed partial class ProcessesViewModel : ViewModelBase
         _timer.Tick += async (_, _) => await SampleAsync();
     }
 
-    partial void OnKindFilterChanged(ProcessKind? value) => View.Refresh();
+    private bool Matches(ProcessKind kind) => KindFilter switch
+    {
+        ProcessFilter.App => kind == ProcessKind.App,
+        ProcessFilter.Background => kind == ProcessKind.Background,
+        ProcessFilter.All => true,
+        _ => kind != ProcessKind.System, // mặc định: ẩn tiến trình hệ thống
+    };
+
+    partial void OnKindFilterChanged(ProcessFilter value) => View.Refresh();
     partial void OnSearchChanged(string value) => View.Refresh();
 
     /// <summary>Bắt đầu lấy mẫu khi mở tab; dừng khi rời tab để không tốn CPU.</summary>
-    public void Start(ProcessKind? filter = null)
+    public void Start(ProcessFilter? filter = null)
     {
-        if (filter != null) KindFilter = filter;
+        if (filter is { } f) KindFilter = f;
         _ = SampleAsync();
         _timer.Start();
     }

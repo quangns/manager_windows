@@ -254,7 +254,7 @@ public partial class App : Application
         var file = _pendingExcelFile;
         ShowMain(_pendingTab);
         // Cảnh báo app chạy ngầm: mở thẳng bộ lọc "Chạy ngầm".
-        if (_pendingTab == "processes") _vm?.Processes.Start(ManagerWindows.Core.Monitoring.ProcessKind.Background);
+        if (_pendingTab == "processes") _vm?.Processes.Start(ProcessFilter.Background);
         if (file != null && File.Exists(file)) _ = _vm!.Priority.AnalyzeAsync(file!);
     }
 

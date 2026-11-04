@@ -127,7 +127,7 @@ A live process monitor for a Windows utility: which apps use CPU and RAM, with e
 1. **Sidebar:** "Tiến trình" selected.
 2. **Page Header:** Title "Tiến trình", subtitle; one primary button "Giải phóng RAM".
 3. **Metrics Row (asymmetric 3:2):** left card with two halves: "CPU" big monospace percent + thin meter, "RAM" used/total + thin meter; right card with "Tiến trình" count and "App chạy ngầm" count.
-4. **Filter Row:** dropdown (Tất cả / Ứng dụng / Chạy ngầm / Hệ thống) and search input.
+4. **Filter Row:** dropdown defaulting to "Ứng dụng & chạy ngầm" (system processes hidden), other options Ứng dụng / Chạy ngầm / "Tất cả (gồm hệ thống)", and search input.
 5. **Process Table Card:** one row per app (child processes grouped): app display name bold + process name muted monospace, kind badge, process count, CPU column with thin teal bar + monospace percent, RAM column with thin teal bar + monospace size, row actions as text links "Giải phóng RAM", "End task" (red), "Mở thư mục"; sorted by CPU, live-updating every 2 seconds.
 6. **Background Alert Card (bottom):** checkbox "Cảnh báo app chạy ngầm dùng nhiều tài nguyên", inline number inputs CPU ≥ %, RAM ≥ MB, sustained seconds, secondary "Lưu"; monospace input "Không cảnh báo".
 ```
