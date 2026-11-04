@@ -32,6 +32,7 @@ public sealed class AppHost
     public RelocationService Relocation { get; }
     public BackgroundWatcher BackgroundWatcher { get; }
     public LeftoverWatcher LeftoverWatcher { get; }
+    public HibernationService Hibernation { get; }
 
     /// <summary>Hiện thông báo ở khay hệ thống (tiêu đề, nội dung, tab cần mở khi bấm vào).</summary>
     public event Action<string, string, string?>? Notify;
@@ -61,6 +62,7 @@ public sealed class AppHost
         Relocation = new RelocationService(this);
         BackgroundWatcher = new BackgroundWatcher(this);
         LeftoverWatcher = new LeftoverWatcher(this);
+        Hibernation = new HibernationService(this);
     }
 
     /// <summary>
@@ -119,6 +121,8 @@ public sealed class AppHost
         Priority.Start();
         BackgroundWatcher.Start();
         LeftoverWatcher.Start();
+        Hibernation.Attach(); // luồng UI: móc sự kiện cửa sổ, đánh thức app còn ngủ từ lần trước
+        Hibernation.Start();
         Relocation.StartHealthChecks();
     }
 
@@ -129,6 +133,7 @@ public sealed class AppHost
         Priority.Stop();
         BackgroundWatcher.Stop();
         LeftoverWatcher.Stop();
+        Hibernation.Stop(); // đánh thức mọi app đang ngủ
         Relocation.Stop();
     }
 }

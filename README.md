@@ -11,6 +11,7 @@ App chạy nền trên Windows 10/11 (x64) giúp:
    - Xem app nào đang chiếm CPU, RAM, ổ đĩa (gộp tiến trình theo app), phân loại Ứng dụng / Chạy ngầm / Hệ thống.
    - Chẩn đoán lag: khi ổ đĩa, CPU hoặc RAM quá tải, chỉ ra app dùng nhiều nhất.
    - Khởi động lại app; kiểm tra tiến trình sót (mồ côi, treo, chạy ngầm lâu không hoạt động) và dừng các mục được chọn.
+   - Ngủ đông app không dùng (mặc định 15 phút, tắt sẵn): tạm dừng app cùng tiến trình chạy ngầm của nó, trả RAM/CPU; bấm vào app là chạy tiếp đúng trạng thái cũ. Không áp dụng cho app nhắn tin, nhạc, app đang phát âm thanh/đang làm việc.
    - End task, giải phóng RAM từng app hoặc toàn máy (kèm xả bộ nhớ đệm standby qua dịch vụ nền).
    - Cảnh báo ở khay khi một app chạy ngầm dùng nhiều CPU/RAM liên tục.
 7. **Excel nặng**:

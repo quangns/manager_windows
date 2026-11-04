@@ -229,3 +229,63 @@ public class LeftoverTests
         Assert.DoesNotContain(r, g => g.Name is "Busy" or "Small" or "SysHelper");
     }
 }
+
+public class HibernationTests
+{
+    private static readonly DateTime Now = new(2026, 11, 5, 9, 0, 0, DateTimeKind.Utc);
+
+    private static HibernationCandidate C(string name, bool window = true, bool minimized = false, double cpu = 0, double io = 0,
+        long wsMb = 300, bool audio = false, bool clip = false, bool fg = false) =>
+        new(name, [1], window, minimized, cpu, io, wsMb << 20, audio, clip, fg);
+
+    private static HibernationVerdict V(HibernationCandidate c, int idleMin = 30, HibernationOptions? opt = null, string[]? asleep = null) =>
+        HibernationPlanner.Decide([c], _ => Now.AddMinutes(-idleMin), Now, opt ?? new HibernationOptions(),
+            new HashSet<string>(asleep ?? [], StringComparer.OrdinalIgnoreCase)).Single().Verdict;
+
+    [Fact]
+    public void Idle_quiet_app_is_hibernated()
+    {
+        Assert.Equal(HibernationVerdict.Hibernate, V(C("EXCEL")));
+        Assert.Equal(HibernationVerdict.InUse, V(C("EXCEL"), idleMin: 10));
+        Assert.Equal(HibernationVerdict.InUse, V(C("EXCEL", fg: true)));
+    }
+
+    [Fact]
+    public void Never_hibernates_unsafe_apps()
+    {
+        Assert.Equal(HibernationVerdict.Excluded, V(C("Zalo")));                    // sẽ không nhận tin nhắn
+        Assert.Equal(HibernationVerdict.PlayingAudio, V(C("chrome", audio: true)));
+        Assert.Equal(HibernationVerdict.OwnsClipboard, V(C("WINWORD", clip: true)));
+        Assert.Equal(HibernationVerdict.Busy, V(C("Photoshop", cpu: 15)));
+        Assert.Equal(HibernationVerdict.Busy, V(C("chrome", io: 5 * 1024 * 1024)));  // đang tải file
+        Assert.Equal(HibernationVerdict.TooSmall, V(C("notepad", wsMb: 10)));
+        Assert.Equal(HibernationVerdict.NoWindow, V(C("node", window: false)));
+        Assert.Equal(HibernationVerdict.Protected, V(C("explorer")));
+        Assert.Equal(HibernationVerdict.Protected, V(C("ManagerWindows.App")));
+        Assert.Equal(HibernationVerdict.AlreadyAsleep, V(C("EXCEL"), asleep: ["excel"]));
+    }
+
+    [Fact]
+    public void Only_minimized_option_and_custom_idle_time()
+    {
+        var opt = new HibernationOptions { OnlyMinimized = true, IdleMinutes = 5 };
+        Assert.Equal(HibernationVerdict.NotMinimized, V(C("EXCEL"), idleMin: 6, opt: opt));
+        Assert.Equal(HibernationVerdict.Hibernate, V(C("EXCEL", minimized: true), idleMin: 6, opt: opt));
+    }
+
+    [Fact]
+    public void Collects_whole_process_tree()
+    {
+        var parent = new Dictionary<int, int> { [10] = 1, [11] = 10, [12] = 10, [13] = 12, [20] = 1, [4] = 0 };
+        Assert.Equal(new HashSet<int> { 10, 11, 12, 13 }, HibernationPlanner.WithDescendants([10], parent));
+    }
+
+    [Fact]
+    public void Activity_tracker_uses_start_time_for_unseen_apps()
+    {
+        var t = new AppActivityTracker(Now.AddHours(-1));
+        t.MarkActive("chrome", Now);
+        Assert.Equal(Now, t.LastActive("CHROME"));
+        Assert.Equal(Now.AddHours(-1), t.LastActive("EXCEL"));
+    }
+}

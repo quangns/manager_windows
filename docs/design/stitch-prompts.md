@@ -135,6 +135,20 @@ A live process monitor for a Windows utility: which apps use CPU and RAM, with e
 6. **Background Alert Card (bottom):** checkbox "Cảnh báo app chạy ngầm dùng nhiều tài nguyên", inline number inputs CPU ≥ %, RAM ≥ MB, sustained seconds, secondary "Lưu"; monospace input "Không cảnh báo".
 ```
 
+## 6c. Ngủ đông (Hibernation)
+
+```
+A screen to hibernate (pause) apps that haven't been used for a while, freeing RAM/CPU while keeping their state.
+
+**Page Structure:**
+1. **Sidebar:** "Ngủ đông" selected (moon icon).
+2. **Page Header:** Title, subtitle; secondary "Đánh thức tất cả", primary "Lưu".
+3. **Info Callout:** how hibernation works and its limits (messaging/music apps never sleep).
+4. **Settings Card:** setting rows: "Bật ngủ đông app không dùng" (checkbox, off by default), "Không dùng quá (phút)" number (15), "Chỉ cho ngủ app đang thu nhỏ" checkbox, "Chỉ cho ngủ app dùng từ (MB RAM)"; monospace multi-line "Không bao giờ cho ngủ".
+5. **Sleeping Table Card:** moon icon + app name, "Ngủ từ" time, "RAM trước khi ngủ", process count, link "Đánh thức"; summary "3 app · đã trả 1,2 GB RAM"; empty state text.
+6. **Watch Table Card:** app name + process name, "Không dùng" duration, status with icon ("Sẽ ngủ sau 4 phút", "Đang phát âm thanh", "Trong danh sách không bao giờ ngủ"), links "Cho ngủ ngay", "Không bao giờ ngủ".
+```
+
 ## 7. Ưu tiên & Excel (Priority & Excel)
 
 ```

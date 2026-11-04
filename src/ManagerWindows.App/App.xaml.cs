@@ -38,6 +38,11 @@ public partial class App : Application
             Log.Error("ui", ex.Exception);
             ex.Handled = true;
         };
+        // App sắp sập vì lỗi không bắt được: đánh thức mọi app đang ngủ đông trước khi thoát.
+        AppDomain.CurrentDomain.UnhandledException += (_, _) =>
+        {
+            try { _host?.Hibernation.WakeAll("crash"); } catch { }
+        };
 
         if (e.Args.Contains("--rollback-all"))
         {
@@ -200,6 +205,7 @@ public partial class App : Application
             _vm?.Dashboard.QuickCleanCommand.Execute(null);
         });
         Item("Tray_Relocation", () => ShowMain("relocation"));
+        Item("Tray_WakeAll", () => _host?.Hibernation.WakeAll("tray"));
         menu.Items.Add(new Separator());
         Item("Tray_Exit", ExitApp);
         return menu;

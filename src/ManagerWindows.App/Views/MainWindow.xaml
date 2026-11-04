@@ -972,6 +972,138 @@
             </DockPanel>
         </TabItem>
 
+        <!-- ===================== NGỦ ĐÔNG ===================== -->
+        <TabItem Tag="&#xE708;" Header="{l:T Tab_Hibernation}" DataContext="{Binding Hibernation}">
+            <DockPanel Style="{StaticResource Page}">
+                <c:PageHeader DockPanel.Dock="Top" Title="{l:T Tab_Hibernation}" Subtitle="{l:T Hib_Subtitle}">
+                    <c:PageHeader.Actions>
+                        <StackPanel Orientation="Horizontal">
+                            <Button Style="{StaticResource Secondary}" Content="{l:T Hib_WakeAll}" Command="{Binding WakeAllCommand}" />
+                            <Button Style="{StaticResource Primary}" Content="{l:T Btn_Save}" Command="{Binding SaveCommand}" />
+                        </StackPanel>
+                    </c:PageHeader.Actions>
+                </c:PageHeader>
+                <ContentControl DockPanel.Dock="Bottom" Content="{Binding}" ContentTemplate="{StaticResource StatusBar}" />
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel MaxWidth="1000">
+                        <!-- Giải thích cách hoạt động và giới hạn -->
+                        <Border Style="{StaticResource Card}" Padding="16,12" Margin="0,0,0,16">
+                            <DockPanel>
+                                <TextBlock Style="{StaticResource Icon}" Text="&#xE946;" Foreground="{DynamicResource Accent}" VerticalAlignment="Top" Margin="0,1,12,0" />
+                                <TextBlock Text="{l:T Hib_Explain}" TextWrapping="Wrap" />
+                            </DockPanel>
+                        </Border>
+
+                        <!-- Cài đặt -->
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                            <StackPanel>
+                                <c:SettingRow Title="{l:T Hib_Enabled}" Description="{l:T Hib_EnabledDesc}">
+                                    <CheckBox IsChecked="{Binding Enabled}" />
+                                </c:SettingRow>
+                                <c:SettingRow Title="{l:T Hib_IdleMinutes}">
+                                    <TextBox Text="{Binding IdleMinutes}" Width="72" />
+                                </c:SettingRow>
+                                <c:SettingRow Title="{l:T Hib_OnlyMinimized}" Description="{l:T Hib_OnlyMinimizedDesc}">
+                                    <CheckBox IsChecked="{Binding OnlyMinimized}" />
+                                </c:SettingRow>
+                                <c:SettingRow Title="{l:T Hib_MinRam}" BorderThickness="0">
+                                    <TextBox Text="{Binding MinRamMb}" Width="72" />
+                                </c:SettingRow>
+                                <TextBlock Text="{l:T Hib_ExcludedLabel}" FontWeight="Medium" Margin="0,12,0,6" />
+                                <TextBox Text="{Binding ExcludedText}" AcceptsReturn="True" Height="90" VerticalScrollBarVisibility="Auto"
+                                         FontFamily="{StaticResource MonoFont}" FontSize="12.5" ToolTip="{l:T Proc_IgnoredHint}" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Đang ngủ đông -->
+                        <DockPanel Margin="0,4,0,10">
+                            <TextBlock Text="{Binding SleepingSummary}" DockPanel.Dock="Right" Style="{StaticResource Muted}" VerticalAlignment="Center" />
+                            <TextBlock Text="{l:T Hib_Sleeping}" Style="{StaticResource CardTitle}" />
+                        </DockPanel>
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,16" Visibility="{Binding HasSleeping, Converter={StaticResource BoolVisInv}}">
+                            <TextBlock Text="{l:T Hib_NoneSleeping}" Style="{StaticResource Muted}" />
+                        </Border>
+                        <Border Style="{StaticResource TableCard}" Margin="0,0,0,16" Visibility="{Binding HasSleeping, Converter={StaticResource BoolVis}}">
+                            <DataGrid c:Table.Apply="True" ItemsSource="{Binding Sleeping}" IsReadOnly="True" MaxHeight="260">
+                                <DataGrid.Columns>
+                                    <DataGridTemplateColumn Header="{l:T Col_App}" Width="*">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <TextBlock Style="{StaticResource Icon}" Text="&#xE708;" FontSize="12" Foreground="{DynamicResource Accent}" Margin="0,0,8,0" />
+                                                    <TextBlock Text="{Binding DisplayName}" FontWeight="Medium" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="{l:T Hib_Since}" Binding="{Binding SinceText}" Width="110" />
+                                    <DataGridTextColumn Header="{l:T Hib_RamFreed}" Binding="{Binding RamText}" Width="140" />
+                                    <DataGridTextColumn Header="{l:T Col_Processes}" Binding="{Binding Count}" Width="100" />
+                                    <DataGridTemplateColumn Width="130">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Content="{l:T Hib_Wake}" Style="{StaticResource Link}"
+                                                        Command="{Binding DataContext.WakeCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                        CommandParameter="{Binding}" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
+
+                        <!-- Theo dõi: app nào sắp ngủ, app nào không được ngủ và vì sao -->
+                        <TextBlock Text="{l:T Hib_Watch}" Style="{StaticResource CardTitle}" Margin="0,4,0,4" />
+                        <TextBlock Text="{l:T Hib_WatchDesc}" Style="{StaticResource Muted}" Margin="0,0,0,10" />
+                        <Border Style="{StaticResource TableCard}">
+                            <DataGrid c:Table.Apply="True" ItemsSource="{Binding Watch}" IsReadOnly="True" MaxHeight="360" MinHeight="80">
+                                <DataGrid.Columns>
+                                    <DataGridTemplateColumn Header="{l:T Col_App}" Width="*">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding DisplayName}" FontWeight="Medium" />
+                                                    <TextBlock Text="{Binding Name}" Foreground="{DynamicResource InkMuted}" FontFamily="{StaticResource MonoFont}"
+                                                               FontSize="11.5" Margin="8,0,0,0" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="{l:T Hib_IdleFor}" Binding="{Binding IdleText}" Width="130" />
+                                    <DataGridTemplateColumn Header="{l:T Col_Status}" Width="260">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <TextBlock Style="{StaticResource LevelIcon}" Text="&#xE946;" FontSize="12" Margin="0,0,8,0" />
+                                                    <TextBlock Text="{Binding StatusText}" TextTrimming="CharacterEllipsis" ToolTip="{Binding StatusText}" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Width="240">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Button Content="{l:T Hib_SleepNow}" Style="{StaticResource Link}"
+                                                            Visibility="{Binding CanSleepNow, Converter={StaticResource BoolVis}}"
+                                                            Command="{Binding DataContext.SleepNowCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                            CommandParameter="{Binding}" />
+                                                    <Button Content="{l:T Hib_Never}" Style="{StaticResource Link}"
+                                                            Visibility="{Binding CanExclude, Converter={StaticResource BoolVis}}"
+                                                            Command="{Binding DataContext.ExcludeCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                            CommandParameter="{Binding}" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
+        </TabItem>
+
         <!-- ===================== ƯU TIÊN & EXCEL ===================== -->
         <TabItem Tag="&#xE945;" Header="{l:T Tab_Priority}" DataContext="{Binding Priority}">
             <DockPanel Style="{StaticResource Page}">

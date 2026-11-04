@@ -35,9 +35,11 @@ public sealed partial class LeftoversViewModel : ViewModelBase
     [ObservableProperty] private string _summary = "";
     [ObservableProperty] private bool _isEmpty;
 
+    /// <summary>App đang ngủ đông bị tạm dừng nên trông như "không phản hồi": không đưa vào danh sách.</summary>
     public static List<LeftoverGroup> Scan(AppHost host) =>
         LeftoverDetector.Detect(ProcessTree.Snapshot(), Process.GetCurrentProcess().SessionId, Environment.ProcessId,
-            DateTime.UtcNow, host.Config.Leftovers, Environment.GetFolderPath(Environment.SpecialFolder.Windows));
+            DateTime.UtcNow, host.Config.Leftovers, Environment.GetFolderPath(Environment.SpecialFolder.Windows))
+            .Where(g => !host.Hibernation.IsAsleep(g.Name)).ToList();
 
     [RelayCommand]
     private Task ScanAsync() => RunBusyAsync(async () =>

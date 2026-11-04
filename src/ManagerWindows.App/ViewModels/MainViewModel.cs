@@ -4,7 +4,7 @@ namespace ManagerWindows.App.ViewModels;
 
 public sealed partial class MainViewModel : ObservableObject
 {
-    public static readonly string[] Tabs = ["dashboard", "cleanup", "suggestions", "relocation", "usage", "processes", "priority", "settings"];
+    public static readonly string[] Tabs = ["dashboard", "cleanup", "suggestions", "relocation", "usage", "processes", "hibernation", "priority", "settings"];
 
     public DashboardViewModel Dashboard { get; } = new();
     public CleanupViewModel Cleanup { get; } = new();
@@ -12,6 +12,7 @@ public sealed partial class MainViewModel : ObservableObject
     public RelocationViewModel Relocation { get; } = new();
     public UsageViewModel Usage { get; } = new();
     public ProcessesViewModel Processes { get; } = new();
+    public HibernationViewModel Hibernation { get; } = new();
     public PriorityViewModel Priority { get; } = new();
     public SettingsViewModel Settings { get; } = new();
 
@@ -38,6 +39,8 @@ public sealed partial class MainViewModel : ObservableObject
         // Bảng tiến trình chỉ lấy mẫu khi đang mở tab.
         if (Tabs[value] == "processes") Processes.Start();
         else Processes.Stop();
+        if (Tabs[value] == "hibernation") Hibernation.Start();
+        else Hibernation.Stop();
 
         // Tải dữ liệu khi mở tab để không làm chậm lúc khởi động.
         switch (Tabs[value])

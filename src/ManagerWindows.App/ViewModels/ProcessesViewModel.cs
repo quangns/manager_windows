@@ -299,6 +299,7 @@ public sealed partial class ProcessesViewModel : ViewModelBase
             return;
         }
         Status = Loc.F("Restart_Working", ("app", row.DisplayName));
+        Host.Hibernation.Wake(row.Name, "restart"); // app đang ngủ không xử lý được lệnh đóng
         var r = await AppRestarter.RestartAsync(row.Name, row.Pids.ToList(), Host.Service);
         Status = r.Error != null
             ? Loc.F("Restart_Failed", ("app", row.DisplayName), ("error", r.Error))
