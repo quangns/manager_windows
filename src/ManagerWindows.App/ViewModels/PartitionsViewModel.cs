@@ -92,6 +92,9 @@ public sealed partial class PartitionsViewModel : ViewModelBase
     [ObservableProperty] private bool _hasLoadError;
     [ObservableProperty] private string _detailTitle = "";
     [ObservableProperty] private string _detailText = "";
+    /// <summary>Có thao tác dời phân vùng đang dở (nhật ký còn): phải tiếp tục trước khi dùng phân vùng đó.</summary>
+    [ObservableProperty] private bool _hasPending;
+    [ObservableProperty] private string _pendingText = "";
     public bool HasSelection => Selected != null;
 
     private static readonly char? WindowsLetter = Path.GetPathRoot(Environment.SystemDirectory) is { Length: > 0 } r ? char.ToUpperInvariant(r[0]) : null;
@@ -101,6 +104,13 @@ public sealed partial class PartitionsViewModel : ViewModelBase
     public Task RefreshAsync() => RunBusyAsync(async () =>
     {
         var keep = Selected?.Segment;
+        if (PartitionMover.PendingMove() is { } j)
+        {
+            HasPending = true;
+            PendingText = Loc.F("Part_PendingText", ("part", j.Letter is { } l ? $"{l}:" : $"#{j.Partition}"), ("disk", j.Disk),
+                ("pct", (j.Length > 0 ? j.Done * 100.0 / j.Length : 0).ToString("0")));
+        }
+        else HasPending = false;
         List<DiskInfo> disks;
         try
         {
@@ -158,6 +168,14 @@ public sealed partial class PartitionsViewModel : ViewModelBase
                 check.ReasonKey != null ? Loc.Instance[check.ReasonKey] : null, run, danger));
         }
 
+        void AddCustom(OpCheck check, string labelKey, string glyph, Func<Task> run)
+        {
+            if (check.Allowed && !IsElevated) check = OpCheck.Deny("Part_Deny_NeedAdmin");
+            if (check.Allowed && HasPending) check = OpCheck.Deny("Part_Deny_Pending");
+            Actions.Add(new PartitionAction(Loc.Instance[labelKey], glyph, check.Allowed,
+                check.ReasonKey != null ? Loc.Instance[check.ReasonKey] : null, run));
+        }
+
         if (seg.Disk.Style == PartitionStyle.Raw)
         {
             Add(PartitionOp.Initialize, "Part_ActInitialize", "", InitializeAsync);
@@ -169,6 +187,12 @@ public sealed partial class PartitionsViewModel : ViewModelBase
             return;
         }
         Add(PartitionOp.Resize, "Part_ActResize", "", ResizeAsync);
+        AddCustom(MovePlanner.CanMove(seg, WindowsLetter, AppLetter), "Part_ActMove", "\uE7C2", MoveAsync);
+        var left = MovePlanner.CanMove(seg, WindowsLetter, AppLetter);
+        if (left.Allowed && MovePlanner.Bounds(seg).Lo + DiskLayout.MinFree > p.Offset) left = OpCheck.Deny("Part_Plan_NoSpaceBefore");
+        AddCustom(left, "Part_ActExtendLeft", "\uE76B", ExtendLeftAsync);
+        var neighbors = MergeSources(seg);
+        AddCustom(neighbors.Count > 0 ? OpCheck.Ok : OpCheck.Deny("Part_Deny_NoNeighbor"), "Part_ActMerge", "\uE71D", MergeAsync);
         Add(PartitionOp.ChangeLetter, "Part_ActLetter", "", ChangeLetterAsync);
         Add(PartitionOp.Label, "Part_ActLabel", "", LabelAsync);
         Add(PartitionOp.Check, "Part_ActCheck", "", CheckAsync);
@@ -240,6 +264,146 @@ public sealed partial class PartitionsViewModel : ViewModelBase
         dlg.AddNote(Loc.Instance["Part_ResizeNote"]);
         if (dlg.ShowDialog() != true || size.Value is not { } bytes || bytes == p.Size) return;
         await Run(Loc.F("Part_WhatResize", ("part", Describe(seg)), ("size", Fmt.Bytes((long)bytes))), () => StorageApi.Resize(p.Disk, p.Number, bytes));
+    }
+
+    // ---------------- Dời / mở rộng sang trái / gộp (chép sector) ----------------
+
+    /// <summary>Phân vùng dữ liệu liền kề (chỉ cách nhau vùng trống) có thể gộp vào phân vùng đang chọn.</summary>
+    private static List<DiskSegment> MergeSources(DiskSegment target)
+    {
+        var segs = DiskLayout.Segments(target.Disk);
+        var i = segs.FindIndex(s => s.Partition?.Number == target.Partition?.Number);
+        var list = new List<DiskSegment>();
+        if (i < 0) return list;
+        foreach (var dir in new[] { -1, 1 })
+            for (var j = i + dir; j >= 0 && j < segs.Count; j += dir)
+            {
+                if (segs[j].IsFree) continue;
+                if (MovePlanner.Merge(target, segs[j], "x").Error is null) list.Add(segs[j]);
+                break;
+            }
+        return list;
+    }
+
+    private static string Describe(PlanStep s) => s.Kind switch
+    {
+        StepKind.Shrink => Loc.F("Part_PlanShrink", ("n", s.Partition), ("size", Fmt.Bytes((long)s.Size))),
+        StepKind.Move => Loc.F("Part_PlanMove", ("n", s.Partition), ("offset", Fmt.Bytes((long)s.Offset)), ("size", Fmt.Bytes((long)s.Size))),
+        StepKind.Extend => s.Size == 0 ? Loc.F("Part_PlanExtendMax", ("n", s.Partition)) : Loc.F("Part_PlanExtend", ("n", s.Partition), ("size", Fmt.Bytes((long)s.Size))),
+        StepKind.CopyFiles => Loc.F("Part_PlanCopy", ("from", s.Source!), ("to", s.Target!), ("size", Fmt.Bytes((long)s.Size))),
+        StepKind.Delete => Loc.F("Part_PlanDelete", ("n", s.Partition), ("size", Fmt.Bytes((long)s.Size))),
+        _ => s.Kind.ToString(),
+    };
+
+    /// <summary>Xác nhận kế hoạch (liệt kê từng bước, bắt tick đã sao lưu + gõ chữ xác nhận) rồi chạy với cửa sổ tiến độ.</summary>
+    private async Task ConfirmAndRunAsync(string title, string intro, List<PlanStep> steps)
+    {
+        var lines = string.Join("\n", steps.Select((s, i) => $"{i + 1}. {Describe(s)}"));
+        var dlg = new PartitionDialog(title, $"{intro}\n\n{lines}", danger: true);
+        if (steps.Any(s => s.Kind == StepKind.Move)) dlg.AddNote(Loc.Instance["Part_MoveNote"]);
+        dlg.RequireCheck(Loc.Instance["Part_BackupCheck"]);
+        dlg.RequireTyping(Loc.Instance["Part_AgreeWord"]);
+        if (dlg.ShowDialog() != true) return;
+        await RunPlanAsync(title, steps, resume: false);
+    }
+
+    private Task RunPlanAsync(string title, List<PlanStep>? steps, bool resume) => RunBusyAsync(async () =>
+    {
+        var win = new PartitionProgressWindow(title);
+        var progress = new Progress<PlanProgress>(win.Report);
+        var token = win.Token;
+        Log.Info("partition", "BẮT ĐẦU " + title + (steps == null ? "" : ": " + string.Join(" | ", steps)));
+        win.Show();
+        try
+        {
+            await Task.Run(() =>
+            {
+                if (resume) PartitionMover.Resume(progress, token);
+                else PartitionMover.Run(steps!, progress, token);
+            });
+            Log.Info("partition", "XONG " + title);
+            Status = Loc.F("Part_Done", ("what", title));
+        }
+        catch (OperationCanceledException)
+        {
+            Log.Info("partition", "TẠM DỪNG " + title);
+            Status = Loc.Instance["Part_Paused"];
+            Info(Status);
+        }
+        catch (Exception ex) when (ex is IOException or StorageException or InvalidOperationException or UnauthorizedAccessException
+                                       or Win32Exception or System.Management.ManagementException)
+        {
+            Log.Error("partition", ex);
+            Status = Loc.F("Part_Failed", ("what", title), ("error", ex.Message))
+                     + (PartitionMover.PendingMove() != null ? "\n\n" + Loc.Instance["Part_FailedResumable"] : "");
+            Info(Status);
+        }
+        finally { win.Finish(); }
+        Busy = false;
+        var result = Status;
+        await RefreshAsync();
+        Status = result;
+    });
+
+    [RelayCommand]
+    private Task ResumeAsync()
+    {
+        if (!IsElevated) return OpenElevatedAsync();
+        if (!Confirm(Loc.F("Part_ResumeAsk", ("text", PendingText)))) return Task.CompletedTask;
+        return RunPlanAsync(Loc.Instance["Part_ActResume"], null, resume: true);
+    }
+
+    private async Task MoveAsync()
+    {
+        if (Selected?.Segment is not { Partition: { } p } seg) return;
+        (ulong Min, ulong Max) range;
+        try { range = await Task.Run(() => StorageApi.SupportedSize(p.Disk, p.Number)); }
+        catch (Exception ex) when (ex is StorageException or System.Management.ManagementException) { Info(ex.Message); return; }
+        var (lo, hi) = MovePlanner.Bounds(seg);
+        var room = hi - lo;
+        var dlg = new PartitionDialog(Loc.Instance["Part_ActMove"], Loc.F("Part_MoveIntro", ("part", Describe(seg)), ("room", Fmt.Bytes((long)room))));
+        var before = dlg.AddSize(Loc.Instance["Part_SpaceBefore"], p.Offset - lo, 0, room - range.Min);
+        var size = dlg.AddSize(Loc.Instance["Part_Size"], p.Size, range.Min, room);
+        dlg.AddValidator(() => before.Value + size.Value > room
+            ? Loc.F("Part_SizeOutOfRange", ("min", Fmt.Bytes((long)range.Min)), ("max", Fmt.Bytes((long)(room - (before.Value ?? 0))))) : null);
+        dlg.AddNote(Loc.Instance["Part_MoveHint"]);
+        if (dlg.ShowDialog() != true || before.Value is not { } b || size.Value is not { } sz) return;
+        var (steps, err) = MovePlanner.MoveResize(seg, lo + b, sz, range.Min);
+        if (err != null) { Info(Loc.Instance[err]); return; }
+        await ConfirmAndRunAsync(Loc.Instance["Part_ActMove"], Describe(seg), steps!);
+    }
+
+    private async Task ExtendLeftAsync()
+    {
+        if (Selected?.Segment is not { } seg) return;
+        var (steps, err) = MovePlanner.ExtendLeft(seg);
+        if (err != null) { Info(Loc.Instance[err]); return; }
+        await ConfirmAndRunAsync(Loc.Instance["Part_ActExtendLeft"], Describe(seg), steps!);
+    }
+
+    private async Task MergeAsync()
+    {
+        if (Selected?.Segment is not { Partition: not null } seg) return;
+        var sources = MergeSources(seg);
+        if (sources.Count == 0) return;
+        var dlg = new PartitionDialog(Loc.Instance["Part_ActMerge"], Loc.F("Part_MergeIntro", ("part", Describe(seg))));
+        var source = dlg.AddChoice(Loc.Instance["Part_MergeSource"],
+            sources.Select(s => new Option<string>(s.Partition!.Number.ToString(), Describe(s))), sources[0].Partition!.Number.ToString());
+        var folder = dlg.AddText(Loc.Instance["Part_MergeFolder"], "");
+        void SuggestFolder()
+        {
+            var src = sources.FirstOrDefault(s => s.Partition!.Number.ToString() == source.Value)?.Partition;
+            if (src != null) folder.Text = Loc.F("Part_MergeFolderDefault", ("letter", src.Letter?.ToString() ?? src.Number.ToString()));
+        }
+        SuggestFolder();
+        source.Changed += SuggestFolder;
+        dlg.AddValidator(() => folder.Text.Trim().Length == 0 || folder.Text.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 ? Loc.Instance["Part_BadFolder"] : null);
+        dlg.AddNote(Loc.Instance["Part_MergeNote"]);
+        if (dlg.ShowDialog() != true) return;
+        var srcSeg = sources.First(s => s.Partition!.Number.ToString() == source.Value);
+        var (steps, err) = MovePlanner.Merge(seg, srcSeg, folder.Text.Trim());
+        if (err != null) { Info(Loc.Instance[err]); return; }
+        await ConfirmAndRunAsync(Loc.Instance["Part_ActMerge"], Loc.F("Part_MergeSummary", ("source", Describe(srcSeg)), ("target", Describe(seg))), steps!);
     }
 
     private static readonly string[] FileSystems = ["NTFS", "exFAT", "FAT32"];

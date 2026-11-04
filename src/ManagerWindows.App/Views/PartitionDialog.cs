@@ -101,7 +101,9 @@ public sealed class PartitionDialog : Window
         var field = new SizeField(box);
         _validators.Add(() =>
         {
-            var v = DiskLayout.ParseSize(box.Text);
+            // Ô cho phép 0 (vd. "vùng trống phía trước" = 0): ParseSize coi 0 là không hợp lệ nên xử lý riêng.
+            var v = DiskLayout.ParseSize(box.Text)
+                    ?? (min == 0 && double.TryParse(box.Text.Trim().Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out var z) && z == 0 ? 0UL : null);
             if (v == null) return Loc.Instance["Part_BadSize"];
             // Ô hiển thị làm tròn 2 chữ số: chấp nhận lệch nhỏ quanh giới hạn rồi kẹp lại.
             const ulong slack = 16 * DiskLayout.MiB;
@@ -134,15 +136,35 @@ public sealed class PartitionDialog : Window
         return box;
     }
 
+    /// <summary>Kiểm tra thêm khi bấm đồng ý (trả thông báo lỗi hoặc null).</summary>
+    public void AddValidator(Func<string?> validate) => _validators.Add(validate);
+
+    /// <summary>Ô tick bắt buộc (vd. "Tôi đã sao lưu dữ liệu"): chưa tick thì không bấm được đồng ý.</summary>
+    public void RequireCheck(string text)
+    {
+        var box = new CheckBox { Content = text, Margin = new Thickness(0, 14, 0, 0) };
+        box.SetResourceReference(ForegroundProperty, "Ink");
+        _body.Children.Add(box);
+        _checks.Add(box);
+        box.Checked += (_, _) => UpdateOk();
+        box.Unchecked += (_, _) => UpdateOk();
+        UpdateOk();
+    }
+
+    private readonly List<CheckBox> _checks = new();
+
+    private void UpdateOk() =>
+        _ok.IsEnabled = _checks.All(c => c.IsChecked == true) && (_confirmBox == null || Matches(_confirmBox.Text));
+
     /// <summary>Phải gõ đúng chữ này (không phân biệt hoa thường, có/không dấu) mới bấm được nút đồng ý.</summary>
     public void RequireTyping(string word)
     {
         _confirmWord = word;
         Label(Loc.F("Part_TypeToConfirm", ("word", word)));
         _confirmBox = new TextBox();
-        _confirmBox.TextChanged += (_, _) => _ok.IsEnabled = Matches(_confirmBox.Text);
+        _confirmBox.TextChanged += (_, _) => UpdateOk();
         _body.Children.Add(_confirmBox);
-        _ok.IsEnabled = false;
+        UpdateOk();
         Loaded += (_, _) => _confirmBox.Focus();
     }
 
@@ -155,7 +177,7 @@ public sealed class PartitionDialog : Window
 
     private void Accept()
     {
-        if (_confirmBox != null && !Matches(_confirmBox.Text)) return;
+        if (!_ok.IsEnabled) return;
         foreach (var v in _validators)
             if (v() is { } err)
             {
@@ -173,8 +195,17 @@ public sealed class PartitionDialog : Window
         public ulong? Value { get; internal set; }
     }
 
-    public sealed class ChoiceField(ComboBox combo)
+    public sealed class ChoiceField
     {
-        public string? Value => combo.SelectedValue as string;
+        private readonly ComboBox _combo;
+
+        public ChoiceField(ComboBox combo)
+        {
+            _combo = combo;
+            combo.SelectionChanged += (_, _) => Changed?.Invoke();
+        }
+
+        public string? Value => _combo.SelectedValue as string;
+        public event Action? Changed;
     }
 }

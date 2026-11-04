@@ -72,6 +72,8 @@ public static class StorageApi
                 free = v["SizeRemaining"] is { } r ? Convert.ToUInt64(r) : null;
             }
         var letter = p["DriveLetter"] is char c && char.IsLetter(c) ? char.ToUpperInvariant(c) : (char?)null;
+        // Đường dẫn volume "\\?\Volume{guid}\" (cả phân vùng không có ký tự ổ như Recovery) để khoá volume khi dời.
+        var volumePath = (p["AccessPaths"] as string[])?.FirstOrDefault(a => a.StartsWith(@"\\?\Volume{", StringComparison.OrdinalIgnoreCase));
         return new PartitionInfo(
             Convert.ToUInt32(p["DiskNumber"]),
             Convert.ToUInt32(p["PartitionNumber"]),
@@ -85,7 +87,8 @@ public static class StorageApi
             p["IsHidden"] is true,
             string.IsNullOrEmpty(fs) ? null : fs,
             string.IsNullOrEmpty(label) ? null : label,
-            free);
+            free,
+            volumePath);
     }
 
     private static string BusName(ushort bus) => bus switch

@@ -22,7 +22,8 @@ public sealed record PartitionInfo(
     bool IsHidden,
     string? FileSystem,
     string? Label,
-    ulong? FreeBytes)
+    ulong? FreeBytes,
+    string? VolumePath = null)
 {
     public ulong End => Offset + Size;
 
