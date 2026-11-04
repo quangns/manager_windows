@@ -39,7 +39,7 @@ Cách dùng:
 A calm overview dashboard for a Windows disk-cleanup and resource utility, answering "how full is my drive and what should I do next" at a glance.
 
 **Page Structure:**
-1. **Left Sidebar (232px):** App mark "Manager Windows" at top; vertical navigation with line icons and labels: Tổng quan (selected), Dọn rác, Gợi ý dọn file, Di chuyển data app, Thống kê sử dụng, Ưu tiên & Excel, Cài đặt; at the bottom a status pill "Dịch vụ nền: Đang chạy" with a green dot.
+1. **Left Sidebar (232px):** App mark "Manager Windows" at top; vertical navigation with line icons and labels: Tổng quan (selected), Dọn rác, Gợi ý dọn file, Di chuyển data app, Thống kê sử dụng, Ưu tiên, Cài đặt; at the bottom a status pill "Dịch vụ nền: Đang chạy" with a green dot.
 2. **Page Header:** Title "Tổng quan", one-line muted subtitle "Ổ đĩa, dung lượng đã dọn và việc nên làm"; on the right a secondary "Làm mới" button and one primary "Dọn rác ngay" button.
 3. **Asymmetric 2:1 Hero Grid:**
    - Left (2/3): large "Ổ đĩa" card. Drive C featured: label "C:", large monospace free-space number "[free] GB trống", muted "trên [total] GB", a thick 8px rounded capacity bar; below, smaller rows for other drives each with a thin bar.
@@ -149,13 +149,13 @@ A screen to hibernate (pause) apps that haven't been used for a while, freeing R
 6. **Watch Table Card:** app name + process name, "Không dùng" duration, status with icon ("Sẽ ngủ sau 4 phút", "Đang phát âm thanh", "Trong danh sách không bao giờ ngủ"), links "Cho ngủ ngay", "Không bao giờ ngủ".
 ```
 
-## 7. Ưu tiên & Excel (Priority & Excel)
+## 7. Ưu tiên (Priority)
 
 ```
 A settings-style screen for CPU priority management and heavy Excel file analysis.
 
 **Page Structure:**
-1. **Sidebar:** "Ưu tiên & Excel" selected.
+1. **Sidebar:** "Ưu tiên" selected.
 2. **Page Header:** Title, subtitle; primary "Lưu".
 3. **Priority Settings Card:** setting rows (label + description left, control right): toggle "Bật điều phối ưu tiên", number "Số app dùng nhiều được ưu tiên", toggle "Cho phép mức High".
 4. **App Picker Card:** title "Chọn app để ưu tiên" with secondary "Làm mới"; search input and checkbox "Chỉ app đang chạy"; table with one row per app (all child processes grouped): app display name bold + process name in muted monospace, process count, RAM (monospace), and a dropdown "Bình thường / Ưu tiên / Hạ ưu tiên" that saves instantly; below, an inline row "Thêm app chưa mở" with a monospace input and secondary button; muted summary line "Đang ưu tiên: chrome, EXCEL · Hạ ưu tiên: OneDrive".

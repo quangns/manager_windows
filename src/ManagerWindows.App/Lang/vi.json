@@ -18,7 +18,7 @@
   "Tab_Suggestions": "Gợi ý dọn file",
   "Tab_Relocation": "Di chuyển data app",
   "Tab_Usage": "Thống kê sử dụng",
-  "Tab_Priority": "Ưu tiên & Excel",
+  "Tab_Priority": "Ưu tiên",
   "Tab_Settings": "Cài đặt",
   "Dash_Drives": "Ổ đĩa",
   "Dash_FreeOf": "{free} trống / {total}",
@@ -521,5 +521,8 @@
   "Mini_Hide": "Ẩn mini monitor",
   "Hib_AlreadyExcluded": "{app} đã có trong danh sách không bao giờ ngủ.",
   "Hib_PickerOverListed": "{app} ({name}) đã có trong danh sách",
-  "Config_SaveFailed": "Không lưu được cấu hình: {error}"
+  "Config_SaveFailed": "Không lưu được cấu hình: {error}",
+  "Usage_Unpin": "Bỏ ghim ưu tiên",
+  "Usage_Unpinned": "Đã bỏ {name} khỏi danh sách ưu tiên.",
+  "Usage_PinProtected": "{name} là tiến trình hệ thống, không đổi ưu tiên được."
 }

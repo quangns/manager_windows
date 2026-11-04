@@ -2,11 +2,25 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ManagerWindows.App.Services;
+using ManagerWindows.Core.Priority;
 using ManagerWindows.Ipc;
 
 namespace ManagerWindows.App.ViewModels;
 
-public sealed record UsageRow(string Name, string Exe, string ActiveText, double ActiveSeconds, int Launches, int Sessions);
+public sealed partial class UsageRow(string name, string exe, string activeText, double activeSeconds, int launches, int sessions, bool isPinned)
+    : ObservableObject
+{
+    public string Name { get; } = name;
+    public string Exe { get; } = exe;
+    public string ActiveText { get; } = activeText;
+    public double ActiveSeconds { get; } = activeSeconds;
+    public int Launches { get; } = launches;
+    public int Sessions { get; } = sessions;
+
+    /// <summary>Đang được ghim ưu tiên (tab Ưu tiên).</summary>
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(PinText))] private bool _isPinned = isPinned;
+    public string PinText => Loc.Instance[IsPinned ? "Usage_Unpin" : "Usage_Pin"];
+}
 
 /// <summary>Một cột trong biểu đồ giờ dùng máy (24 cột, một chuỗi số liệu).</summary>
 public sealed record HourBar(int Hour, double Height, string Tooltip, string Label);
@@ -53,8 +67,10 @@ public sealed partial class UsageViewModel : ViewModelBase
         });
 
         Apps.Clear();
+        var prio = Host.Config.Priority;
         foreach (var a in top)
-            Apps.Add(new UsageRow(a.Name, a.Exe, Fmt.Duration(a.ActiveSeconds), a.ActiveSeconds, a.Launches, a.Sessions));
+            Apps.Add(new UsageRow(a.Name, a.Exe, Fmt.Duration(a.ActiveSeconds), a.ActiveSeconds, a.Launches, a.Sessions,
+                prio.GetChoice(a.Name) == AppChoice.Priority));
         TotalText = Loc.F("Usage_Total", ("time", Fmt.Duration(top.Sum(a => a.ActiveSeconds))));
 
         Hours.Clear();
@@ -65,17 +81,22 @@ public sealed partial class UsageViewModel : ViewModelBase
                 h % 3 == 0 ? $"{h}h" : ""));
     }
 
+    /// <summary>Ghim / bỏ ghim ưu tiên (cùng danh sách với tab Ưu tiên), lưu và áp dụng ngay.</summary>
     [RelayCommand]
-    private void Pin(UsageRow? row)
+    private void TogglePin(UsageRow? row)
     {
         if (row == null) return;
-        var pinned = Host.Config.Priority.Pinned;
-        if (!pinned.Contains(row.Name, StringComparer.OrdinalIgnoreCase))
+        if (ProtectedProcesses.IsProtected(row.Name))
         {
-            // Gán danh sách mới thay vì sửa tại chỗ: luồng nền đang đọc danh sách cũ.
-            Host.Config.Priority.Pinned = [.. pinned, row.Name];
-            Host.SaveConfig();
+            Status = Loc.F("Usage_PinProtected", ("name", row.Name));
+            return;
         }
-        Status = Loc.F("Usage_Pinned", ("name", row.Name));
+        var prio = Host.Config.Priority;
+        var pin = prio.GetChoice(row.Name) != AppChoice.Priority;
+        // SetChoice gán danh sách mới thay vì sửa tại chỗ: luồng nền đang đọc danh sách cũ.
+        prio.SetChoice(row.Name, pin ? AppChoice.Priority : AppChoice.Normal);
+        Host.SaveConfig();
+        foreach (var r in Apps.Where(r => r.Name.Equals(row.Name, StringComparison.OrdinalIgnoreCase))) r.IsPinned = pin;
+        Status = Loc.F(pin ? "Usage_Pinned" : "Usage_Unpinned", ("name", row.Name));
     }
 }

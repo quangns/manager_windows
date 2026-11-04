@@ -18,7 +18,7 @@
   "Tab_Suggestions": "File suggestions",
   "Tab_Relocation": "Move app data",
   "Tab_Usage": "App usage",
-  "Tab_Priority": "Priority & Excel",
+  "Tab_Priority": "Priority",
   "Tab_Settings": "Settings",
   "Dash_Drives": "Drives",
   "Dash_FreeOf": "{free} free of {total}",
@@ -521,5 +521,8 @@
   "Mini_Hide": "Hide mini monitor",
   "Hib_AlreadyExcluded": "{app} is already in the never-hibernate list.",
   "Hib_PickerOverListed": "{app} ({name}) is already in the list",
-  "Config_SaveFailed": "Could not save settings: {error}"
+  "Config_SaveFailed": "Could not save settings: {error}",
+  "Usage_Unpin": "Unpin priority",
+  "Usage_Unpinned": "Removed {name} from the priority list.",
+  "Usage_PinProtected": "{name} is a system process; its priority can't be changed."
 }

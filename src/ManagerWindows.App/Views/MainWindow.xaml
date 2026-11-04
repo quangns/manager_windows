@@ -984,8 +984,8 @@
                             <DataGridTemplateColumn Width="130">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Button Content="{l:T Usage_Pin}" Style="{StaticResource Link}"
-                                                Command="{Binding DataContext.PinCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                        <Button Content="{Binding PinText}" Style="{StaticResource Link}"
+                                                Command="{Binding DataContext.TogglePinCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                 CommandParameter="{Binding}" />
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
