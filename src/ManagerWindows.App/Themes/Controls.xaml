@@ -249,6 +249,12 @@
 
     <!-- ===== Điều hướng bên trái (TabItem) ===== -->
     <Style x:Key="NavItem" TargetType="TabItem">
+        <!--
+          BẮT BUỘC: theme mặc định của WPF (Aero2) gán cứng TabItem.Foreground = Black, và giá trị đó thắng giá trị
+          thừa hưởng từ TabControl. Nội dung mỗi trang là con của TabItem, nên thiếu dòng này thì chữ trong trang
+          đen trên nền tối. (Test ThemeXamlTests kiểm tra dòng này.)
+        -->
+        <Setter Property="Foreground" Value="{DynamicResource Ink}" />
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="Template">
             <Setter.Value>

@@ -88,6 +88,7 @@ Chỉ có một màu nhấn duy nhất (Pine Teal, độ bão hoà < 80%), khôn
   - Không kẻ dọc, chỉ kẻ ngang 1px Border. Hàng cao 36px.
   - Tiêu đề cột 12/500 màu Muted, viền dưới 1px. Hàng hover nền Raised Surface, hàng chọn nền Pine Wash, chữ luôn là Ink. Bảng nằm trong một thẻ, nền trong suốt.
   - Cột số căn phải bằng JetBrains Mono.
+* **Màu chữ ở chế độ tối:** theme mặc định của WPF (Aero2) gán cứng màu chữ cho một số điều khiển (`TabItem` = Black, `Hyperlink` = Red, `DatePicker`, `Slider`, `Menu`), và giá trị đó thắng màu thừa hưởng. Style của app phải tự đặt `Foreground` bằng `DynamicResource` cho các điều khiển này (nội dung mọi trang là con của `TabItem`). Không gán màu chữ cứng hay `StaticResource` trong XAML. Test `ThemeXamlTests` kiểm tra các quy tắc này.
 * **Ô nhập, hộp chọn, ô tick, bảng, thanh cuộn, tooltip, menu khay:** tự vẽ bằng bảng màu của app (Themes/StandardControls.xaml), không dựa vào theme Fluent/Aero của Windows. Lý do: trên một số máy theme Fluent không được áp dụng, điều khiển rơi về nền sáng chữ đen giữa giao diện tối.
   - Ô nhập: bo góc 6px, viền Border, focus viền màu nhấn.
   - Ô tick: 18px, khi tick có nền Pine Teal Fill và dấu tick trắng.
