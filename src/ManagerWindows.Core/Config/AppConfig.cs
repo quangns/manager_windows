@@ -61,18 +61,25 @@ public sealed class ConfigStore(string path)
 
     public AppConfig Load()
     {
-        if (!File.Exists(Path)) return new AppConfig();
+        if (!File.Exists(Path)) return Upgraded(new AppConfig());
         try
         {
             using var s = File.OpenRead(Path);
-            return JsonSerializer.Deserialize<AppConfig>(s, RuleLoader.JsonOptions) ?? new AppConfig();
+            return Upgraded(JsonSerializer.Deserialize<AppConfig>(s, RuleLoader.JsonOptions) ?? new AppConfig());
         }
         catch (JsonException)
         {
             // File cấu hình hỏng: giữ lại để xem, dùng mặc định.
             File.Copy(Path, Path + ".broken", overwrite: true);
-            return new AppConfig();
+            return Upgraded(new AppConfig());
         }
+    }
+
+    /// <summary>Bổ sung mặc định mới cho cấu hình cũ (chỉ trong bộ nhớ; lần lưu kế tiếp sẽ ghi xuống).</summary>
+    private static AppConfig Upgraded(AppConfig config)
+    {
+        config.Hibernation.UpgradeDefaults();
+        return config;
     }
 
     public void Save(AppConfig config)

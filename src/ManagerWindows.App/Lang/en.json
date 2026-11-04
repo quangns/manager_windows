@@ -389,7 +389,7 @@
   "Hib_V_NoWindow": "No window",
   "Hib_V_Protected": "System process",
   "Hib_V_AlreadyAsleep": "Sleeping",
-  "Hib_ExcludedDesc": "Apps in this list always keep running. Adding or removing is saved immediately, no need to press Save.",
+  "Hib_ExcludedDesc": "Apps in this list always keep running. Chat/meeting, mail, remote desktop (UltraViewer, AnyDesk, DeskIn…), VPN (Tailscale…) and input method (UniKey, EVKey…) apps are included by default. Adding or removing is saved immediately, no need to press Save.",
   "Hib_PickerTitle": "Drag the crosshair onto the window of an app to keep awake",
   "Hib_PickerTip": "Hold the left button here, drag to an app window, then release",
   "Hib_PickerHint": "Like EVKey: hold the mouse on the crosshair, drag onto another app's window and release.",

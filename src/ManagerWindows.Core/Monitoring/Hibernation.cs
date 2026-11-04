@@ -18,14 +18,84 @@ public sealed class HibernationOptions
     public int MaxIoKbPerSec { get; set; } = 200;
 
     /// <summary>
-    /// Không bao giờ cho ngủ: app nhắn tin/gọi (sẽ không nhận tin), nhạc/video, điều khiển từ xa, VPN, tải file, ghi hình.
+    /// Không bao giờ cho ngủ: app nhắn tin/gọi (sẽ không nhận tin), mail, điều khiển từ xa (máy khác sẽ mất kết nối),
+    /// VPN, bộ gõ (ngủ là không gõ được tiếng Việt), nhạc/video, tải file, ghi hình.
     /// </summary>
-    public List<string> Excluded { get; set; } =
+    public List<string> Excluded { get; set; } = [.. DefaultExcluded];
+
+    /// <summary>Phiên bản bộ mặc định đã gộp vào <see cref="Excluded"/> (cấu hình cũ không có trường này = 0).</summary>
+    public int DefaultsVersion { get; set; }
+
+    public const int CurrentDefaultsVersion = 2;
+
+    // Chat, gọi, họp
+    private static readonly string[] Chat =
+    [
+        "Zalo", "ZaloCall", "Telegram", "Teams", "ms-teams", "Skype", "lync", "Slack", "Discord", "Viber", "WeChat", "Weixin",
+        "WhatsApp", "WhatsApp.Root", "Messenger", "Signal", "LINE", "KakaoTalk", "Lark", "Feishu", "Mattermost", "Element",
+        "Rocket.Chat", "Ferdium", "Rambox", "Zoom", "CiscoCollabHost", "atmgr",
+    ];
+    // Mail
+    private static readonly string[] Mail =
+        ["OUTLOOK", "olk", "HxOutlook", "HxTsr", "thunderbird", "MailClient", "Mailbird", "Spark", "BlueMail", "Postbox"];
+    // Điều khiển từ xa
+    private static readonly string[] Remote =
+    [
+        "mstsc", "msrdc", "AnyDesk", "TeamViewer", "TeamViewer_Service", "UltraViewer_Desktop", "UltraViewer_Service",
+        "DeskIn", "DeskInService", "ToDesk", "ToDesk_Service", "rustdesk", "parsecd", "remoting_host", "SRManager", "SRStreamer",
+        "strwinclt", "vncviewer", "vncserver", "winvnc", "tvnserver", "Radmin", "rserver3", "mRemoteNG", "RDCMan",
+    ];
+    // VPN
+    private static readonly string[] Vpn =
+    [
+        "tailscale-ipn", "tailscaled", "openvpn-gui", "openvpn", "OpenVPNConnect", "wireguard", "zerotier_desktop_ui",
+        "zerotier-one_x64", "FortiClient", "FortiTray", "vpnui", "csc_ui", "Cloudflare WARP", "warp-svc", "ProtonVPN",
+        "NordVPN", "expressvpn", "Pulse", "PanGPA", "SoftEther VPN Client Manager", "Hamachi-2-ui",
+    ];
+    // Bộ gõ tiếng Việt và IME của Windows
+    private static readonly string[] Typing =
+    [
+        "UniKeyNT", "UniKey", "EVKey", "EVKey64", "EVKey32", "OpenKey", "OpenKey64", "OpenKey32", "GoTiengViet", "VietKey",
+        "LabanKey", "ctfmon", "TextInputHost",
+    ];
+    // Nhạc/video, tải file, ghi hình
+    private static readonly string[] Media =
+        ["Spotify", "vlc", "wmplayer", "PotPlayerMini64", "Music.UI", "IDMan", "obs64", "ShareX"];
+
+    public static IReadOnlyList<string> DefaultExcluded { get; } =
+        [.. Chat, .. Mail, .. Remote, .. Vpn, .. Typing, .. Media];
+
+    /// <summary>Bộ mặc định đến v0.5.1 (DefaultsVersion 0/1).</summary>
+    private static readonly string[] DefaultsV1 =
     [
         "Zalo", "ZaloCall", "Telegram", "Teams", "ms-teams", "Skype", "Slack", "Discord", "Viber", "WeChat", "Weixin",
         "WhatsApp", "Messenger", "OUTLOOK", "thunderbird", "Spotify", "vlc", "wmplayer", "PotPlayerMini64", "Music.UI",
         "mstsc", "AnyDesk", "TeamViewer", "UltraViewer_Desktop", "openvpn-gui", "IDMan", "obs64", "ShareX",
     ];
+
+    /// <summary>App mới thêm vào bộ mặc định ở từng phiên bản (để cập nhật cấu hình cũ).</summary>
+    private static readonly Dictionary<int, string[]> AddedIn = new()
+    {
+        [2] = DefaultExcluded.Except(DefaultsV1, StringComparer.OrdinalIgnoreCase).ToArray(),
+    };
+
+    /// <summary>
+    /// Gộp các app mới của bộ mặc định vào cấu hình cũ, đúng một lần cho mỗi phiên bản,
+    /// để không thêm lại app người dùng đã tự bỏ. Trả về true nếu có thay đổi cần lưu.
+    /// </summary>
+    public bool UpgradeDefaults()
+    {
+        if (DefaultsVersion >= CurrentDefaultsVersion) return false;
+        var set = new HashSet<string>(Excluded, StringComparer.OrdinalIgnoreCase);
+        var list = new List<string>(Excluded);
+        foreach (var (v, names) in AddedIn)
+            if (v > DefaultsVersion)
+                foreach (var n in names)
+                    if (set.Add(n)) list.Add(n);
+        Excluded = list;
+        DefaultsVersion = CurrentDefaultsVersion;
+        return true;
+    }
 }
 
 /// <summary>Một app (gộp theo tên tiến trình) tại thời điểm xét ngủ đông.</summary>

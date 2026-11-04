@@ -389,7 +389,7 @@
   "Hib_V_NoWindow": "Không có cửa sổ",
   "Hib_V_Protected": "Tiến trình hệ thống",
   "Hib_V_AlreadyAsleep": "Đang ngủ",
-  "Hib_ExcludedDesc": "Các app trong danh sách này luôn chạy bình thường. Thêm hoặc bỏ là lưu ngay, không cần bấm Lưu.",
+  "Hib_ExcludedDesc": "Các app trong danh sách này luôn chạy bình thường. Mặc định đã có app chat/họp, mail, điều khiển từ xa (UltraViewer, AnyDesk, DeskIn…), VPN (Tailscale…) và bộ gõ (UniKey, EVKey…). Thêm hoặc bỏ là lưu ngay, không cần bấm Lưu.",
   "Hib_PickerTitle": "Kéo biểu tượng tâm ngắm thả lên cửa sổ app cần giữ thức",
   "Hib_PickerTip": "Giữ chuột trái vào đây, kéo tới cửa sổ app rồi thả ra",
   "Hib_PickerHint": "Giống EVKey: giữ chuột trên tâm ngắm, kéo sang cửa sổ app khác rồi thả.",

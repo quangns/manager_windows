@@ -290,6 +290,35 @@ public class HibernationTests
     }
 }
 
+public class HibernationDefaultsTests
+{
+    [Fact]
+    public void Defaults_cover_chat_mail_remote_vpn_typing()
+    {
+        var o = new HibernationOptions();
+        foreach (var n in new[] { "Zalo", "olk", "UltraViewer_Desktop", "AnyDesk", "DeskIn", "tailscale-ipn", "wireguard", "UniKeyNT", "EVKey64" })
+            Assert.Contains(n, o.Excluded, StringComparer.OrdinalIgnoreCase);
+        Assert.Equal(o.Excluded.Count, o.Excluded.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+    }
+
+    [Fact]
+    public void Upgrade_adds_new_defaults_once_and_keeps_user_removals()
+    {
+        // Cấu hình cũ: người dùng đã bỏ Zalo, thêm app riêng.
+        var o = new HibernationOptions { Excluded = ["Telegram", "myapp"], DefaultsVersion = 0 };
+        Assert.True(o.UpgradeDefaults());
+        Assert.DoesNotContain("Zalo", o.Excluded);
+        Assert.Contains("myapp", o.Excluded);
+        Assert.Contains("tailscale-ipn", o.Excluded);
+        Assert.Contains("UniKeyNT", o.Excluded);
+        Assert.Equal(HibernationOptions.CurrentDefaultsVersion, o.DefaultsVersion);
+
+        o.Excluded = o.Excluded.Where(n => n != "tailscale-ipn").ToList();
+        Assert.False(o.UpgradeDefaults());
+        Assert.DoesNotContain("tailscale-ipn", o.Excluded);
+    }
+}
+
 public class MacProcessesTests
 {
     private const string Ps = """
