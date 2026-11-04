@@ -95,8 +95,8 @@ public sealed class MiniMonitorWindow : Window
     {
         var area = SystemParameters.WorkArea;
         // Vị trí lưu theo DIP của màn hình chính; ra ngoài màn hình (rút màn phụ) thì về góc trên phải.
-        var left = double.IsNaN(_opt.Left) ? area.Right - ActualWidth - 16 : _opt.Left;
-        var top = double.IsNaN(_opt.Top) ? area.Top + 8 : _opt.Top;
+        var left = _opt.Left ?? area.Right - ActualWidth - 16;
+        var top = _opt.Top ?? area.Top + 8;
         if (left < SystemParameters.VirtualScreenLeft || left > SystemParameters.VirtualScreenLeft + SystemParameters.VirtualScreenWidth - 20 ||
             top < SystemParameters.VirtualScreenTop || top > SystemParameters.VirtualScreenTop + SystemParameters.VirtualScreenHeight - 20)
             (left, top) = (area.Right - ActualWidth - 16, area.Top + 8);

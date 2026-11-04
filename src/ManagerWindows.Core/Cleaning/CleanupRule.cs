@@ -42,6 +42,8 @@ public static class RuleLoader
         ReadCommentHandling = JsonCommentHandling.Skip,
         AllowTrailingCommas = true,
         WriteIndented = true,
+        // NaN/Infinity trong một số thực bất kỳ không được làm hỏng việc lưu cả file cấu hình.
+        NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals,
         Converters = { new JsonStringEnumConverter() },
     };
 

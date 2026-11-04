@@ -11,6 +11,8 @@ public sealed record SleepingApp(string Name, List<SleepingProcess> Processes, D
 
 public sealed record SleepingProcess(int Pid, long StartTicks);
 
+public enum ExcludeResult { Added, AlreadyListed, NotAllowed }
+
 /// <summary>
 /// Ngủ đông app không dùng: tạm dừng mọi tiến trình của app (kể cả tiến trình con) và trả RAM cho Windows; app giữ nguyên
 /// trạng thái. Đánh thức ngay khi app được đưa lên trước, khôi phục từ thu nhỏ, hoặc có tiến trình mới cùng tên
@@ -189,20 +191,21 @@ public sealed class HibernationService : BackgroundLoop
     public static bool CanExclude(string name) =>
         !ProtectedProcesses.IsProtected(name) && !name.Equals("ManagerWindows.App", StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>Thêm app vào danh sách không bao giờ ngủ (lưu ngay) và đánh thức nếu nó đang ngủ.</summary>
-    public bool Exclude(string name)
+    /// <summary>
+    /// Thêm app vào danh sách không bao giờ ngủ (lưu ngay) và đánh thức nếu nó đang ngủ.
+    /// App đã có trong danh sách thì không thêm lần nữa.
+    /// </summary>
+    public ExcludeResult Exclude(string name)
     {
-        if (name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) name = name[..^4];
-        if (!CanExclude(name)) return false;
+        name = HibernationOptions.NormalizeName(name);
+        if (name.Length == 0 || !CanExclude(name)) return ExcludeResult.NotAllowed;
         var o = _host.Config.Hibernation;
-        if (!o.Excluded.Contains(name, StringComparer.OrdinalIgnoreCase))
-        {
-            o.Excluded = [.. o.Excluded, name]; // danh sách mới: luồng nền đang đọc danh sách cũ
-            _host.SaveConfig();
-        }
         if (IsAsleep(name)) Wake(name, "excluded");
+        if (o.IsExcluded(name)) return ExcludeResult.AlreadyListed;
+        o.Excluded = [.. o.Excluded, name]; // danh sách mới: luồng nền đang đọc danh sách cũ
+        _host.SaveConfig();
         ExcludedChanged?.Invoke();
-        return true;
+        return ExcludeResult.Added;
     }
 
     /// <summary>Danh sách không bao giờ ngủ vừa đổi (tab Ngủ đông nạp lại).</summary>

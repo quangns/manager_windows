@@ -1308,7 +1308,8 @@
                                     </StackPanel>
                                 </Grid>
                                 <Border Style="{StaticResource TableCard}">
-                                    <DataGrid c:Table.Apply="True" ItemsSource="{Binding Excluded}" IsReadOnly="True" MinHeight="320" MaxHeight="520">
+                                    <DataGrid c:Table.Apply="True" ItemsSource="{Binding Excluded}" SelectedItem="{Binding SelectedExcluded}" IsReadOnly="True" MinHeight="320" MaxHeight="520"
+                                              SelectionChanged="ScrollSelectedIntoView">
                                         <DataGrid.Columns>
                                             <DataGridTemplateColumn Header="{l:T Col_App}" Width="*">
                                                 <DataGridTemplateColumn.CellTemplate>

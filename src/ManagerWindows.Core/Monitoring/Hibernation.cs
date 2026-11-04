@@ -23,6 +23,25 @@ public sealed class HibernationOptions
     /// </summary>
     public List<string> Excluded { get; set; } = [.. DefaultExcluded];
 
+    /// <summary>Tên tiến trình chuẩn để so trùng: bỏ khoảng trắng thừa và đuôi ".exe".</summary>
+    public static string NormalizeName(string name)
+    {
+        name = name.Trim().Trim('"');
+        return name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? name[..^4] : name;
+    }
+
+    /// <summary>Đã có trong danh sách chưa (không phân biệt hoa thường, có hay không ".exe").</summary>
+    public bool IsExcluded(string name) => Excluded.Contains(NormalizeName(name), StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Chuẩn hoá danh sách: bỏ tên rỗng, bỏ ".exe", gộp tên trùng (giữ lần xuất hiện đầu). Trả true nếu có thay đổi.</summary>
+    public bool NormalizeExcluded()
+    {
+        var clean = Excluded.Select(NormalizeName).Where(n => n.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        if (clean.SequenceEqual(Excluded)) return false;
+        Excluded = clean;
+        return true;
+    }
+
     /// <summary>Phiên bản bộ mặc định đã gộp vào <see cref="Excluded"/> (cấu hình cũ không có trường này = 0).</summary>
     public int DefaultsVersion { get; set; }
 

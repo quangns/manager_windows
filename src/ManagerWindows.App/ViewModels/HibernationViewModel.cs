@@ -27,6 +27,7 @@ public sealed partial class HibernationViewModel : ViewModelBase
     [ObservableProperty] private bool _onlyMinimized;
     [ObservableProperty] private int _minRamMb;
     [ObservableProperty] private string _newExcludedName = "";
+    [ObservableProperty] private ExcludedRow? _selectedExcluded;
     /// <summary>Dòng chữ cạnh tâm ngắm: đang trỏ vào app nào / vừa thêm app nào.</summary>
     [ObservableProperty] private string _pickerText = "";
     [ObservableProperty] private bool _hasSleeping;
@@ -126,10 +127,19 @@ public sealed partial class HibernationViewModel : ViewModelBase
     }
 
     /// <summary>Thêm app vào danh sách không bao giờ ngủ (lưu ngay) và đánh thức nếu nó đang ngủ.</summary>
-    private void AddExcluded(string name, string display)
+    private ExcludeResult AddExcluded(string name, string display)
     {
-        Status = Host.Hibernation.Exclude(name) ? Loc.F("Hib_Excluded", ("app", display)) : Loc.Instance["Hib_PickerInvalid"];
+        var r = Host.Hibernation.Exclude(name);
+        Status = r switch
+        {
+            ExcludeResult.Added => Loc.F("Hib_Excluded", ("app", display)),
+            ExcludeResult.AlreadyListed => Loc.F("Hib_AlreadyExcluded", ("app", display)),
+            _ => Loc.Instance["Hib_PickerInvalid"],
+        };
         LoadExcluded();
+        // Đã có sẵn: chọn dòng đó để người dùng thấy ngay.
+        SelectedExcluded = Excluded.FirstOrDefault(e => e.Name.Equals(HibernationOptions.NormalizeName(name), StringComparison.OrdinalIgnoreCase));
+        return r;
     }
 
     [RelayCommand]
@@ -175,7 +185,7 @@ public sealed partial class HibernationViewModel : ViewModelBase
     private void PickHover(int pid)
     {
         PickerText = pid == Environment.ProcessId ? Loc.Instance["Hib_PickerSelf"]
-            : AppOf(pid) is { } a ? Loc.F("Hib_PickerOver", ("app", a.Display), ("name", a.Name))
+            : AppOf(pid) is { } a ? Loc.F(Host.Config.Hibernation.IsExcluded(a.Name) ? "Hib_PickerOverListed" : "Hib_PickerOver", ("app", a.Display), ("name", a.Name))
             : Loc.Instance["Hib_PickerNone"];
     }
 
@@ -189,8 +199,9 @@ public sealed partial class HibernationViewModel : ViewModelBase
             Status = Loc.Instance["Hib_PickerInvalid"];
             return;
         }
-        AddExcluded(a.Name, a.Display);
-        PickerText = Loc.F("Hib_PickerAdded", ("app", a.Display));
+        PickerText = AddExcluded(a.Name, a.Display) == ExcludeResult.AlreadyListed
+            ? Loc.F("Hib_AlreadyExcluded", ("app", a.Display))
+            : Loc.F("Hib_PickerAdded", ("app", a.Display));
     }
 
     [RelayCommand]

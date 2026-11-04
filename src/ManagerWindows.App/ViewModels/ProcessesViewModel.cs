@@ -379,9 +379,12 @@ public sealed partial class ProcessesViewModel : ViewModelBase
     private void NeverHibernate(ProcessRow? row)
     {
         if (row == null) return;
-        Status = Host.Hibernation.Exclude(row.Name)
-            ? Loc.F("Hib_Excluded", ("app", row.DisplayName))
-            : Loc.F("Proc_CannotNeverHibernate", ("app", row.DisplayName));
+        Status = Host.Hibernation.Exclude(row.Name) switch
+        {
+            ExcludeResult.Added => Loc.F("Hib_Excluded", ("app", row.DisplayName)),
+            ExcludeResult.AlreadyListed => Loc.F("Hib_AlreadyExcluded", ("app", row.DisplayName)),
+            _ => Loc.F("Proc_CannotNeverHibernate", ("app", row.DisplayName)),
+        };
     }
 
     [RelayCommand]

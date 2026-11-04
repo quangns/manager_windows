@@ -518,5 +518,8 @@
   "Mini_ClickThroughDesc": "Does not block the app underneath. Untick here to move it again.",
   "Mini_Position": "Position",
   "Mini_ResetPosition": "Move to top-right corner",
-  "Mini_Hide": "Hide mini monitor"
+  "Mini_Hide": "Hide mini monitor",
+  "Hib_AlreadyExcluded": "{app} is already in the never-hibernate list.",
+  "Hib_PickerOverListed": "{app} ({name}) is already in the list",
+  "Config_SaveFailed": "Could not save settings: {error}"
 }

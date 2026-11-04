@@ -81,6 +81,7 @@ public sealed class ConfigStore(string path)
     private static AppConfig Upgraded(AppConfig config)
     {
         config.Hibernation.UpgradeDefaults();
+        config.Hibernation.NormalizeExcluded();
         return config;
     }
 

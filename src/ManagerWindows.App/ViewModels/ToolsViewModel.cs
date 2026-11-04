@@ -298,7 +298,7 @@ public sealed partial class ToolsViewModel : ViewModelBase
     [RelayCommand]
     private void ResetOverlayPosition()
     {
-        Opt.Overlay.Left = Opt.Overlay.Top = double.NaN;
+        Opt.Overlay.Left = Opt.Overlay.Top = null;
         Host.SaveConfig();
         if (Tools?.OverlayVisible == true)
         {

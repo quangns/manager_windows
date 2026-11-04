@@ -319,6 +319,52 @@ public class HibernationDefaultsTests
     }
 }
 
+public class HibernationConfigRoundTripTests
+{
+    [Fact]
+    public void Removed_app_stays_removed_after_restart_and_no_duplicates()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"mw-cfg-{Guid.NewGuid():N}.json");
+        try
+        {
+            var store = new ManagerWindows.Core.Config.ConfigStore(path);
+            var cfg = store.Load();
+            Assert.Equal(cfg.Hibernation.Excluded.Count, cfg.Hibernation.Excluded.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+            cfg.Hibernation.Excluded = cfg.Hibernation.Excluded.Where(n => n != "Zalo" && n != "tailscale-ipn").ToList();
+            store.Save(cfg);
+
+            var again = store.Load();
+            Assert.DoesNotContain("Zalo", again.Hibernation.Excluded);
+            Assert.DoesNotContain("tailscale-ipn", again.Hibernation.Excluded);
+            Assert.Equal(again.Hibernation.Excluded.Count, again.Hibernation.Excluded.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        }
+        finally { File.Delete(path); }
+    }
+}
+
+public class HibernationExcludedListTests
+{
+    [Fact]
+    public void Normalizes_and_detects_existing_names()
+    {
+        var o = new HibernationOptions { Excluded = ["Zalo", "zalo.exe", " Chrome.EXE ", "", "chrome", "Telegram"] };
+        Assert.True(o.NormalizeExcluded());
+        Assert.Equal(["Zalo", "Chrome", "Telegram"], o.Excluded);
+        Assert.True(o.IsExcluded("ZALO.exe"));
+        Assert.True(o.IsExcluded("chrome"));
+        Assert.False(o.IsExcluded("notepad"));
+        Assert.False(o.NormalizeExcluded());
+    }
+
+    [Fact]
+    public void Overlay_position_defaults_serialize()
+    {
+        // NaN từng làm hỏng việc lưu cả file cấu hình (System.Text.Json không ghi được NaN).
+        var json = System.Text.Json.JsonSerializer.Serialize(new ManagerWindows.Core.Config.AppConfig(), ManagerWindows.Core.Cleaning.RuleLoader.JsonOptions);
+        Assert.Contains("\"Overlay\"", json, StringComparison.OrdinalIgnoreCase);
+    }
+}
+
 public class MacProcessesTests
 {
     private const string Ps = """

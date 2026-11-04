@@ -104,9 +104,19 @@ public sealed class AppHost
     public RelocationEngine CreateEngine() =>
         new(new JunctionApi(), new WindowsVolumeApi(), new RobocopyCopier(), Relocations, SystemClock.Instance);
 
+    /// <summary>Lưu cấu hình. Lỗi (ổ đầy, file bị khoá…) được ghi log và báo ở khay thay vì làm hỏng thao tác đang làm.</summary>
     public void SaveConfig()
     {
-        ConfigStore.Save(Config);
+        try
+        {
+            ConfigStore.Save(Config);
+        }
+        catch (Exception ex)
+        {
+            Log.Error("config", ex);
+            RaiseNotify(Loc.Instance["Notify_Title"], Loc.F("Config_SaveFailed", ("error", ex.Message)));
+            return;
+        }
         Autostart.Apply(Config.StartWithWindows);
         ConfigSaved?.Invoke();
     }

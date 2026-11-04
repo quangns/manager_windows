@@ -36,4 +36,11 @@ public partial class MainWindow : Window
         if (Nav.Template?.FindName("PageHost", Nav) is UIElement host)
             host.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(150)));
     }
+
+    /// <summary>Bảng có dòng được chọn từ ViewModel (vd. app đã có trong danh sách): cuộn tới dòng đó.</summary>
+    private void ScrollSelectedIntoView(object sender, SelectionChangedEventArgs e)
+    {
+        e.Handled = true; // không để sự kiện nổi lên TabControl (Nav_SelectionChanged)
+        if (sender is DataGrid { SelectedItem: { } item } grid) grid.ScrollIntoView(item);
+    }
 }

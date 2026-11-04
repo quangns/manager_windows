@@ -518,5 +518,8 @@
   "Mini_ClickThroughDesc": "Không che thao tác với app bên dưới. Muốn di chuyển lại thì bỏ chọn ở đây.",
   "Mini_Position": "Vị trí",
   "Mini_ResetPosition": "Về góc trên bên phải",
-  "Mini_Hide": "Ẩn mini monitor"
+  "Mini_Hide": "Ẩn mini monitor",
+  "Hib_AlreadyExcluded": "{app} đã có trong danh sách không bao giờ ngủ.",
+  "Hib_PickerOverListed": "{app} ({name}) đã có trong danh sách",
+  "Config_SaveFailed": "Không lưu được cấu hình: {error}"
 }

@@ -47,7 +47,7 @@ public sealed class OverlayOptions
     public string Size { get; set; } = "medium";
     /// <summary>Khoá vị trí và cho chuột bấm xuyên qua (không che app bên dưới).</summary>
     public bool ClickThrough { get; set; }
-    /// <summary>Vị trí (pixel màn hình); NaN = góc trên bên phải màn hình chính.</summary>
-    public double Left { get; set; } = double.NaN;
-    public double Top { get; set; } = double.NaN;
+    /// <summary>Vị trí (DIP); null = góc trên bên phải màn hình chính. Không dùng NaN: JSON không ghi được NaN.</summary>
+    public double? Left { get; set; }
+    public double? Top { get; set; }
 }
