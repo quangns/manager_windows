@@ -115,6 +115,32 @@ public sealed partial class PipeServerWorker(SystemCleanupService cleanup, Usage
                     : IpcResponse.Fail("Không đặt được ưu tiên");
             }
 
+            case IpcCommands.TrimMemory:
+            {
+                if (clientSession < 0) return IpcResponse.Fail("Không xác định được phiên của bạn");
+                var (ok, failed) = await Task.Run(() => MemoryApi.TrimAll(p =>
+                    p.SessionId == clientSession && !ProtectedProcesses.IsProtected(p.ProcessName)), ct);
+                var purged = MemoryApi.PurgeStandbyList();
+                log.LogInformation("Giải phóng RAM phiên {Session}: trim {Ok}, lỗi {Failed}, xả standby {Purged}", clientSession, ok, failed, purged);
+                return IpcResponse.Success(new TrimMemoryResult(ok, failed, purged));
+            }
+
+            case IpcCommands.KillProcess:
+            {
+                var p = IpcServerProtocol.Payload<KillProcessRequest>(req);
+                try
+                {
+                    using var proc = Process.GetProcessById(p.Pid);
+                    if (ProtectedProcesses.IsProtected(proc.ProcessName)) return IpcResponse.Fail("Process được bảo vệ");
+                    // Chỉ đóng tiến trình cùng phiên đăng nhập với người gọi (không đụng dịch vụ/phiên người khác).
+                    if (clientSession < 0 || proc.SessionId != clientSession) return IpcResponse.Fail("Process không thuộc phiên của bạn");
+                    log.LogInformation("End task {Name} ({Pid}) theo yêu cầu phiên {Session}", proc.ProcessName, p.Pid, clientSession);
+                    proc.Kill();
+                    return IpcResponse.Success();
+                }
+                catch (ArgumentException) { return IpcResponse.Success(); } // đã thoát
+            }
+
             case IpcCommands.GetLaunchCounts:
             {
                 var p = IpcServerProtocol.Payload<LaunchCountsRequest>(req);

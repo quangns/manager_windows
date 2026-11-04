@@ -53,18 +53,24 @@ public static class RunningApps
         return result.OrderByDescending(a => a.HasWindow).ThenByDescending(a => a.WorkingSetBytes).ToList();
     }
 
-    /// <summary>Tên dễ đọc từ thông tin phiên bản của exe ("Google Chrome", "Microsoft Excel").</summary>
-    private static string Describe(string name, string? path)
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> DescriptionCache =
+        new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Tên dễ đọc từ thông tin phiên bản của exe ("Google Chrome", "Microsoft Excel"), có cache theo đường dẫn.</summary>
+    public static string Describe(string name, string? path)
     {
         if (path == null) return name;
-        try
+        return DescriptionCache.GetOrAdd(path, p =>
         {
-            var d = FileVersionInfo.GetVersionInfo(path).FileDescription?.Trim();
-            return string.IsNullOrEmpty(d) ? name : d;
-        }
-        catch (Exception ex) when (ex is FileNotFoundException or IOException or UnauthorizedAccessException)
-        {
-            return name;
-        }
+            try
+            {
+                var d = FileVersionInfo.GetVersionInfo(p).FileDescription?.Trim();
+                return string.IsNullOrEmpty(d) ? name : d;
+            }
+            catch (Exception ex) when (ex is FileNotFoundException or IOException or UnauthorizedAccessException)
+            {
+                return name;
+            }
+        });
     }
 }

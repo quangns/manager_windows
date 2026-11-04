@@ -1,6 +1,7 @@
 using System.Text.Json;
 using ManagerWindows.Core.Cleaning;
 using ManagerWindows.Core.Excel;
+using ManagerWindows.Core.Monitoring;
 using ManagerWindows.Core.Priority;
 using ManagerWindows.Core.Scheduling;
 
@@ -49,6 +50,7 @@ public sealed class AppConfig
     public UsageConfig Usage { get; set; } = new();
     public PriorityOptions Priority { get; set; } = new();
     public ExcelOptions Excel { get; set; } = new();
+    public MonitorOptions Monitor { get; set; } = new();
 }
 
 public sealed class ConfigStore(string path)

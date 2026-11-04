@@ -7,7 +7,11 @@ App chạy nền trên Windows 10/11 (x64) giúp:
 3. **Chuyển data app khỏi ổ C** (Zalo, Telegram, Chrome/Edge, backup iPhone…). Data được chuyển sang ổ khác, đường dẫn cũ trên ổ C giữ nguyên nhờ *junction* nên app vẫn chạy bình thường. Có Hoàn tác.
 4. **Theo dõi tần suất dùng app**: thời gian dùng thật (không tính lúc máy rảnh), số lần mở, biểu đồ theo giờ.
 5. **Ưu tiên tài nguyên**: app dùng nhiều nhất hoặc app được ghim được ưu tiên CPU; app nền (OneDrive, updater…) bị hạ ưu tiên và chạy chế độ tiết kiệm (EcoQoS).
-6. **Excel nặng**:
+6. **Theo dõi tiến trình**:
+   - Xem app nào đang chiếm CPU, RAM (gộp tiến trình theo app), phân loại Ứng dụng / Chạy ngầm / Hệ thống.
+   - End task, giải phóng RAM từng app hoặc toàn máy (kèm xả bộ nhớ đệm standby qua dịch vụ nền).
+   - Cảnh báo ở khay khi một app chạy ngầm dùng nhiều CPU/RAM liên tục.
+7. **Excel nặng**:
    - Khi phát hiện Excel đang mở file nặng, app tự ưu tiên tài nguyên cho Excel.
    - App đọc thẳng file .xlsx để tìm nguyên nhân làm file nặng: vùng dữ liệu "ma", quá nhiều style, hàm tự tính lại (INDIRECT/OFFSET…), liên kết ngoài, ảnh lớn, Office 32-bit…
    - Từ đó app đưa ra cách xử lý cụ thể.

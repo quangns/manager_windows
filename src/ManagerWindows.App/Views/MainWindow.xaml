@@ -733,6 +733,188 @@
             </DockPanel>
         </TabItem>
 
+        <!-- ===================== TIẾN TRÌNH ===================== -->
+        <TabItem Tag="&#xE9D9;" Header="{l:T Tab_Processes}" DataContext="{Binding Processes}">
+            <DockPanel Style="{StaticResource Page}">
+                <c:PageHeader DockPanel.Dock="Top" Title="{l:T Tab_Processes}" Subtitle="{l:T Proc_Subtitle}">
+                    <c:PageHeader.Actions>
+                        <Button Style="{StaticResource Primary}" Content="{l:T Proc_FreeMemory}" Command="{Binding FreeMemoryCommand}"
+                                IsEnabled="{Binding Busy, Converter={StaticResource Not}}" ToolTip="{l:T Proc_FreeMemoryHint}" />
+                    </c:PageHeader.Actions>
+                </c:PageHeader>
+                <ContentControl DockPanel.Dock="Bottom" Content="{Binding}" ContentTemplate="{StaticResource StatusBar}" />
+
+                <!-- Chỉ số tức thời: CPU, RAM, số tiến trình, số app chạy ngầm (lưới lệch, không chia 4 thẻ bằng nhau) -->
+                <Grid DockPanel.Dock="Top" Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="3*" />
+                        <ColumnDefinition Width="16" />
+                        <ColumnDefinition Width="2*" />
+                    </Grid.ColumnDefinitions>
+                    <Border Style="{StaticResource Card}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="24" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="CPU" Style="{StaticResource Overline}" />
+                                <TextBlock Text="{Binding CpuTotalText}" Style="{StaticResource BigNumber}" Margin="0,4,0,8" />
+                                <ProgressBar Style="{StaticResource Meter}" Value="{Binding CpuTotal, Mode=OneWay}" Maximum="100" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="RAM" Style="{StaticResource Overline}" />
+                                <TextBlock Text="{Binding RamText}" Style="{StaticResource BigNumber}" FontSize="20" Margin="0,10,0,10" TextWrapping="Wrap" />
+                                <ProgressBar Style="{StaticResource Meter}" Value="{Binding RamUsedRatio, Mode=OneWay}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                    <Border Grid.Column="2" Style="{StaticResource Card}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="{l:T Proc_Count}" Style="{StaticResource Overline}" />
+                                <TextBlock Text="{Binding ProcessCount}" Style="{StaticResource BigNumber}" Margin="0,4,0,0" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="{l:T Proc_BackgroundApps}" Style="{StaticResource Overline}" />
+                                <TextBlock Text="{Binding BackgroundCount}" Style="{StaticResource BigNumber}" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+
+                <!-- Cảnh báo app chạy ngầm -->
+                <Border DockPanel.Dock="Bottom" Style="{StaticResource Card}" Margin="0,16,0,0" Padding="20,14">
+                    <StackPanel>
+                        <WrapPanel VerticalAlignment="Center">
+                            <CheckBox Content="{l:T Proc_AlertsEnabled}" IsChecked="{Binding AlertsEnabled}" Margin="0,0,20,0" VerticalAlignment="Center" />
+                            <TextBlock Text="{l:T Proc_AlertCpu}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                            <TextBox Text="{Binding AlertCpu}" Width="56" Margin="0,0,16,0" />
+                            <TextBlock Text="{l:T Proc_AlertRam}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                            <TextBox Text="{Binding AlertRamMb}" Width="72" Margin="0,0,16,0" />
+                            <TextBlock Text="{l:T Proc_AlertSeconds}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                            <TextBox Text="{Binding AlertSeconds}" Width="64" Margin="0,0,16,0" />
+                            <Button Style="{StaticResource Secondary}" Content="{l:T Btn_Save}" Command="{Binding SaveAlertsCommand}" />
+                        </WrapPanel>
+                        <DockPanel Margin="0,10,0,0">
+                            <TextBlock Text="{l:T Proc_IgnoredLabel}" VerticalAlignment="Center" Margin="0,0,8,0" Style="{StaticResource Muted}" />
+                            <TextBox Text="{Binding IgnoredText}" FontFamily="{StaticResource MonoFont}" FontSize="12.5" ToolTip="{l:T Proc_IgnoredHint}" />
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Lọc -->
+                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+                    <ComboBox DockPanel.Dock="Left" ItemsSource="{Binding Kinds}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                              SelectedValue="{Binding KindFilter}" Width="180" Margin="0,0,12,0" />
+                    <TextBlock Style="{StaticResource Icon}" Text="&#xE721;" Foreground="{DynamicResource InkMuted}" Margin="0,0,10,0" />
+                    <TextBox Text="{Binding Search, UpdateSourceTrigger=PropertyChanged, Delay=200}" ToolTip="{l:T Prio_Search}" />
+                </DockPanel>
+
+                <Border Style="{StaticResource TableCard}">
+                    <DataGrid c:Table.Apply="True" ItemsSource="{Binding View}" IsReadOnly="True" EnableRowVirtualization="True">
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Header="{l:T Col_App}" Width="*" SortMemberPath="DisplayName">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding DisplayName}" FontWeight="Medium" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}" />
+                                            <TextBlock Text="{Binding Name}" Foreground="{DynamicResource InkMuted}" FontFamily="{StaticResource MonoFont}"
+                                                       FontSize="11.5" Margin="8,0,0,0" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="{l:T Col_Kind}" Width="120" SortMemberPath="Kind">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border Style="{StaticResource BadgeNeutral}">
+                                            <TextBlock Text="{Binding KindText}" />
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="{l:T Col_Processes}" Width="90" SortMemberPath="Count">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Count}" Style="{StaticResource Num}" Margin="0,0,12,0" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <!-- CPU và RAM: số + thanh ngang mảnh (một chuỗi, cùng màu biểu đồ) -->
+                            <DataGridTemplateColumn Header="CPU" Width="140" SortMemberPath="Cpu">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Grid VerticalAlignment="Center">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="56" />
+                                            </Grid.ColumnDefinitions>
+                                            <ProgressBar Style="{StaticResource Meter}" Height="6" Background="Transparent"
+                                                         Foreground="{DynamicResource ChartBar}" Value="{Binding CpuRatio, Mode=OneWay}" />
+                                            <TextBlock Grid.Column="1" Text="{Binding CpuText}" Style="{StaticResource Num}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="RAM" Width="160" SortMemberPath="Ram">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Grid VerticalAlignment="Center">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="76" />
+                                            </Grid.ColumnDefinitions>
+                                            <ProgressBar Style="{StaticResource Meter}" Height="6" Background="Transparent"
+                                                         Foreground="{DynamicResource ChartBar}" Value="{Binding RamRatio, Mode=OneWay}" />
+                                            <TextBlock Grid.Column="1" Text="{Binding RamText}" Style="{StaticResource Num}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Width="300">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Visibility="{Binding CanAct, Converter={StaticResource BoolVis}}">
+                                            <Button Content="{l:T Proc_Trim}" Style="{StaticResource Link}"
+                                                    Command="{Binding DataContext.TrimAppCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}" />
+                                            <Button Content="{l:T Proc_EndTask}" Style="{StaticResource Link}" Foreground="{DynamicResource Critical}"
+                                                    Command="{Binding DataContext.EndTaskCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}" />
+                                            <Button Content="{l:T Sug_OpenFolder}" Style="{StaticResource Link}"
+                                                    Command="{Binding DataContext.OpenLocationCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                        <!-- Chuột phải: bỏ qua cảnh báo chạy ngầm cho app này -->
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                <Setter Property="ContextMenu">
+                                    <Setter.Value>
+                                        <ContextMenu>
+                                            <MenuItem Header="{l:T Proc_IgnoreAlerts}"
+                                                      Command="{Binding PlacementTarget.Tag.IgnoreAlertsCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                      CommandParameter="{Binding}" />
+                                        </ContextMenu>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter Property="Tag" Value="{Binding DataContext, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
+                            </Style>
+                        </DataGrid.RowStyle>
+                    </DataGrid>
+                </Border>
+            </DockPanel>
+        </TabItem>
+
         <!-- ===================== ƯU TIÊN & EXCEL ===================== -->
         <TabItem Tag="&#xE945;" Header="{l:T Tab_Priority}" DataContext="{Binding Priority}">
             <DockPanel Style="{StaticResource Page}">

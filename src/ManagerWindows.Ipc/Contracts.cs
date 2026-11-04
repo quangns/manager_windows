@@ -19,6 +19,10 @@ public static class IpcCommands
     public const string SetPriority = "set-priority";
     /// <summary>Số lần mở app trong khoảng thời gian (service theo dõi bằng WMI).</summary>
     public const string GetLaunchCounts = "get-launch-counts";
+    /// <summary>Giải phóng RAM của mọi tiến trình trong phiên người gọi + xả bộ nhớ standby (cần quyền SYSTEM).</summary>
+    public const string TrimMemory = "trim-memory";
+    /// <summary>End task tiến trình mà app không đủ quyền (chạy quyền admin). Chỉ trong phiên người gọi.</summary>
+    public const string KillProcess = "kill-process";
 }
 
 public static class IpcConstants
@@ -59,3 +63,5 @@ public sealed record RuleEstimate(string RuleId, long Bytes, int Files);
 public sealed record CleanupResultDto(long FreedBytes, int Deleted, int Failed);
 public sealed record SetPriorityRequest(int Pid, PriorityLevel Level, bool EcoQoS);
 public sealed record LaunchCountsRequest(DateTime FromUtc, DateTime ToUtc);
+public sealed record TrimMemoryResult(int Trimmed, int Failed, bool StandbyPurged);
+public sealed record KillProcessRequest(int Pid);

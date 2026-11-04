@@ -30,6 +30,7 @@ public sealed class AppHost
     public CleanupScheduler Scheduler { get; }
     public PriorityController Priority { get; }
     public RelocationService Relocation { get; }
+    public BackgroundWatcher BackgroundWatcher { get; }
 
     /// <summary>Hiện thông báo ở khay hệ thống (tiêu đề, nội dung, tab cần mở khi bấm vào).</summary>
     public event Action<string, string, string?>? Notify;
@@ -58,6 +59,7 @@ public sealed class AppHost
         Scheduler = new CleanupScheduler(this);
         Priority = new PriorityController(this);
         Relocation = new RelocationService(this);
+        BackgroundWatcher = new BackgroundWatcher(this);
     }
 
     private static (string Dir, bool Portable) ResolveDataDir()
@@ -103,6 +105,7 @@ public sealed class AppHost
         UsageTracker.Start();
         Scheduler.Start();
         Priority.Start();
+        BackgroundWatcher.Start();
         Relocation.StartHealthChecks();
     }
 
@@ -111,6 +114,7 @@ public sealed class AppHost
         UsageTracker.Stop();
         Scheduler.Stop();
         Priority.Stop();
+        BackgroundWatcher.Stop();
         Relocation.Stop();
     }
 }
