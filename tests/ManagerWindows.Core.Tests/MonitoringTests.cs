@@ -74,4 +74,45 @@ public class MonitoringTests
         Assert.Equal(AlertReason.Ram, only.Reason);
         Assert.Empty(new BackgroundAlertTracker().Update([G("Sync", 99)], T0, new MonitorOptions { AlertsEnabled = false, SustainSeconds = 0 }));
     }
+
+    private static AppGroup A(string name, double cpu = 0, long ws = 0, double io = 0, ProcessKind kind = ProcessKind.App) =>
+        new(name, null, kind, 1, cpu, ws, [1], io);
+
+    [Fact]
+    public void Lag_diagnosis_names_busiest_resource_and_its_top_apps()
+    {
+        var groups = new[]
+        {
+            A("svchost", io: 40e6, kind: ProcessKind.System),
+            A("OneDrive", io: 8e6, kind: ProcessKind.Background),
+            A("chrome", cpu: 30, ws: 3_000_000_000, io: 500),
+            A("EXCEL", cpu: 60, ws: 1_000_000_000, io: 2e6),
+            A("notepad", io: 2048),
+        };
+
+        var causes = LagDiagnosis.Analyze(cpuPercent: 92, diskBusyPercent: 97, ramUsedPercent: 70, groups, diskDetail: "C:");
+
+        Assert.Equal([LagResource.Disk, LagResource.Cpu], causes.Select(c => c.Resource));
+        var disk = causes[0];
+        Assert.Equal("C:", disk.Detail);
+        Assert.Equal(["svchost", "OneDrive", "EXCEL"], disk.TopApps.Select(a => a.Name)); // chrome < 1 KB/s bị bỏ
+        Assert.Equal(["EXCEL", "chrome"], causes[1].TopApps.Select(a => a.Name));
+    }
+
+    [Fact]
+    public void No_lag_causes_when_below_thresholds()
+    {
+        Assert.Empty(LagDiagnosis.Analyze(40, 20, 60, [A("chrome", cpu: 40)]));
+        var mem = Assert.Single(LagDiagnosis.Analyze(10, 10, 95, [A("a", ws: 10), A("b", ws: 30)]));
+        Assert.Equal(LagResource.Memory, mem.Resource);
+        Assert.Equal("b", mem.TopApps[0].Name);
+    }
+
+    [Fact]
+    public void Grouping_sums_io_rate()
+    {
+        var g = Assert.Single(ProcessGrouping.Group(
+            [new ProcessSample(1, "x", null, 1, true, 0, 0, 1000), new ProcessSample(2, "x", null, 1, false, 0, 0, 500)], 1, Win));
+        Assert.Equal(1500, g.IoBytesPerSec);
+    }
 }

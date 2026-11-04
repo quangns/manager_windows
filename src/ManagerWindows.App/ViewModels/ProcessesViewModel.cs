@@ -36,7 +36,14 @@ public sealed partial class ProcessRow : ObservableObject
     [ObservableProperty] private long _ram;
     [ObservableProperty] private string _ramText = "";
     [ObservableProperty] private double _ramRatio;
+    /// <summary>Byte đọc + ghi mỗi giây (gồm I/O mạng/thiết bị, như cột I/O của Task Manager).</summary>
+    [ObservableProperty] private double _io;
+    [ObservableProperty] private string _ioText = "";
+    [ObservableProperty] private double _ioRatio;
 }
+
+/// <summary>Một dòng chẩn đoán lag: tài nguyên quá tải + app dùng nhiều nhất.</summary>
+public sealed record LagLine(string Text, string Level);
 
 /// <summary>Bộ lọc loại: mặc định ẩn tiến trình hệ thống, chỉ hiện khi chọn "Tất cả".</summary>
 public enum ProcessFilter { UserApps, App, Background, All }
@@ -45,6 +52,7 @@ public sealed partial class ProcessesViewModel : ViewModelBase
 {
     private readonly ProcessMonitorSampler _sampler = new();
     private readonly CpuMeter _cpuMeter = new();
+    private readonly DiskMeter _diskMeter = new();
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromSeconds(2) };
     private readonly Dictionary<string, ProcessRow> _rows = new(StringComparer.OrdinalIgnoreCase);
     private readonly int _session = Process.GetCurrentProcess().SessionId;
@@ -52,6 +60,7 @@ public sealed partial class ProcessesViewModel : ViewModelBase
     private bool _sampling;
 
     public ObservableCollection<ProcessRow> Rows { get; } = new();
+    public ObservableCollection<LagLine> LagCauses { get; } = new();
     public ListCollectionView View { get; }
 
     public List<Option<ProcessFilter>> Kinds { get; } =
@@ -70,6 +79,10 @@ public sealed partial class ProcessesViewModel : ViewModelBase
     [ObservableProperty] private string _ramText = "";
     [ObservableProperty] private string _processCount = "";
     [ObservableProperty] private string _backgroundCount = "";
+    [ObservableProperty] private double _diskBusy;
+    [ObservableProperty] private string _diskBusyText = "";
+    [ObservableProperty] private string _diskDetail = "";
+    [ObservableProperty] private bool _hasLag;
 
     // Cài đặt cảnh báo app chạy ngầm
     [ObservableProperty] private bool _alertsEnabled;
@@ -89,7 +102,7 @@ public sealed partial class ProcessesViewModel : ViewModelBase
         View.SortDescriptions.Add(new SortDescription(nameof(ProcessRow.Cpu), ListSortDirection.Descending));
         // Sắp xếp lại khi số liệu đổi (CPU/RAM thay đổi mỗi 2 giây).
         View.IsLiveSorting = true;
-        foreach (var p in new[] { nameof(ProcessRow.Cpu), nameof(ProcessRow.Ram), nameof(ProcessRow.Count), nameof(ProcessRow.DisplayName) })
+        foreach (var p in new[] { nameof(ProcessRow.Cpu), nameof(ProcessRow.Ram), nameof(ProcessRow.Io), nameof(ProcessRow.Count), nameof(ProcessRow.DisplayName) })
             View.LiveSortingProperties.Add(p);
         View.IsLiveFiltering = true;
         View.LiveFilteringProperties.Add(nameof(ProcessRow.Kind));
@@ -131,16 +144,20 @@ public sealed partial class ProcessesViewModel : ViewModelBase
         _sampling = true;
         try
         {
-            var (groups, cpu, mem) = await Task.Run(() =>
+            var (groups, cpu, mem, disk) = await Task.Run(() =>
             {
                 var g = ProcessGrouping.Group(_sampler.Sample(), _session, _windowsDir);
-                return (g, _cpuMeter.Sample(), SystemInfo.Memory());
+                return (g, _cpuMeter.Sample(), SystemInfo.Memory(), _diskMeter.Sample());
             });
             Apply(groups);
             CpuTotal = cpu;
             CpuTotalText = $"{cpu:0}%";
             var used = mem.TotalBytes - mem.AvailBytes;
             RamUsedRatio = mem.TotalBytes == 0 ? 0 : (double)used / mem.TotalBytes;
+            DiskBusy = disk.BusyPercent;
+            DiskBusyText = $"{disk.BusyPercent:0}%";
+            DiskDetail = Loc.F("Proc_DiskDetail", ("disk", disk.BusiestDisk ?? "—"), ("speed", Rate(disk.BytesPerSec)));
+            UpdateLag(groups, cpu, disk, RamUsedRatio * 100);
             RamText = Loc.F("Proc_RamUsed", ("used", Fmt.Bytes((long)used)), ("total", Fmt.Bytes((long)mem.TotalBytes)));
             ProcessCount = groups.Sum(x => x.Count).ToString("N0");
             BackgroundCount = groups.Count(x => x.Kind == ProcessKind.Background).ToString("N0");
@@ -149,10 +166,39 @@ public sealed partial class ProcessesViewModel : ViewModelBase
         finally { _sampling = false; }
     }
 
+    private static string Rate(double bytesPerSec) =>
+        bytesPerSec < 1024 ? "0 KB/s" : Fmt.Bytes((long)bytesPerSec) + "/s";
+
+    /// <summary>Đoán nguyên nhân lag: tài nguyên quá tải và app dùng nó nhiều nhất.</summary>
+    private void UpdateLag(List<AppGroup> groups, double cpu, DiskSample disk, double ramPercent)
+    {
+        var causes = LagDiagnosis.Analyze(cpu, disk.BusyPercent, ramPercent, groups, diskDetail: disk.BusiestDisk);
+        LagCauses.Clear();
+        foreach (var c in causes)
+        {
+            var apps = string.Join(", ", c.TopApps.Select(a =>
+            {
+                var name = RunningApps.Describe(a.Name, a.Path);
+                var value = c.Resource switch
+                {
+                    LagResource.Disk => Rate(a.IoBytesPerSec),
+                    LagResource.Cpu => $"{a.CpuPercent:0}% CPU",
+                    _ => Fmt.Bytes(a.WorkingSetBytes),
+                };
+                return $"{name} ({value})";
+            }));
+            var text = Loc.F("Lag_" + c.Resource, ("percent", c.Percent.ToString("0")), ("disk", c.Detail ?? ""),
+                ("apps", apps.Length == 0 ? Loc.Instance["Lag_NoApp"] : apps));
+            LagCauses.Add(new LagLine(text, c.Percent >= 95 ? "critical" : "warn"));
+        }
+        HasLag = LagCauses.Count > 0;
+    }
+
     private void Apply(List<AppGroup> groups)
     {
         var maxCpu = Math.Max(groups.Select(g => g.CpuPercent).DefaultIfEmpty(0).Max(), 1);
         var maxRam = Math.Max(groups.Select(g => g.WorkingSetBytes).DefaultIfEmpty(0).Max(), 1);
+        var maxIo = Math.Max(groups.Select(g => g.IoBytesPerSec).DefaultIfEmpty(0).Max(), 1);
         var alive = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var g in groups)
         {
@@ -173,6 +219,9 @@ public sealed partial class ProcessesViewModel : ViewModelBase
             row.Ram = g.WorkingSetBytes;
             row.RamText = Fmt.Bytes(g.WorkingSetBytes);
             row.RamRatio = (double)g.WorkingSetBytes / maxRam;
+            row.Io = Math.Round(g.IoBytesPerSec);
+            row.IoText = Rate(g.IoBytesPerSec);
+            row.IoRatio = g.IoBytesPerSec / maxIo;
         }
         foreach (var gone in _rows.Keys.Where(k => !alive.Contains(k)).ToList())
         {

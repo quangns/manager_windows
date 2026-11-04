@@ -10,7 +10,8 @@ public sealed record ProcessSample(
     int SessionId,
     bool HasWindow,
     double CpuPercent,
-    long WorkingSetBytes);
+    long WorkingSetBytes,
+    double IoBytesPerSec = 0);
 
 /// <summary>Các tiến trình cùng tên gộp thành một app (Chrome có thể vài chục tiến trình).</summary>
 public sealed record AppGroup(
@@ -20,7 +21,8 @@ public sealed record AppGroup(
     int Count,
     double CpuPercent,
     long WorkingSetBytes,
-    IReadOnlyList<int> Pids);
+    IReadOnlyList<int> Pids,
+    double IoBytesPerSec = 0);
 
 public static class ProcessGrouping
 {
@@ -32,7 +34,8 @@ public static class ProcessGrouping
             {
                 var path = g.Select(s => s.Path).FirstOrDefault(p => p != null);
                 return new AppGroup(g.Key, path, Classify(g.ToList(), path, currentSession, windowsDir), g.Count(),
-                    g.Sum(s => s.CpuPercent), g.Sum(s => s.WorkingSetBytes), g.Select(s => s.Pid).ToList());
+                    g.Sum(s => s.CpuPercent), g.Sum(s => s.WorkingSetBytes), g.Select(s => s.Pid).ToList(),
+                    g.Sum(s => s.IoBytesPerSec));
             })
             .ToList();
     }

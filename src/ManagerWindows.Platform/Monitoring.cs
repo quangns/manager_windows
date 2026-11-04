@@ -47,8 +47,29 @@ public sealed class ProcessMonitorSampler
     [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr hwnd, out uint pid);
 
     private const uint GW_OWNER = 4;
+    private const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
 
-    private readonly Dictionary<int, (DateTime Start, TimeSpan Cpu, DateTime At, string? Path)> _last = new();
+    [StructLayout(LayoutKind.Sequential)]
+    private struct IO_COUNTERS
+    {
+        public ulong ReadOperationCount, WriteOperationCount, OtherOperationCount;
+        public ulong ReadTransferCount, WriteTransferCount, OtherTransferCount;
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern SafeProcessHandle OpenProcess(uint access, bool inherit, int pid);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool GetProcessIoCounters(SafeProcessHandle process, out IO_COUNTERS counters);
+
+    private readonly Dictionary<int, (DateTime Start, TimeSpan Cpu, DateTime At, string? Path, ulong Io)> _last = new();
+
+    /// <summary>Tổng byte đọc + ghi của tiến trình (gồm cả I/O mạng/thiết bị, như cột I/O của Task Manager).</summary>
+    private static ulong IoBytes(int pid)
+    {
+        using var h = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+        return !h.IsInvalid && GetProcessIoCounters(h, out var c) ? c.ReadTransferCount + c.WriteTransferCount : 0;
+    }
 
     /// <summary>PID có cửa sổ chính hiển thị (cửa sổ cấp cao nhất, không có chủ, có tiêu đề).</summary>
     public static HashSet<int> PidsWithWindows()
@@ -81,25 +102,28 @@ public sealed class ProcessMonitorSampler
                 {
                     var ws = p.WorkingSet64;
                     var session = p.SessionId;
-                    double cpu = 0;
+                    double cpu = 0, io = 0;
                     string? path = null;
                     try
                     {
                         var start = p.StartTime;
                         var total = p.TotalProcessorTime;
+                        var ioBytes = IoBytes(p.Id);
                         if (_last.TryGetValue(p.Id, out var prev) && prev.Start == start)
                         {
                             path = prev.Path;
-                            var wall = (now - prev.At).TotalMilliseconds * Environment.ProcessorCount;
+                            var seconds = (now - prev.At).TotalSeconds;
+                            var wall = seconds * 1000 * Environment.ProcessorCount;
                             if (wall > 0) cpu = Math.Clamp((total - prev.Cpu).TotalMilliseconds * 100.0 / wall, 0, 100);
+                            if (seconds > 0 && ioBytes >= prev.Io) io = (ioBytes - prev.Io) / seconds;
                         }
                         else path = SystemInfo.ProcessPath(p.Id);
-                        _last[p.Id] = (start, total, now, path);
+                        _last[p.Id] = (start, total, now, path, ioBytes);
                     }
                     catch (Win32Exception) { }               // tiến trình được bảo vệ: không đọc được thời gian CPU
                     catch (InvalidOperationException) { continue; }
                     seen.Add(p.Id);
-                    result.Add(new ProcessSample(p.Id, p.ProcessName, path, session, windows.Contains(p.Id), cpu, ws));
+                    result.Add(new ProcessSample(p.Id, p.ProcessName, path, session, windows.Contains(p.Id), cpu, ws, io));
                 }
                 catch (InvalidOperationException) { } // vừa thoát
             }
@@ -186,5 +210,105 @@ public static class MemoryApi
         }
         var cmd = MemoryPurgeStandbyList;
         return NtSetSystemInformation(SystemMemoryListInformation, ref cmd, sizeof(int)) == 0;
+    }
+}
+
+/// <summary>Một lần đo ổ đĩa: % bận của ổ bận nhất (Active time như Task Manager) và tổng tốc độ đọc ghi.</summary>
+public sealed record DiskSample(double BusyPercent, string? BusiestDisk, double BytesPerSec);
+
+/// <summary>
+/// Đo ổ đĩa vật lý bằng PDH với tên bộ đếm tiếng Anh (PdhAddEnglishCounter) nên chạy đúng trên Windows mọi ngôn ngữ.
+/// Lần đo đầu chưa có số (PDH cần hai lần thu), trả 0.
+/// </summary>
+[SupportedOSPlatform("windows")]
+public sealed class DiskMeter : IDisposable
+{
+    [StructLayout(LayoutKind.Sequential)]
+    private struct PDH_FMT_COUNTERVALUE { public uint CStatus; public double DoubleValue; }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct PDH_FMT_COUNTERVALUE_ITEM { public IntPtr Name; public PDH_FMT_COUNTERVALUE Value; }
+
+    [DllImport("pdh.dll", CharSet = CharSet.Unicode)]
+    private static extern uint PdhOpenQuery(string? source, IntPtr user, out IntPtr query);
+
+    [DllImport("pdh.dll", CharSet = CharSet.Unicode)]
+    private static extern uint PdhAddEnglishCounter(IntPtr query, string path, IntPtr user, out IntPtr counter);
+
+    [DllImport("pdh.dll")]
+    private static extern uint PdhCollectQueryData(IntPtr query);
+
+    [DllImport("pdh.dll", CharSet = CharSet.Unicode)]
+    private static extern uint PdhGetFormattedCounterArray(IntPtr counter, uint format, ref uint bufferSize, out uint itemCount, IntPtr buffer);
+
+    [DllImport("pdh.dll")]
+    private static extern uint PdhCloseQuery(IntPtr query);
+
+    private const uint PDH_FMT_DOUBLE = 0x200, PDH_FMT_NOCAP100 = 0x8000;
+    private const uint PDH_MORE_DATA = 0x800007D2;
+
+    private readonly IntPtr _query;
+    private readonly IntPtr _idle, _bytes;
+    private readonly bool _ok;
+
+    public DiskMeter()
+    {
+        try
+        {
+            _ok = PdhOpenQuery(null, IntPtr.Zero, out _query) == 0
+                  && PdhAddEnglishCounter(_query, @"\PhysicalDisk(*)\% Idle Time", IntPtr.Zero, out _idle) == 0
+                  && PdhAddEnglishCounter(_query, @"\PhysicalDisk(*)\Disk Bytes/sec", IntPtr.Zero, out _bytes) == 0;
+            if (_ok) PdhCollectQueryData(_query);
+        }
+        catch (DllNotFoundException) { _ok = false; }
+    }
+
+    public DiskSample Sample()
+    {
+        if (!_ok || PdhCollectQueryData(_query) != 0) return new DiskSample(0, null, 0);
+        double busy = 0, bytes = 0;
+        string? busiest = null;
+        foreach (var (name, idle) in Read(_idle, PDH_FMT_DOUBLE | PDH_FMT_NOCAP100))
+        {
+            if (name == "_Total") continue;
+            var b = Math.Clamp(100 - idle, 0, 100);
+            if (b > busy) (busy, busiest) = (b, DiskLabel(name));
+        }
+        foreach (var (name, v) in Read(_bytes, PDH_FMT_DOUBLE))
+            if (name == "_Total") bytes = v;
+        return new DiskSample(busy, busiest, bytes);
+    }
+
+    /// <summary>Tên phiên bản PDH dạng "0 C: D:" → "C: D:" (ổ có thể chứa nhiều phân vùng).</summary>
+    private static string DiskLabel(string instance)
+    {
+        var i = instance.IndexOf(' ');
+        return i > 0 ? instance[(i + 1)..] : instance;
+    }
+
+    private static List<(string Name, double Value)> Read(IntPtr counter, uint format)
+    {
+        var list = new List<(string, double)>();
+        uint size = 0;
+        if (PdhGetFormattedCounterArray(counter, format, ref size, out _, IntPtr.Zero) != PDH_MORE_DATA || size == 0) return list;
+        var buffer = Marshal.AllocHGlobal((int)size);
+        try
+        {
+            if (PdhGetFormattedCounterArray(counter, format, ref size, out var count, buffer) != 0) return list;
+            var itemSize = Marshal.SizeOf<PDH_FMT_COUNTERVALUE_ITEM>();
+            for (var i = 0; i < count; i++)
+            {
+                var item = Marshal.PtrToStructure<PDH_FMT_COUNTERVALUE_ITEM>(buffer + i * itemSize);
+                if (item.Value.CStatus is 0 or 1) // PDH_CSTATUS_VALID_DATA / NEW_DATA
+                    list.Add((Marshal.PtrToStringUni(item.Name) ?? "", item.Value.DoubleValue));
+            }
+        }
+        finally { Marshal.FreeHGlobal(buffer); }
+        return list;
+    }
+
+    public void Dispose()
+    {
+        if (_ok) PdhCloseQuery(_query);
     }
 }

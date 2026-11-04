@@ -757,6 +757,8 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="24" />
                                 <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="24" />
+                                <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <StackPanel>
                                 <TextBlock Text="CPU" Style="{StaticResource Overline}" />
@@ -767,6 +769,14 @@
                                 <TextBlock Text="RAM" Style="{StaticResource Overline}" />
                                 <TextBlock Text="{Binding RamText}" Style="{StaticResource BigNumber}" FontSize="20" Margin="0,10,0,10" TextWrapping="Wrap" />
                                 <ProgressBar Style="{StaticResource Meter}" Value="{Binding RamUsedRatio, Mode=OneWay}" />
+                            </StackPanel>
+                            <!-- Ổ đĩa: % thời gian bận của ổ bận nhất (Active time như Task Manager) -->
+                            <StackPanel Grid.Column="4" ToolTip="{l:T Proc_DiskHint}">
+                                <TextBlock Text="{l:T Proc_Disk}" Style="{StaticResource Overline}" />
+                                <TextBlock Text="{Binding DiskBusyText}" Style="{StaticResource BigNumber}" Margin="0,4,0,0" />
+                                <TextBlock Text="{Binding DiskDetail}" Style="{StaticResource Muted}" FontSize="11.5" Margin="0,0,0,4"
+                                           FontFamily="{StaticResource MonoFont}" TextTrimming="CharacterEllipsis" />
+                                <ProgressBar Style="{StaticResource Meter}" Value="{Binding DiskBusy, Mode=OneWay}" Maximum="100" />
                             </StackPanel>
                         </Grid>
                     </Border>
@@ -805,6 +815,25 @@
                             <TextBlock Text="{l:T Proc_IgnoredLabel}" VerticalAlignment="Center" Margin="0,0,8,0" Style="{StaticResource Muted}" />
                             <TextBox Text="{Binding IgnoredText}" FontFamily="{StaticResource MonoFont}" FontSize="12.5" ToolTip="{l:T Proc_IgnoredHint}" />
                         </DockPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Chẩn đoán lag: chỉ hiện khi CPU/ổ đĩa/RAM quá tải -->
+                <Border DockPanel.Dock="Top" Background="{DynamicResource WarningWash}" CornerRadius="10" Padding="16,12" Margin="0,0,0,16"
+                        Visibility="{Binding HasLag, Converter={StaticResource BoolVis}}">
+                    <StackPanel>
+                        <TextBlock Text="{l:T Lag_Title}" FontWeight="SemiBold" Foreground="{DynamicResource Warning}" Margin="0,0,0,6" />
+                        <ItemsControl ItemsSource="{Binding LagCauses}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <DockPanel Margin="0,2">
+                                        <TextBlock DockPanel.Dock="Left" Style="{StaticResource LevelIcon}" Text="&#xE7BA;" FontSize="13"
+                                                   VerticalAlignment="Top" Margin="0,2,10,0" />
+                                        <TextBlock Text="{Binding Text}" TextWrapping="Wrap" />
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </StackPanel>
                 </Border>
 
@@ -873,6 +902,24 @@
                                             <ProgressBar Style="{StaticResource Meter}" Height="6" Background="Transparent"
                                                          Foreground="{DynamicResource ChartBar}" Value="{Binding RamRatio, Mode=OneWay}" />
                                             <TextBlock Grid.Column="1" Text="{Binding RamText}" Style="{StaticResource Num}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Width="160" SortMemberPath="Io">
+                                <DataGridTemplateColumn.Header>
+                                    <TextBlock Text="{l:T Proc_DiskColumn}" ToolTip="{l:T Proc_IoHint}" />
+                                </DataGridTemplateColumn.Header>
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Grid VerticalAlignment="Center">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="82" />
+                                            </Grid.ColumnDefinitions>
+                                            <ProgressBar Style="{StaticResource Meter}" Height="6" Background="Transparent"
+                                                         Foreground="{DynamicResource ChartBar}" Value="{Binding IoRatio, Mode=OneWay}" />
+                                            <TextBlock Grid.Column="1" Text="{Binding IoText}" Style="{StaticResource Num}" />
                                         </Grid>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>

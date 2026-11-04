@@ -87,6 +87,7 @@ A file-suggestion screen showing old, large, duplicate files and old installers.
 1. **Sidebar:** "Gợi ý dọn file" selected.
 2. **Page Header:** Title, subtitle "Chỉ gợi ý — file được chuyển vào Thùng rác, có thể khôi phục"; primary "Quét".
 3. **Scan Folders Card:** label above a multi-line input listing folders (%USERPROFILE%\Downloads …); amber inline note when last-access time is disabled.
+3b. **Lag Diagnosis Callout (only when overloaded):** amber callout "Máy có thể đang chậm vì:" with one line per overloaded resource, e.g. "Ổ C: bận 96%. Đọc ghi nhiều nhất: Windows Update (42 MB/s), OneDrive (8 MB/s)."
 4. **Filter Row:** segmented control: Tất cả, Lâu không dùng, File lớn, Bộ cài cũ, File trùng; selection summary "Đã chọn [n] file ([size])"; secondary "Chọn tất cả đang hiện"; primary "Chuyển vào Thùng rác".
 5. **Results Table Card:** checkbox, Loại badge, Đường dẫn, Dung lượng, Dùng lần cuối, "Mở thư mục" link.
 6. **Empty State** before scanning: large folder icon, sentence, "Quét" button.
@@ -126,9 +127,10 @@ A live process monitor for a Windows utility: which apps use CPU and RAM, with e
 **Page Structure:**
 1. **Sidebar:** "Tiến trình" selected.
 2. **Page Header:** Title "Tiến trình", subtitle; one primary button "Giải phóng RAM".
-3. **Metrics Row (asymmetric 3:2):** left card with two halves: "CPU" big monospace percent + thin meter, "RAM" used/total + thin meter; right card with "Tiến trình" count and "App chạy ngầm" count.
+3. **Metrics Row (asymmetric 3:2):** left card with three columns: "CPU" big monospace percent + thin meter, "RAM" used/total + thin meter, "Ổ đĩa" busiest-disk active-time percent + "C: · 42 MB/s" + thin meter; right card with "Tiến trình" count and "App chạy ngầm" count.
+3b. **Lag Diagnosis Callout (only when overloaded):** amber callout "Máy có thể đang chậm vì:" with one line per overloaded resource, e.g. "Ổ C: bận 96%. Đọc ghi nhiều nhất: Windows Update (42 MB/s), OneDrive (8 MB/s)."
 4. **Filter Row:** dropdown defaulting to "Ứng dụng & chạy ngầm" (system processes hidden), other options Ứng dụng / Chạy ngầm / "Tất cả (gồm hệ thống)", and search input.
-5. **Process Table Card:** one row per app (child processes grouped): app display name bold + process name muted monospace, kind badge, process count, CPU column with thin teal bar + monospace percent, RAM column with thin teal bar + monospace size, row actions as text links "Giải phóng RAM", "End task" (red), "Mở thư mục"; sorted by CPU, live-updating every 2 seconds.
+5. **Process Table Card:** one row per app (child processes grouped): app display name bold + process name muted monospace, kind badge, process count, CPU column with thin teal bar + monospace percent, RAM column with thin teal bar + monospace size, "Đĩa (I/O)" column with thin teal bar + monospace MB/s, row actions as text links "Giải phóng RAM", "End task" (red), "Mở thư mục"; sorted by CPU, live-updating every 2 seconds.
 6. **Background Alert Card (bottom):** checkbox "Cảnh báo app chạy ngầm dùng nhiều tài nguyên", inline number inputs CPU ≥ %, RAM ≥ MB, sustained seconds, secondary "Lưu"; monospace input "Không cảnh báo".
 ```
 

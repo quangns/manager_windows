@@ -306,5 +306,15 @@
   "Proc_Ignored": "Sẽ không cảnh báo {app} nữa.",
   "Proc_AlertCpuMsg": "{app} đang chạy ngầm dùng {cpu}% CPU liên tục {sec} giây. Mở tab Tiến trình để xem hoặc end task.",
   "Proc_AlertRamMsg": "{app} đang chạy ngầm dùng {ram} RAM. Mở tab Tiến trình để giải phóng RAM hoặc end task.",
-  "Proc_FilterUserApps": "Ứng dụng & chạy ngầm"
+  "Proc_FilterUserApps": "Ứng dụng & chạy ngầm",
+  "Proc_Disk": "Ổ đĩa",
+  "Proc_DiskHint": "% thời gian ổ đĩa bận (Active time như Task Manager) của ổ đang bận nhất. Gần 100% liên tục là máy sẽ giật, mở app chậm.",
+  "Proc_DiskDetail": "{disk} · {speed}",
+  "Proc_DiskColumn": "Đĩa (I/O)",
+  "Proc_IoHint": "Tốc độ đọc + ghi của app. Gồm cả đọc ghi qua mạng/thiết bị (như cột I/O của Task Manager), nên là số gần đúng cho ổ đĩa.",
+  "Lag_Title": "Máy có thể đang chậm vì:",
+  "Lag_Disk": "Ổ {disk} bận {percent}%. Đọc ghi nhiều nhất: {apps}.",
+  "Lag_Cpu": "CPU dùng {percent}%. Nhiều nhất: {apps}.",
+  "Lag_Memory": "RAM đã dùng {percent}%, Windows phải đẩy bớt sang ổ đĩa. Nhiều nhất: {apps}.",
+  "Lag_NoApp": "không xác định được app (có thể do Windows hoặc driver)"
 }

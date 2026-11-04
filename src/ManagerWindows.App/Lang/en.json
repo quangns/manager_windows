@@ -306,5 +306,15 @@
   "Proc_Ignored": "No more alerts for {app}.",
   "Proc_AlertCpuMsg": "{app} is running in the background using {cpu}% CPU for {sec} seconds. Open Processes to inspect or end it.",
   "Proc_AlertRamMsg": "{app} is running in the background using {ram} of RAM. Open Processes to free memory or end it.",
-  "Proc_FilterUserApps": "Apps & background"
+  "Proc_FilterUserApps": "Apps & background",
+  "Proc_Disk": "Disk",
+  "Proc_DiskHint": "Active time of the busiest physical disk (as in Task Manager). Near 100% for long makes the PC stutter and apps open slowly.",
+  "Proc_DiskDetail": "{disk} · {speed}",
+  "Proc_DiskColumn": "Disk (I/O)",
+  "Proc_IoHint": "Read + write rate of the app. Includes network/device I/O (like Task Manager's I/O column), so it approximates disk usage.",
+  "Lag_Title": "The PC may be slow because:",
+  "Lag_Disk": "Disk {disk} is {percent}% busy. Top readers/writers: {apps}.",
+  "Lag_Cpu": "CPU at {percent}%. Top users: {apps}.",
+  "Lag_Memory": "RAM {percent}% used, Windows is paging to disk. Top users: {apps}.",
+  "Lag_NoApp": "no single app (likely Windows itself or a driver)"
 }
