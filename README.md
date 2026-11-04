@@ -20,6 +20,11 @@ App chạy nền trên Windows 10/11 (x64) giúp:
    - App đọc thẳng file .xlsx để tìm nguyên nhân làm file nặng: vùng dữ liệu "ma", quá nhiều style, hàm tự tính lại (INDIRECT/OFFSET…), liên kết ngoài, ảnh lớn, Office 32-bit…
    - Từ đó app đưa ra cách xử lý cụ thể.
 
+8. **Công cụ** (phím tắt toàn cục, tự cấu hình):
+   - Chụp màn hình: khoanh vùng tự do hoặc bấm chọn cửa sổ (`Ctrl+Alt+A`), chụp cửa sổ đang dùng (`Ctrl+Alt+W`), toàn màn hình (`Ctrl+Alt+F`). Trình chỉnh sửa có khung, elip, mũi tên, tô sáng, che kín, đánh số thứ tự, 8 màu, 3 độ dày nét; sao chép/lưu PNG.
+   - Ghim cửa sổ app khác luôn trên cùng: phím tắt `Ctrl+Alt+T`, kéo tâm ngắm thả lên cửa sổ, hoặc chọn trong danh sách.
+   - Mini monitor CPU / GPU / RAM / ổ đĩa luôn trên cùng, nền trong suốt; chọn chỉ số, ngang/dọc, 3 cỡ, khoá vị trí + click xuyên (`Ctrl+Alt+M`).
+
 Giao diện kiểu dashboard, có tiếng Việt và tiếng Anh. Chế độ sáng/tối tự theo Windows, hoặc chọn cố định trong phần Cài đặt.
 
 ![Tổng quan – sáng](docs/design/preview/overview-light.png)

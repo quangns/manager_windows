@@ -9,7 +9,8 @@ namespace ManagerWindows.App.Controls;
 
 /// <summary>
 /// Biểu tượng tâm ngắm "kéo để chọn app" (giống EVKey): giữ chuột trái vào biểu tượng, kéo tới cửa sổ app bất kỳ rồi thả.
-/// Trong lúc kéo gọi <see cref="HoverCommand"/> với PID dưới con trỏ; khi thả gọi <see cref="PickedCommand"/>.
+/// Trong lúc kéo gọi <see cref="HoverCommand"/> với PID (hoặc handle cửa sổ nếu <see cref="PickWindow"/>) dưới con trỏ;
+/// khi thả gọi <see cref="PickedCommand"/>.
 /// Chuột được "bắt" (CaptureMouse) nên vẫn nhận sự kiện khi con trỏ ra ngoài cửa sổ app.
 /// </summary>
 public sealed class WindowPicker : Border
@@ -22,9 +23,14 @@ public sealed class WindowPicker : Border
     public ICommand? PickedCommand { get => (ICommand?)GetValue(PickedCommandProperty); set => SetValue(PickedCommandProperty, value); }
     public ICommand? HoverCommand { get => (ICommand?)GetValue(HoverCommandProperty); set => SetValue(HoverCommandProperty, value); }
 
+    /// <summary>true: tham số lệnh là handle cửa sổ (long) thay vì PID — dùng cho "ghim cửa sổ".</summary>
+    public bool PickWindow { get; set; }
+
+    private long Target() => PickWindow ? DesktopWindows.AtCursor().ToInt64() : WindowInfo.PidAtCursor();
+
     private readonly System.Windows.Shapes.Path _icon;
     private bool _dragging;
-    private int _lastPid = -1;
+    private long _last = -1;
 
     public WindowPicker()
     {
@@ -56,7 +62,7 @@ public sealed class WindowPicker : Border
         base.OnMouseLeftButtonDown(e);
         _dragging = CaptureMouse();
         if (!_dragging) return;
-        _lastPid = -1;
+        _last = -1;
         Mouse.OverrideCursor = Cursors.Cross;
         _icon.Visibility = Visibility.Hidden; // "nhấc" tâm ngắm lên theo con trỏ như EVKey
         SetResourceReference(BorderBrushProperty, "Accent");
@@ -67,19 +73,19 @@ public sealed class WindowPicker : Border
     {
         base.OnMouseMove(e);
         if (!_dragging) return;
-        var pid = WindowInfo.PidAtCursor();
-        if (pid == _lastPid) return;
-        _lastPid = pid;
-        if (HoverCommand?.CanExecute(pid) == true) HoverCommand.Execute(pid);
+        var target = Target();
+        if (target == _last) return;
+        _last = target;
+        Fire(HoverCommand, target);
     }
 
     protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
     {
         base.OnMouseLeftButtonUp(e);
         if (!_dragging) return;
-        var pid = WindowInfo.PidAtCursor();
+        var target = Target();
         End();
-        if (PickedCommand?.CanExecute(pid) == true) PickedCommand.Execute(pid);
+        Fire(PickedCommand, target);
         e.Handled = true;
     }
 
@@ -87,6 +93,13 @@ public sealed class WindowPicker : Border
     {
         base.OnLostMouseCapture(e);
         if (_dragging) End(); // bấm Esc / mất focus giữa chừng: huỷ
+    }
+
+    /// <summary>PID truyền dạng int (như trước), handle cửa sổ dạng long.</summary>
+    private void Fire(ICommand? cmd, long target)
+    {
+        object arg = PickWindow ? target : (int)target;
+        if (cmd?.CanExecute(arg) == true) cmd.Execute(arg);
     }
 
     private void End()

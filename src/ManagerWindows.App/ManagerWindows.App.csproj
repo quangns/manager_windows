@@ -6,6 +6,7 @@
     <AssemblyName>ManagerWindows.App</AssemblyName>
     <RootNamespace>ManagerWindows.App</RootNamespace>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>false</SelfContained>
     <!-- dotnet publish -p:PortableBuild=true: bản portable một file exe (dữ liệu cạnh exe, không cần portable.txt) -->

@@ -1588,6 +1588,170 @@
             </DockPanel>
         </TabItem>
 
+        <!-- ===================== CÔNG CỤ: chụp màn hình, ghim cửa sổ, mini monitor ===================== -->
+        <TabItem Tag="&#xE90F;" Header="{l:T Tab_Tools}" DataContext="{Binding Tools}">
+            <DockPanel Style="{StaticResource Page}">
+                <c:PageHeader DockPanel.Dock="Top" Title="{l:T Tab_Tools}" Subtitle="{l:T Tools_Subtitle}">
+                    <c:PageHeader.Actions>
+                        <StackPanel Orientation="Horizontal">
+                            <Button Style="{StaticResource Secondary}" Content="{l:T Cap_Full}" Command="{Binding CaptureFullCommand}" />
+                            <Button Style="{StaticResource Primary}" Content="{l:T Cap_Region}" Command="{Binding CaptureRegionCommand}" />
+                        </StackPanel>
+                    </c:PageHeader.Actions>
+                </c:PageHeader>
+                <ContentControl DockPanel.Dock="Bottom" Content="{Binding}" ContentTemplate="{StaticResource StatusBar}" />
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel MaxWidth="1000">
+                        <!-- Phím tắt -->
+                        <DockPanel Margin="0,0,0,10">
+                            <Button DockPanel.Dock="Right" Style="{StaticResource Link}" Content="{l:T Hotkey_Reset}" Command="{Binding ResetHotkeysCommand}" />
+                            <TextBlock Text="{l:T Hotkey_Title}" Style="{StaticResource CardTitle}" VerticalAlignment="Center" />
+                        </DockPanel>
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                            <StackPanel>
+                                <c:SettingRow Title="{l:T Hotkey_Enabled}" Description="{l:T Hotkey_EnabledDesc}">
+                                    <CheckBox IsChecked="{Binding HotkeysEnabled}" />
+                                </c:SettingRow>
+                                <ItemsControl ItemsSource="{Binding Hotkeys}" Margin="0,8,0,0">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,4">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="190" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="200" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
+                                                <c:HotkeyBox Grid.Column="1" Text="{Binding Value, UpdateSourceTrigger=Explicit}" />
+                                                <Button Grid.Column="2" Style="{StaticResource Link}" Content="{l:T Hotkey_Clear}" Margin="6,0,0,0"
+                                                        Command="{Binding DataContext.ClearHotkeyCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                        CommandParameter="{Binding}" />
+                                                <StackPanel Grid.Column="3" Orientation="Horizontal" Margin="10,0,0,0" VerticalAlignment="Center">
+                                                    <TextBlock Style="{StaticResource Icon}" Text="&#xE7BA;" FontSize="12" Foreground="{DynamicResource Warning}" Margin="0,0,6,0"
+                                                               Visibility="{Binding HasError, Converter={StaticResource BoolVis}}" />
+                                                    <TextBlock Text="{Binding StatusText}" Style="{StaticResource Muted}" TextTrimming="CharacterEllipsis" ToolTip="{Binding StatusText}" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Chụp màn hình -->
+                        <TextBlock Text="{l:T Cap_Title}" Style="{StaticResource CardTitle}" Margin="0,4,0,4" />
+                        <TextBlock Text="{l:T Cap_Desc}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,10" />
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                            <StackPanel>
+                                <c:SettingRow Title="{l:T Cap_OpenEditor}" Description="{l:T Cap_OpenEditorDesc}">
+                                    <CheckBox IsChecked="{Binding OpenEditor}" />
+                                </c:SettingRow>
+                                <c:SettingRow Title="{l:T Cap_CopyClipboard}">
+                                    <CheckBox IsChecked="{Binding CopyToClipboard}" />
+                                </c:SettingRow>
+                                <c:SettingRow Title="{l:T Cap_AutoSave}" Description="{l:T Cap_AutoSaveDesc}">
+                                    <CheckBox IsChecked="{Binding AutoSave}" />
+                                </c:SettingRow>
+                                <c:SettingRow Title="{l:T Cap_Folder}" BorderThickness="0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding SaveFolder}" FontFamily="{StaticResource MonoFont}" FontSize="12" MaxWidth="380"
+                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center" ToolTip="{Binding SaveFolder}" />
+                                        <Button Style="{StaticResource Link}" Content="{l:T Disk_Browse}" Command="{Binding BrowseFolderCommand}" Margin="10,0,0,0" />
+                                        <Button Style="{StaticResource Link}" Content="{l:T Sug_OpenFolder}" Command="{Binding OpenFolderCommand}" />
+                                    </StackPanel>
+                                </c:SettingRow>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Ghim cửa sổ luôn trên cùng -->
+                        <DockPanel Margin="0,4,0,4">
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                <Button Style="{StaticResource Link}" Content="{l:T Pin_UnpinAll}" Command="{Binding UnpinAllCommand}" />
+                                <Button Style="{StaticResource Link}" Content="{l:T Btn_Refresh}" Command="{Binding RefreshWindowsCommand}" />
+                            </StackPanel>
+                            <TextBlock Text="{l:T Pin_Title}" Style="{StaticResource CardTitle}" VerticalAlignment="Center" />
+                        </DockPanel>
+                        <TextBlock Text="{l:T Pin_Desc}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,10" />
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                            <DockPanel>
+                                <Grid DockPanel.Dock="Top" Margin="0,0,0,14">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <c:WindowPicker PickWindow="True" PickedCommand="{Binding PinPickedCommand}" HoverCommand="{Binding PinHoverCommand}" />
+                                    <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{l:T Pin_PickerTitle}" FontWeight="Medium" />
+                                        <TextBlock Text="{Binding PickerText}" Style="{StaticResource Muted}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
+                                    </StackPanel>
+                                </Grid>
+                                <Border Style="{StaticResource TableCard}">
+                                    <DataGrid c:Table.Apply="True" ItemsSource="{Binding Windows}" IsReadOnly="True" MinHeight="160" MaxHeight="360">
+                                        <DataGrid.Columns>
+                                            <DataGridTemplateColumn Header="{l:T Pin_ColWindow}" Width="*">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                            <TextBlock Style="{StaticResource Icon}" Text="&#xE718;" FontSize="12" Foreground="{DynamicResource Accent}" Margin="0,0,8,0"
+                                                                       Visibility="{Binding IsTopMost, Converter={StaticResource BoolVis}}" />
+                                                            <TextBlock Text="{Binding Title}" FontWeight="Medium" TextTrimming="CharacterEllipsis" ToolTip="{Binding Title}" />
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                            <DataGridTextColumn Header="{l:T Col_App}" Binding="{Binding App}" Width="200" />
+                                            <DataGridTemplateColumn Width="130">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <Button Content="{Binding ActionText}" Style="{StaticResource Link}"
+                                                                Command="{Binding DataContext.TogglePinCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                                CommandParameter="{Binding}" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </Border>
+                            </DockPanel>
+                        </Border>
+
+                        <!-- Mini monitor -->
+                        <TextBlock Text="{l:T Mini_Title}" Style="{StaticResource CardTitle}" Margin="0,4,0,4" />
+                        <TextBlock Text="{l:T Mini_Desc}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,10" />
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                            <StackPanel>
+                                <c:SettingRow Title="{l:T Mini_Show}">
+                                    <CheckBox IsChecked="{Binding OverlayVisible}" />
+                                </c:SettingRow>
+                                <c:SettingRow Title="{l:T Mini_Metrics}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <CheckBox IsChecked="{Binding ShowCpu}" Content="CPU" Margin="0,0,16,0" />
+                                        <CheckBox IsChecked="{Binding ShowGpu}" Content="GPU" Margin="0,0,16,0" />
+                                        <CheckBox IsChecked="{Binding ShowRam}" Content="RAM" Margin="0,0,16,0" />
+                                        <CheckBox IsChecked="{Binding ShowDisk}" Content="Disk" />
+                                    </StackPanel>
+                                </c:SettingRow>
+                                <c:SettingRow Title="{l:T Mini_Horizontal}">
+                                    <CheckBox IsChecked="{Binding Horizontal}" />
+                                </c:SettingRow>
+                                <c:SettingRow Title="{l:T Mini_Size}">
+                                    <ComboBox ItemsSource="{Binding Sizes}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                                              SelectedValue="{Binding OverlaySize}" Width="140" />
+                                </c:SettingRow>
+                                <c:SettingRow Title="{l:T Mini_ClickThrough}" Description="{l:T Mini_ClickThroughDesc}">
+                                    <CheckBox IsChecked="{Binding ClickThrough}" />
+                                </c:SettingRow>
+                                <c:SettingRow Title="{l:T Mini_Position}" BorderThickness="0">
+                                    <Button Style="{StaticResource Secondary}" Content="{l:T Mini_ResetPosition}" Command="{Binding ResetOverlayPositionCommand}" />
+                                </c:SettingRow>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
+        </TabItem>
+
         <!-- ===================== CÀI ĐẶT ===================== -->
         <TabItem Tag="&#xE713;" Header="{l:T Tab_Settings}" DataContext="{Binding Settings}">
             <DockPanel Style="{StaticResource Page}">

@@ -25,6 +25,7 @@ public partial class App : Application
     private bool _ownsMutex;
     private AppHost? _host;
     private TaskbarIcon? _tray;
+    private ToolsService? _tools;
     private MainWindow? _window;
     private MainViewModel? _vm;
     private string? _pendingTab;
@@ -62,6 +63,9 @@ public partial class App : Application
 
         CreateTray();
         _host.Start();
+        // Phím tắt toàn cục, chụp màn hình, ghim cửa sổ, mini monitor (cần luồng UI).
+        try { _tools = new ToolsService(_host); }
+        catch (Exception ex) { Log.Error("tools", ex); }
         ListenForShowRequests();
 
         if (!e.Args.Contains("--tray")) ShowMain();
@@ -207,6 +211,9 @@ public partial class App : Application
         Item("Tray_Relocation", () => ShowMain("relocation"));
         Item("Tray_WakeAll", () => _host?.Hibernation.WakeAll("tray"));
         menu.Items.Add(new Separator());
+        Item("Tray_Capture", () => _tools?.Capture(CaptureMode.Region, delayMs: 300)); // chờ menu khay tắt hẳn
+        Item("Tray_MiniMonitor", () => _tools?.SetOverlay(!_tools.OverlayVisible));
+        menu.Items.Add(new Separator());
         Item("Tray_Exit", ExitApp);
         return menu;
     }
@@ -273,6 +280,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        _tools?.Dispose();
         _host?.Stop(); // trả lại mức ưu tiên ban đầu, ghi nốt thống kê
         _tray?.Dispose();
         if (_ownsMutex)

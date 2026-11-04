@@ -4,6 +4,7 @@ using ManagerWindows.Core.Excel;
 using ManagerWindows.Core.Monitoring;
 using ManagerWindows.Core.Priority;
 using ManagerWindows.Core.Scheduling;
+using ManagerWindows.Core.Tools;
 
 namespace ManagerWindows.Core.Config;
 
@@ -53,6 +54,7 @@ public sealed class AppConfig
     public MonitorOptions Monitor { get; set; } = new();
     public LeftoverOptions Leftovers { get; set; } = new();
     public HibernationOptions Hibernation { get; set; } = new();
+    public ToolsOptions Tools { get; set; } = new();
 }
 
 public sealed class ConfigStore(string path)

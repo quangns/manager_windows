@@ -4,7 +4,7 @@ namespace ManagerWindows.App.ViewModels;
 
 public sealed partial class MainViewModel : ObservableObject
 {
-    public static readonly string[] Tabs = ["dashboard", "cleanup", "suggestions", "diskusage", "relocation", "usage", "processes", "hibernation", "priority", "settings"];
+    public static readonly string[] Tabs = ["dashboard", "cleanup", "suggestions", "diskusage", "relocation", "usage", "processes", "hibernation", "priority", "tools", "settings"];
 
     public DashboardViewModel Dashboard { get; } = new();
     public CleanupViewModel Cleanup { get; } = new();
@@ -15,6 +15,7 @@ public sealed partial class MainViewModel : ObservableObject
     public ProcessesViewModel Processes { get; } = new();
     public HibernationViewModel Hibernation { get; } = new();
     public PriorityViewModel Priority { get; } = new();
+    public ToolsViewModel Tools { get; } = new();
     public SettingsViewModel Settings { get; } = new();
 
     [ObservableProperty] private int _selectedTab;
@@ -51,6 +52,7 @@ public sealed partial class MainViewModel : ObservableObject
             case "relocation": Relocation.LoadRecords(); break;
             case "usage": _ = Usage.RefreshCommand.ExecuteAsync(null); break;
             case "priority": _ = Priority.LoadAppsCommand.ExecuteAsync(null); break;
+            case "tools": Tools.Start(); break;
         }
     }
 }
