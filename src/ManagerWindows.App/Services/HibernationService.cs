@@ -64,10 +64,19 @@ public sealed class HibernationService : BackgroundLoop
 
     private void OnActivated(int pid)
     {
-        var name = NameOf(pid);
+        // Cửa sổ có thể thuộc tiến trình con (tên khác tên app): tìm app ngủ theo PID trước, rồi theo tên.
+        var sleeping = SleepingAppOf(pid);
+        var name = sleeping ?? NameOf(pid);
         if (name == null) return;
         _activity.MarkActive(name, DateTime.UtcNow);
-        if (IsAsleep(name)) Task.Run(() => Wake(name, "foreground"));
+        if (sleeping != null || IsAsleep(name)) Task.Run(() => Wake(name, "foreground"));
+    }
+
+    /// <summary>Tên app đang ngủ có chứa tiến trình này (kể cả tiến trình con), hoặc null.</summary>
+    private string? SleepingAppOf(int pid)
+    {
+        if (pid <= 0) return null;
+        lock (_gate) return _asleep.Values.FirstOrDefault(a => a.Processes.Any(p => p.Pid == pid))?.Name;
     }
 
     /// <summary>
@@ -81,7 +90,7 @@ public sealed class HibernationService : BackgroundLoop
             List<SleepingApp> asleep;
             lock (_gate) asleep = _asleep.Values.ToList();
             if (asleep.Count == 0) return;
-            var fg = WindowInfo.ForegroundPid();
+            var fg = WindowInfo.ForegroundPid(); // đã lần ngược cửa sổ "ma" (Not Responding) về app thật
             foreach (var app in asleep)
             {
                 if (app.Processes.Any(p => p.Pid == fg)) { Wake(app.Name, "foreground"); continue; }
@@ -129,6 +138,8 @@ public sealed class HibernationService : BackgroundLoop
                 tree.Sum(p => sampleByPid[p].WorkingSetBytes),
                 tree.Overlaps(audio), tree.Overlaps(clipboard), tree.Contains(fgPid));
         }).ToList();
+        // Cửa sổ đang dùng thuộc tiến trình con của app (tên khác): vẫn tính là app đang được dùng.
+        foreach (var c in candidates.Where(c => c.IsForeground)) _activity.MarkActive(c.Name, DateTime.UtcNow);
 
         HashSet<string> asleepNames;
         lock (_gate) asleepNames = _asleep.Keys.ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -164,9 +175,13 @@ public sealed class HibernationService : BackgroundLoop
     {
         var self = Environment.ProcessId;
         var done = new List<SleepingProcess>();
+        // Tiến trình đã bị tạm dừng trong app khác đang ngủ (vd. tiến trình con dùng chung): không tạm dừng lần hai,
+        // vì NtSuspendProcess cộng dồn — đánh thức một lần sẽ không đủ, app vẫn đứng.
+        HashSet<int> already;
+        lock (_gate) already = _asleep.Values.SelectMany(a => a.Processes).Select(p => p.Pid).ToHashSet();
         foreach (var pid in pids)
         {
-            if (pid == self) continue;
+            if (pid == self || already.Contains(pid)) continue;
             string pname;
             long start;
             try

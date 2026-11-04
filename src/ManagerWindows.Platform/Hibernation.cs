@@ -75,7 +75,31 @@ public static class WindowInfo
         return set;
     }
 
-    public static int ForegroundPid() => PidOf(GetForegroundWindow());
+    public static int ForegroundPid() => OwnerPid(GetForegroundWindow());
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetClassName(IntPtr hwnd, System.Text.StringBuilder name, int max);
+    [DllImport("user32.dll")] private static extern IntPtr HungWindowFromGhostWindow(IntPtr ghost);
+
+    /// <summary>
+    /// PID thật của app sở hữu cửa sổ. App bị tạm dừng lâu bị Windows coi là "Not Responding": khi người dùng bấm vào,
+    /// Windows thay cửa sổ thật bằng cửa sổ "ma" (lớp "Ghost", thuộc dwm.exe) — phải lần ngược về cửa sổ treo thật,
+    /// nếu không sẽ không bao giờ nhận ra app đang ngủ được gọi lại.
+    /// </summary>
+    public static int OwnerPid(IntPtr hwnd)
+    {
+        if (hwnd == IntPtr.Zero) return 0;
+        var cls = new System.Text.StringBuilder(32);
+        if (GetClassName(hwnd, cls, cls.Capacity) > 0 && cls.ToString() == "Ghost")
+        {
+            try
+            {
+                var real = HungWindowFromGhostWindow(hwnd);
+                if (real != IntPtr.Zero) return PidOf(real);
+            }
+            catch (EntryPointNotFoundException) { }
+        }
+        return PidOf(hwnd);
+    }
 
     [StructLayout(LayoutKind.Sequential)] private struct POINT { public int X, Y; }
     [DllImport("user32.dll")] private static extern bool GetCursorPos(out POINT p);
@@ -113,7 +137,7 @@ public sealed class ForegroundHook : IDisposable
 
     public ForegroundHook(Action<int> onActivated)
     {
-        _proc = (_, _, hwnd, _, _, _, _) => { if (WindowInfo.PidOf(hwnd) is > 0 and var pid) onActivated(pid); };
+        _proc = (_, _, hwnd, _, _, _, _) => { if (WindowInfo.OwnerPid(hwnd) is > 0 and var pid) onActivated(pid); };
         _fg = SetWinEventHook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND, IntPtr.Zero, _proc, 0, 0, WINEVENT_OUTOFCONTEXT);
         _restore = SetWinEventHook(EVENT_SYSTEM_MINIMIZEEND, EVENT_SYSTEM_MINIMIZEEND, IntPtr.Zero, _proc, 0, 0, WINEVENT_OUTOFCONTEXT);
     }
