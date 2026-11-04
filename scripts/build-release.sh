@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # Đóng gói bản phát hành cho Windows x64 (chạy được trên Linux).
 # Kết quả:
-#   dist/ManagerWindows-<version>-win-x64.zip           bản cài đặt (App + Service, chạy install.cmd với quyền admin)
+#   dist/ManagerWindows-<version>-win-x64.zip           bản cài đặt: bên ngoài chỉ có ManagerWindows.App.exe, install.cmd,
+#                                                       uninstall.cmd, Huong-dan-su-dung.txt; dịch vụ nền + thư viện trong lib\
 #   dist/ManagerWindows-<version>-win-x64-portable.zip  bản portable: CHỈ 1 file exe + file hướng dẫn
 #   dist/SHA256SUMS.txt
-# Cùng một commit, cùng mã nguồn App. Bản portable build thêm cờ PortableBuild (dữ liệu cạnh exe) và gộp thành
-# một file exe tự chứa: runtime .NET, thư viện native, font và luật dọn rác đều nằm trong exe.
+# Cùng một commit, cùng mã nguồn App. Cả hai bản đều gộp App thành một file exe tự chứa (runtime .NET, thư viện native,
+# font, luật dọn rác nằm trong exe); bản portable build thêm cờ PortableBuild (dữ liệu cạnh exe).
 set -euo pipefail
 # Chạy cả script dưới reap-run (child subreaper): mọi tiến trình con mồ côi của dotnet (MSBuild node,
 # VBCSCompiler, testhost) được thu dọn thay vì thành zombie dưới PID 1 của container.
@@ -26,60 +27,82 @@ rm -rf dist && mkdir -p dist/build/app dist/build/service
 
 "$DOTNET" test tests/ManagerWindows.Core.Tests -c Release --nologo -v q --disable-build-servers
 
-# Tự chứa runtime .NET để máy văn phòng không cần cài thêm gì.
-# Xoá file trung gian của App trước mỗi lần publish: bản portable build cùng project với cờ khác (PortableBuild).
-rm -rf src/ManagerWindows.App/obj/Release
-"$DOTNET" publish src/ManagerWindows.App -c Release -r win-x64 --self-contained true -o dist/build/app --nologo -v q --disable-build-servers -p:DebugType=none
-"$DOTNET" publish src/ManagerWindows.Service -c Release -r win-x64 --self-contained true -o dist/build/service --nologo -v q --disable-build-servers -p:DebugType=none
+COMMON=(-c Release -r win-x64 --self-contained true --nologo -v q --disable-build-servers -p:DebugType=none)
+SINGLE=(-p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true)
+APP_OBJ_DLL=src/ManagerWindows.App/obj/Release/net10.0-windows/win-x64/ManagerWindows.App.dll
 
-# Bản cài đặt: Service trước, App sau (file runtime trùng nhau là cùng một bản .NET).
-INST=dist/ManagerWindows
-mkdir -p "$INST"
-cp -r dist/build/service/. "$INST/"
-cp -r dist/build/app/. "$INST/"
-cp scripts/install.ps1 scripts/uninstall.ps1 scripts/install.cmd scripts/uninstall.cmd README.md "$INST/"
-
-# Bản portable: một file exe tự chứa + file hướng dẫn (kèm toàn văn giấy phép font OFL).
-rm -rf src/ManagerWindows.App/obj/Release
-"$DOTNET" publish src/ManagerWindows.App -c Release -r win-x64 --self-contained true -o dist/build/portable --nologo -v q \
-  --disable-build-servers -p:DebugType=none -p:PortableBuild=true -p:PublishSingleFile=true \
-  -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true
-PORT=dist/portable/ManagerWindows-Portable
-mkdir -p "$PORT"
-cp dist/build/portable/ManagerWindows.App.exe "$PORT/"
-python3 - "$PORT/Huong-dan-su-dung.txt" scripts/Huong-dan-su-dung.txt src/ManagerWindows.App/Assets/Fonts/OFL-BeVietnamPro.txt src/ManagerWindows.App/Assets/Fonts/OFL-JetBrainsMono.txt <<'PY'
+# Nhãn loại bản (AssemblyMetadata ManagerWindowsEdition) trên dll trung gian — exe một file đã nén nên không dò được.
+check_edition() {
+  python3 - "$APP_OBJ_DLL" "$1" <<'PY'
 import sys
-out, guide, *licenses = sys.argv[1:]
-text = open(guide, encoding="utf-8").read()
-for lic in licenses:
-    text += "\n" + "-" * 72 + "\n" + open(lic, encoding="utf-8").read().strip() + "\n"
-# UTF-8 có BOM + CRLF để Notepad nào cũng đọc đúng tiếng Việt
-open(out, "w", encoding="utf-8-sig", newline="\r\n").write(text)
-PY
-
-# Kiểm tra: gói portable đúng 2 file; App ở gói cài đặt giống hệt bản publish thường.
-COUNT=$(find "$PORT" -type f | wc -l)
-[[ "$COUNT" == 2 ]] || { echo "Gói portable phải có đúng 2 file, đang có $COUNT"; exit 1; }
-python3 - "$INST" dist/build/app <<'PY'
-import hashlib, os, sys
-inst, app = sys.argv[1:]
-h = lambda p: hashlib.sha256(open(p, 'rb').read()).hexdigest()
-bad = [r for root, _, fs in os.walk(app) for f in fs
-       for r in [os.path.relpath(os.path.join(root, f), app)] if h(os.path.join(app, r)) != h(os.path.join(inst, r))]
-if bad: sys.exit(f"File App trong gói cài đặt khác bản publish: {bad[:10]}")
-print("Gói cài đặt đủ file App; gói portable gồm:", ", ".join(sorted(os.listdir(sys.argv[1].replace('ManagerWindows', 'portable/ManagerWindows-Portable')))))
-PY
-
-# Kiểm tra nhãn loại bản: App của gói cài đặt phải là "installed", không lẫn bản portable.
-python3 - "$INST/ManagerWindows.App.dll" dist/build/portable/ManagerWindows.App.exe <<'PY'
-import sys
+path, want = sys.argv[1:]
 def tag(value):  # blob của AssemblyMetadata: chuỗi có tiền tố độ dài
     key = b"ManagerWindowsEdition"
     return bytes([len(key)]) + key + bytes([len(value)]) + value.encode()
-inst = open(sys.argv[1], "rb").read()
-if tag("installed") not in inst or tag("portable") in inst:
-    sys.exit("LỖI: App trong gói cài đặt không mang nhãn installed")
-print("Nhãn loại bản: gói cài đặt = installed")
+data = open(path, "rb").read()
+other = "portable" if want == "installed" else "installed"
+if tag(want) not in data or tag(other) in data:
+    sys.exit(f"LỖI: App phải mang nhãn {want}")
+print(f"Nhãn loại bản: {want}")
+PY
+}
+
+# Hướng dẫn = nội dung + toàn văn giấy phép font OFL; UTF-8 có BOM + CRLF để Notepad nào cũng đọc đúng tiếng Việt.
+write_guide() {
+  python3 - "$1" "$2" src/ManagerWindows.App/Assets/Fonts/OFL-BeVietnamPro.txt src/ManagerWindows.App/Assets/Fonts/OFL-JetBrainsMono.txt <<'PY'
+import sys
+out, guide, *licenses = sys.argv[1:]
+text = open(guide, encoding="utf-8").read()
+if "GIẤY PHÉP FONT" not in text:
+    text += ("\n\nGIẤY PHÉP FONT / FONT LICENSES\n==============================\n"
+             "App nhúng font Be Vietnam Pro và JetBrains Mono, phát hành theo SIL Open Font License 1.1 (toàn văn bên dưới).\n"
+             "The app embeds the Be Vietnam Pro and JetBrains Mono fonts, licensed under the SIL Open Font License 1.1 (full text below).\n")
+for lic in licenses:
+    text += "\n" + "-" * 72 + "\n" + open(lic, encoding="utf-8").read().strip() + "\n"
+open(out, "w", encoding="utf-8-sig", newline="\r\n").write(text)
+PY
+}
+
+# ---------- Bản cài đặt ----------
+# Xoá file trung gian của App trước mỗi lần publish: bản portable build cùng project với cờ khác (PortableBuild).
+rm -rf src/ManagerWindows.App/obj/Release
+"$DOTNET" publish src/ManagerWindows.App "${COMMON[@]}" "${SINGLE[@]}" -o dist/build/app
+check_edition installed
+"$DOTNET" publish src/ManagerWindows.Service "${COMMON[@]}" -o dist/build/service
+
+# Bên ngoài chỉ có file chạy app, cài, gỡ, hướng dẫn; dịch vụ nền, thư viện, luật dọn rác, script nằm trong lib\.
+INST=dist/ManagerWindows
+mkdir -p "$INST/lib"
+cp dist/build/app/ManagerWindows.App.exe "$INST/"
+cp -r dist/build/service/. "$INST/lib/"
+cp scripts/install.ps1 scripts/uninstall.ps1 "$INST/lib/"
+cp scripts/install.cmd scripts/uninstall.cmd "$INST/"
+write_guide "$INST/Huong-dan-su-dung.txt" scripts/Huong-dan-cai-dat.txt
+
+# ---------- Bản portable: một file exe tự chứa + file hướng dẫn ----------
+rm -rf src/ManagerWindows.App/obj/Release
+"$DOTNET" publish src/ManagerWindows.App "${COMMON[@]}" "${SINGLE[@]}" -p:PortableBuild=true -o dist/build/portable
+check_edition portable
+PORT=dist/portable/ManagerWindows-Portable
+mkdir -p "$PORT"
+cp dist/build/portable/ManagerWindows.App.exe "$PORT/"
+write_guide "$PORT/Huong-dan-su-dung.txt" scripts/Huong-dan-su-dung.txt
+
+# Kiểm tra cấu trúc: portable đúng 2 file; cài đặt bên ngoài đúng 4 file + lib\ (đủ dịch vụ, script, luật).
+python3 - "$INST" "$PORT" <<'PY'
+import os, sys
+inst, port = sys.argv[1:]
+top = sorted(os.listdir(inst))
+want = sorted(["ManagerWindows.App.exe", "install.cmd", "uninstall.cmd", "Huong-dan-su-dung.txt", "lib"])
+if top != want:
+    sys.exit(f"Gói cài đặt bên ngoài phải chỉ có {want}, đang có {top}")
+for f in ["ManagerWindows.Service.exe", "install.ps1", "uninstall.ps1", os.path.join("rules", "cleanup-rules.json")]:
+    if not os.path.isfile(os.path.join(inst, "lib", f)):
+        sys.exit(f"Thiếu lib/{f}")
+if sorted(os.listdir(port)) != ["Huong-dan-su-dung.txt", "ManagerWindows.App.exe"]:
+    sys.exit(f"Gói portable phải có đúng 2 file, đang có {sorted(os.listdir(port))}")
+n = sum(len(fs) for _, _, fs in os.walk(os.path.join(inst, "lib")))
+print(f"Gói cài đặt: {', '.join(top)} (lib có {n} file); gói portable: {', '.join(sorted(os.listdir(port)))}")
 PY
 
 zipdir() { python3 -c "import shutil,sys; shutil.make_archive(sys.argv[1], 'zip', sys.argv[2], sys.argv[3])" "$1" "$2" "$3"; }

@@ -1,0 +1,56 @@
+MANAGER WINDOWS — BẢN CÀI ĐẶT
+=============================
+
+TRONG GÓI CÓ
+  ManagerWindows.App.exe   App (đã gồm .NET runtime, thư viện, font, luật dọn rác)
+  install.cmd              Cài đặt (Windows sẽ hỏi quyền admin)
+  uninstall.cmd            Gỡ cài đặt
+  Huong-dan-su-dung.txt    File này
+  lib\                     Dịch vụ nền, thư viện và script cài đặt — không cần mở, không xoá
+
+CÀI ĐẶT
+  1. Giải nén cả thư mục (giữ nguyên thư mục lib bên cạnh install.cmd).
+  2. Nhấp đúp install.cmd, chọn Yes khi Windows hỏi quyền admin.
+     - App được cài vào C:\Program Files\ManagerWindows, cùng cấu trúc như gói này.
+     - Đăng ký dịch vụ nền "Manager Windows Service" (dọn thư mục hệ thống theo lịch, đếm số lần mở app,
+       xả bộ nhớ đệm standby, đổi ưu tiên app chạy quyền admin).
+     - Tạo shortcut "Manager Windows" trong Start menu rồi mở app.
+  3. Biểu tượng Manager Windows nằm ở khay hệ thống (góc phải thanh taskbar). Bấm vào để mở cửa sổ.
+     Góc trên bên trái cửa sổ hiện phiên bản, ví dụ "v0.8.0 · Bản cài đặt".
+
+  Windows SmartScreen có thể cảnh báo vì file chưa ký số: bấm "More info" > "Run anyway".
+  Lần mở app đầu tiên có thể mất vài giây (app giải nén thư viện vào thư mục tạm).
+
+CẬP NHẬT BẢN MỚI
+  Giải nén gói mới rồi chạy install.cmd như lần đầu. App và dịch vụ cũ được dừng và thay thế;
+  cấu hình, thống kê và các thư mục data đã chuyển ổ được giữ nguyên.
+
+DỮ LIỆU
+  - Cấu hình, thống kê, log của bạn: %LOCALAPPDATA%\ManagerWindows
+  - Dữ liệu của dịch vụ nền:        %ProgramData%\ManagerWindows
+
+GỠ CÀI ĐẶT
+  Chạy uninstall.cmd (trong gói này hoặc trong C:\Program Files\ManagerWindows).
+  - Mặc định: các thư mục data đã chuyển (Zalo, Telegram…) được đưa về lại ổ C trước khi gỡ.
+    Chỉ hoàn tác cho tài khoản đang gỡ; tài khoản khác hãy mở app > Di chuyển data app > Hoàn tác trước.
+  - Giữ data ở ổ khác (Zalo… vẫn chạy bình thường):  uninstall.cmd -KeepRelocations
+  - Xoá luôn cấu hình và thống kê:                   uninstall.cmd -RemoveData
+
+PHÍM TẮT MẶC ĐỊNH (đổi được trong tab Công cụ)
+  Ctrl+Alt+A  Chụp vùng (kéo thả hoặc bấm chọn cửa sổ)
+  Ctrl+Alt+W  Chụp cửa sổ đang dùng
+  Ctrl+Alt+F  Chụp toàn màn hình
+  Ctrl+Alt+T  Ghim / bỏ ghim cửa sổ đang dùng luôn trên cùng
+  Ctrl+Alt+M  Bật / tắt mini monitor CPU, GPU, RAM, ổ đĩa
+
+
+MANAGER WINDOWS — INSTALLER EDITION
+===================================
+  ManagerWindows.App.exe  the app;  install.cmd  install (asks for admin);  uninstall.cmd  uninstall;
+  lib\  background service, libraries and setup scripts (keep it next to install.cmd).
+  1. Extract the whole folder, double-click install.cmd and accept the admin prompt.
+     The app goes to C:\Program Files\ManagerWindows (same layout), the "Manager Windows Service"
+     background service is registered, a Start menu shortcut is created and the app starts in the tray.
+  2. Update: extract the new package and run install.cmd again; settings, stats and moved data are kept.
+  3. Uninstall: run uninstall.cmd. Moved app data is moved back to drive C unless you pass -KeepRelocations;
+     -RemoveData also deletes settings and stats (%LOCALAPPDATA%\ManagerWindows, %ProgramData%\ManagerWindows).

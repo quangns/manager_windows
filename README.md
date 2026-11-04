@@ -68,11 +68,13 @@ Trước khi xoá thư mục portable, nếu đã chuyển data app sang ổ kh�
 
 ### Bản cài đặt
 
-1. Giải nén rồi chạy `install.cmd` (Windows sẽ hỏi quyền admin).
+Gói gọn bên ngoài chỉ có `ManagerWindows.App.exe`, `install.cmd`, `uninstall.cmd`, `Huong-dan-su-dung.txt`; dịch vụ nền, thư viện, luật dọn rác và script cài đặt nằm trong thư mục `lib\` (giữ nguyên cạnh `install.cmd`). Thư mục cài đặt `C:\Program Files\ManagerWindows` có cùng cấu trúc.
+
+1. Giải nén cả thư mục rồi chạy `install.cmd` (Windows sẽ hỏi quyền admin). Cập nhật bản mới cũng chạy lại `install.cmd`.
    - App được cài vào `C:\Program Files\ManagerWindows` và đăng ký dịch vụ nền `ManagerWindowsService`.
    - Shortcut được tạo trong Start Menu; app tự mở và nằm ở khay hệ thống.
-2. Gỡ cài đặt: chạy `uninstall.ps1` trong thư mục cài đặt. Mặc định các thư mục data đã chuyển sẽ được đưa về lại ổ C trước khi gỡ.
-   - Thêm `-KeepRelocations` để giữ nguyên các thư mục đã chuyển.
+2. Gỡ cài đặt: chạy `uninstall.cmd` (trong gói hoặc trong thư mục cài đặt). Mặc định các thư mục data đã chuyển sẽ được đưa về lại ổ C trước khi gỡ.
+   - Thêm `-KeepRelocations` (`uninstall.cmd -KeepRelocations`) để giữ nguyên các thư mục đã chuyển.
    - Thêm `-RemoveData` để xoá luôn thống kê và cấu hình.
 
 ## Bản macOS (Manager Mac)

@@ -35,6 +35,8 @@ if ($svc) {
 Remove-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name 'ManagerWindows' -ErrorAction SilentlyContinue
 Remove-Item (Join-Path ([Environment]::GetFolderPath('CommonPrograms')) 'Manager Windows.lnk') -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 2
+# Script này nằm trong $Dest\lib: đổi thư mục làm việc ra ngoài để xoá được cả thư mục cài đặt.
+Set-Location $env:SystemRoot
 Remove-Item $Dest -Recurse -Force -ErrorAction SilentlyContinue
 
 if ($RemoveData) {

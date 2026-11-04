@@ -1,11 +1,14 @@
 ﻿#Requires -Version 5.1
 <#
   Cài Manager Windows: copy vào Program Files, đăng ký Windows Service, tạo shortcut, mở app.
-  Chạy bằng install.cmd (tự xin quyền admin).
+  Chạy bằng install.cmd (tự xin quyền admin). Script này nằm trong lib\ của gói:
+    <gói>\ManagerWindows.App.exe, install.cmd, uninstall.cmd, Huong-dan-su-dung.txt
+    <gói>\lib\   dịch vụ nền, thư viện, script
+  Thư mục cài đặt giữ đúng cấu trúc đó.
 #>
 $ErrorActionPreference = 'Stop'
 $ServiceName = 'ManagerWindowsService'
-$Src = $PSScriptRoot
+$Src = Split-Path -Parent $PSScriptRoot
 $Dest = Join-Path $env:ProgramFiles 'ManagerWindows'
 
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
@@ -14,18 +17,34 @@ if (-not $isAdmin) {
     exit
 }
 
+if (-not (Test-Path (Join-Path $Src 'lib\ManagerWindows.Service.exe'))) {
+    throw 'Thiếu thư mục lib cạnh install.cmd. Hãy giải nén cả gói rồi chạy lại install.cmd.'
+}
+
 Write-Host 'Đang dừng phiên bản cũ (nếu có)...'
 Get-Process -Name 'ManagerWindows.App' -ErrorAction SilentlyContinue | Stop-Process -Force
 $svc = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
 if ($svc -and $svc.Status -ne 'Stopped') { Stop-Service -Name $ServiceName -Force; $svc.WaitForStatus('Stopped', '00:00:30') }
 
 Write-Host "Đang copy vào $Dest ..."
-New-Item -ItemType Directory -Path $Dest -Force | Out-Null
-Get-ChildItem -Path $Src -Exclude 'install.*', 'uninstall.cmd' | Copy-Item -Destination $Dest -Recurse -Force
-Copy-Item -Path (Join-Path $Src 'uninstall.ps1') -Destination $Dest -Force
+# Xoá bản cũ (trước 0.8.0 hàng trăm file dll nằm ngay trong thư mục cài). Dữ liệu người dùng không nằm ở đây.
+if (Test-Path $Dest) {
+    Start-Sleep -Seconds 1 # chờ tiến trình vừa dừng nhả file
+    Get-ChildItem -Path $Dest -Force | Remove-Item -Recurse -Force
+}
+New-Item -ItemType Directory -Path (Join-Path $Dest 'lib') -Force | Out-Null
+foreach ($f in 'ManagerWindows.App.exe', 'uninstall.cmd', 'Huong-dan-su-dung.txt') {
+    Copy-Item -Path (Join-Path $Src $f) -Destination $Dest -Force
+}
+Get-ChildItem -Path (Join-Path $Src 'lib') -Exclude 'install.ps1' | Copy-Item -Destination (Join-Path $Dest 'lib') -Recurse -Force
 
-$exe = Join-Path $Dest 'ManagerWindows.Service.exe'
-if (-not $svc) {
+$exe = Join-Path $Dest 'lib\ManagerWindows.Service.exe'
+if ($svc) {
+    # Đã cài bản cũ: trỏ dịch vụ sang vị trí mới trong lib\.
+    $r = Get-CimInstance Win32_Service -Filter "Name='$ServiceName'" | Invoke-CimMethod -MethodName Change -Arguments @{ PathName = "`"$exe`"" }
+    if ($r.ReturnValue -ne 0) { throw "Không cập nhật được đường dẫn dịch vụ (mã $($r.ReturnValue))." }
+}
+else {
     Write-Host 'Đang đăng ký dịch vụ nền...'
     New-Service -Name $ServiceName -BinaryPathName "`"$exe`"" -DisplayName 'Manager Windows Service' `
         -Description 'Dọn rác hệ thống theo lịch, đếm số lần mở ứng dụng, hỗ trợ ưu tiên tài nguyên cho Manager Windows.' `
