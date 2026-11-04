@@ -1,0 +1,50 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:vm="using:ManagerMac.ViewModels" xmlns:l="using:ManagerMac.Services" x:Class="ManagerMac.Views.ReviewWindow" x:DataType="vm:ReviewViewModel"
+        Title="{Binding Title}" Width="980" Height="640" MinWidth="720" MinHeight="420" WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource Canvas}" Foreground="{DynamicResource Ink}" FontFamily="{StaticResource UiFont}" FontSize="13">
+    <DockPanel Margin="28,24,28,20">
+        <TextBlock DockPanel.Dock="Top" Text="{Binding Title}" Classes="title" Margin="0,0,0,14" />
+        <Border DockPanel.Dock="Top" Background="{DynamicResource WarningWash}" CornerRadius="10" Padding="14,10" Margin="0,0,0,14" IsVisible="{Binding ShowRiskNote}">
+            <TextBlock Text="{l:T Review_Note}" Foreground="{DynamicResource Warning}" TextWrapping="Wrap" />
+        </Border>
+        <Grid DockPanel.Dock="Bottom" ColumnDefinitions="*,Auto" Margin="0,14,0,0">
+            <TextBlock Text="{Binding Summary}" Classes="muted" VerticalAlignment="Center" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                <Button Content="{l:T Review_Cancel}" Click="Cancel_Click" IsCancel="True" />
+                <Button Classes="primary" Content="{l:T Review_Done}" Click="Done_Click" IsDefault="True" />
+            </StackPanel>
+        </Grid>
+        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,12">
+            <TextBox Text="{Binding Filter}" Watermark="{l:T Review_Filter}" Margin="0,0,12,0" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                <Button Content="{l:T Review_IncludeAll}" Command="{Binding IncludeVisibleCommand}" />
+                <Button Content="{l:T Review_ExcludeAll}" Command="{Binding ExcludeVisibleCommand}" />
+            </StackPanel>
+        </Grid>
+        <Border Classes="table">
+            <DataGrid ItemsSource="{Binding Items}" AutoGenerateColumns="False">
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="{l:T Col_Delete}" Width="64">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="vm:ReviewFileRow"><CheckBox IsChecked="{Binding Include}" HorizontalAlignment="Center" /></DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="{l:T Col_Path}" Binding="{Binding RelativePath, DataType=vm:ReviewFileRow}" Width="*" MinWidth="240" IsReadOnly="True" />
+                    <DataGridTemplateColumn Header="{l:T Col_Size}" Width="100">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="vm:ReviewFileRow"><TextBlock Text="{Binding SizeText}" Classes="num" Margin="0,0,12,0" /></DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="{l:T Col_Modified}" Binding="{Binding ModifiedText, DataType=vm:ReviewFileRow}" Width="140" IsReadOnly="True" />
+                    <DataGridTemplateColumn Width="140">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="vm:ReviewFileRow">
+                                <Button Classes="link" Content="{l:T Mac_Reveal}"
+                                        Command="{Binding $parent[DataGrid].((vm:ReviewViewModel)DataContext).RevealCommand}" CommandParameter="{Binding}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+    </DockPanel>
+</Window>

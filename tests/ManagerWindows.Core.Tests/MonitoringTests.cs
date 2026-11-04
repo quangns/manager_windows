@@ -289,3 +289,64 @@ public class HibernationTests
         Assert.Equal(Now.AddHours(-1), t.LastActive("EXCEL"));
     }
 }
+
+public class MacProcessesTests
+{
+    private const string Ps = """
+            1     0     0   0.0  12000 /sbin/launchd
+          310     1   501  12.5 300000 /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
+          320   310   501  20,0 500000 /Applications/Google Chrome.app/Contents/Frameworks/Google Chrome Framework.framework/Versions/120/Helpers/Google Chrome Helper (Renderer).app/Contents/MacOS/Google Chrome Helper (Renderer)
+          400     1   501   0.5  80000 /System/Applications/Notes.app/Contents/MacOS/Notes
+          500     1   501   3.0 150000 /opt/homebrew/bin/node
+          600     1     0   1.0  40000 /usr/libexec/logd
+          700     1   501   0.0  20000 /usr/libexec/trustd
+          800     1   501   0.1  60000 /Users/quang/Library/Application Support/Zalo/ZaloAgent
+        """;
+
+    [Fact]
+    public void Parses_ps_output_including_comma_decimals_and_spaces_in_paths()
+    {
+        var p = MacProcesses.ParsePs(Ps);
+        Assert.Equal(8, p.Count);
+        var helper = p.Single(x => x.Pid == 320);
+        Assert.Equal(310, helper.ParentPid);
+        Assert.Equal(20.0, helper.CpuPercent);
+        Assert.Equal(500000L * 1024, helper.RssBytes);
+        Assert.EndsWith("Google Chrome Helper (Renderer)", helper.Path);
+    }
+
+    [Fact]
+    public void Groups_helpers_into_outermost_app_bundle_and_classifies()
+    {
+        var groups = MacProcesses.Group(MacProcesses.ParsePs(Ps), currentUid: 501);
+        var chrome = groups.Single(g => g.Name == "Google Chrome");
+        Assert.Equal(2, chrome.Count);
+        Assert.Equal(32.5, chrome.CpuPercent);
+        Assert.Equal("/Applications/Google Chrome.app", chrome.Path);
+        Assert.Equal(ProcessKind.App, chrome.Kind);
+
+        // Notes nằm trong /System nhưng là gói .app của người dùng → vẫn tính hệ thống (app có sẵn của Apple).
+        Assert.Equal(ProcessKind.System, groups.Single(g => g.Name == "Notes").Kind);
+        Assert.Equal(ProcessKind.Background, groups.Single(g => g.Name == "node").Kind);
+        Assert.Equal(ProcessKind.Background, groups.Single(g => g.Name == "ZaloAgent").Kind);
+        Assert.Equal(ProcessKind.System, groups.Single(g => g.Name == "logd").Kind);      // root
+        Assert.Equal(ProcessKind.System, groups.Single(g => g.Name == "trustd").Kind);    // thư mục hệ thống
+        Assert.DoesNotContain(groups, g => g.Name == "launchd");                           // PID 1
+    }
+
+    [Fact]
+    public void Used_memory_from_vm_stat()
+    {
+        const string vm = """
+            Mach Virtual Memory Statistics: (page size of 16384 bytes)
+            Pages free:                               10000.
+            Pages active:                            200000.
+            Pages inactive:                          150000.
+            Pages speculative:                         5000.
+            Pages wired down:                         80000.
+            Pages purgeable:                           3000.
+            Pages occupied by compressor:             20000.
+            """;
+        Assert.Equal((200000L + 80000 + 20000) * 16384, MacProcesses.UsedMemoryFromVmStat(vm));
+    }
+}

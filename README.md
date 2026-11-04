@@ -69,6 +69,28 @@ Trước khi xoá thư mục portable, nếu đã chuyển data app sang ổ kh�
    - Thêm `-KeepRelocations` để giữ nguyên các thư mục đã chuyển.
    - Thêm `-RemoveData` để xoá luôn thống kê và cấu hình.
 
+## Bản macOS (Manager Mac)
+
+Bản cho macOS 14 Sonoma trở lên, tải ở mục Releases:
+- `ManagerMac-<version>-macos-arm64.zip`: Mac chip Apple (M1–M4).
+- `ManagerMac-<version>-macos-x64.zip`: Mac chip Intel.
+
+**Tính năng (bản đầu):**
+- Tổng quan: ổ đĩa, RAM, tổng đã dọn.
+- Dọn rác: cache Xcode/Simulator, cache Homebrew/npm/pip/Yarn, cache trình duyệt, log cũ. `~/Library/Caches` và Thùng rác phải xem file trước khi dọn.
+- Gợi ý dọn file: file lâu không sửa, file lớn, bộ cài `.dmg`/`.pkg` cũ, file trùng.
+- Tiến trình: CPU/RAM theo app (gộp các tiến trình Helper vào app chính), end task, khởi động lại app, giải phóng RAM bằng lệnh `purge`.
+- Cài đặt: ngôn ngữ, sáng/tối theo macOS, tự chạy khi đăng nhập (LaunchAgent).
+- Biểu tượng trên thanh menu.
+
+**Chưa có trên macOS:** ngủ đông app (macOS không cho biết khi nào app đang tạm dừng được bấm vào, nên không đánh thức an toàn được; macOS đã có sẵn App Nap và nén bộ nhớ), chuyển data app, thống kê thời gian dùng, ưu tiên CPU, tiến trình sót, phân tích Excel, dịch vụ nền.
+
+**Cài đặt:** app chỉ ký ad-hoc, chưa ký bằng Apple Developer ID nên lần đầu mở phải vào System Settings > Privacy & Security > **Open Anyway**, hoặc chạy `xattr -dr com.apple.quarantine /Applications/ManagerMac.app`. Chi tiết trong file `Huong-dan-macOS.txt` kèm theo.
+
+Mã nguồn: `src/ManagerMac` (Avalonia 11), dùng chung `ManagerWindows.Core`/`Storage` với bản Windows. Đóng gói từ Linux bằng `scripts/build-mac.sh`, ký ad-hoc bằng `rcodesign`. `tools/MacPreview` dựng giao diện ở chế độ headless để bắt lỗi lúc chạy và chụp ảnh (`docs/design/preview/mac/`).
+
+![Manager Mac – Tiến trình (tối)](docs/design/preview/mac/processes-dark.png)
+
 ## Kiến trúc
 
 ```

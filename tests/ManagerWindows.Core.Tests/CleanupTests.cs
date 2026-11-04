@@ -146,6 +146,18 @@ public class CleanupTests
     }
 
     [Fact]
+    public void MacOS_rules_file_is_valid()
+    {
+        var rules = RuleLoader.Load(Path.Combine(AppContext.BaseDirectory, "rules", "cleanup-rules.macos.json"));
+        Assert.NotEmpty(rules);
+        Assert.All(rules, r => Assert.Equal(RuleScope.User, r.Scope));
+        Assert.All(rules, r => Assert.True(r.Name.ContainsKey("vi") && r.Name.ContainsKey("en"), r.Id));
+        Assert.All(rules, r => Assert.All(r.Paths, p => Assert.StartsWith("%HOME%/", p)));
+        // Dọn thẳng cả ~/Library/Caches hoặc Thùng rác thì bắt buộc xem lại trước.
+        Assert.All(rules.Where(r => r.Id is "user-caches" or "trash"), r => Assert.Equal(RuleRisk.Review, r.Risk));
+    }
+
+    [Fact]
     public void Default_app_profiles_are_valid()
     {
         var profiles = ManagerWindows.Core.Relocation.AppProfile.Load(Path.Combine(AppContext.BaseDirectory, "rules", "app-profiles.json"));

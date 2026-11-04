@@ -1,0 +1,65 @@
+// Luật dọn rác cho macOS (Manager Mac). Paths hỗ trợ %HOME% và ký tự đại diện (*) trong từng đoạn.
+// Mọi luật chạy với quyền người dùng; mục "Review" phải xem danh sách file trước khi dọn.
+[
+  {
+    "id": "xcode-derived-data",
+    "name": { "vi": "Xcode DerivedData (file build tạm)", "en": "Xcode DerivedData (build intermediates)" },
+    "paths": [ "%HOME%/Library/Developer/Xcode/DerivedData" ],
+    "minAgeDays": 3
+  },
+  {
+    "id": "simulator-caches",
+    "name": { "vi": "Cache iOS Simulator", "en": "iOS Simulator caches" },
+    "paths": [ "%HOME%/Library/Developer/CoreSimulator/Caches" ],
+    "minAgeDays": 3
+  },
+  {
+    "id": "ios-device-support",
+    "name": { "vi": "iOS DeviceSupport (dữ liệu gỡ lỗi iPhone cũ)", "en": "iOS DeviceSupport (old iPhone debug symbols)" },
+    "paths": [ "%HOME%/Library/Developer/Xcode/iOS DeviceSupport" ],
+    "minAgeDays": 90,
+    "risk": "Review",
+    "enabledByDefault": false
+  },
+  {
+    "id": "dev-package-caches",
+    "name": { "vi": "Cache Homebrew, npm, pip, Yarn", "en": "Homebrew, npm, pip, Yarn caches" },
+    "paths": [ "%HOME%/Library/Caches/Homebrew", "%HOME%/.npm/_cacache", "%HOME%/Library/Caches/pip", "%HOME%/Library/Caches/Yarn" ],
+    "minAgeDays": 7
+  },
+  {
+    "id": "browser-cache",
+    "name": { "vi": "Bộ nhớ đệm trình duyệt (Chrome, Edge, Cốc Cốc, Brave)", "en": "Browser cache (Chrome, Edge, Coc Coc, Brave)" },
+    "paths": [
+      "%HOME%/Library/Caches/Google/Chrome/*/Cache",
+      "%HOME%/Library/Caches/Google/Chrome/*/Code Cache",
+      "%HOME%/Library/Caches/Microsoft Edge/*/Cache",
+      "%HOME%/Library/Caches/CocCoc/*/Cache",
+      "%HOME%/Library/Caches/BraveSoftware/Brave-Browser/*/Cache"
+    ],
+    "minAgeDays": 3
+  },
+  {
+    "id": "user-logs",
+    "name": { "vi": "File log cũ của ứng dụng", "en": "Old application logs" },
+    "paths": [ "%HOME%/Library/Logs" ],
+    "patterns": [ "*.log", "*.log.*", "*.crash", "*.ips", "*.diag" ],
+    "minAgeDays": 14
+  },
+  {
+    "id": "user-caches",
+    "name": { "vi": "Toàn bộ cache ứng dụng (~/Library/Caches)", "en": "All app caches (~/Library/Caches)" },
+    "paths": [ "%HOME%/Library/Caches" ],
+    "minAgeDays": 7,
+    "risk": "Review",
+    "enabledByDefault": false
+  },
+  {
+    "id": "trash",
+    "name": { "vi": "Thùng rác", "en": "Trash" },
+    "paths": [ "%HOME%/.Trash" ],
+    "minAgeDays": 0,
+    "risk": "Review",
+    "enabledByDefault": false
+  }
+]

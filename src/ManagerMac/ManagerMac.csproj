@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Manager Mac: bản macOS (Avalonia), dùng chung ManagerWindows.Core / Storage với bản Windows -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>ManagerMac</AssemblyName>
+    <RootNamespace>ManagerMac</RootNamespace>
+    <RuntimeIdentifiers>osx-arm64;osx-x64</RuntimeIdentifiers>
+    <!-- Kiểm tra binding lúc build (không chạy thử được trên macOS trong môi trường build) -->
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <BuiltInComInteropSupport>false</BuiltInComInteropSupport>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.22" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.22" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.22" />
+    <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.13" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ManagerWindows.Core\ManagerWindows.Core.csproj" />
+    <ProjectReference Include="..\ManagerWindows.Storage\ManagerWindows.Storage.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\*.png" />
+    <AvaloniaResource Include="..\ManagerWindows.App\Assets\Fonts\*.ttf" Link="Assets\Fonts\%(Filename)%(Extension)" />
+    <!-- Chuỗi giao diện: dùng chung với bản Windows, mac.*.json ghi đè/bổ sung -->
+    <EmbeddedResource Include="..\ManagerWindows.App\Lang\vi.json" LogicalName="lang/vi.json" />
+    <EmbeddedResource Include="..\ManagerWindows.App\Lang\en.json" LogicalName="lang/en.json" />
+    <!-- Không đặt tên dạng mac.vi.json: MSBuild coi ".vi." là mã ngôn ngữ và tách ra assembly vệ tinh -->
+    <EmbeddedResource Include="Lang\mac-vi.json" LogicalName="lang/mac-vi.json" />
+    <EmbeddedResource Include="Lang\mac-en.json" LogicalName="lang/mac-en.json" />
+    <EmbeddedResource Include="..\..\rules\cleanup-rules.macos.json" LogicalName="rules/cleanup-rules.macos.json" />
+    <None Include="..\ManagerWindows.App\Assets\Fonts\OFL-*.txt" CopyToOutputDirectory="PreserveNewest" Link="licenses\%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>
