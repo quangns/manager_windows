@@ -10,6 +10,24 @@ namespace ManagerWindows.Core.Tests;
 public class StorageTests
 {
     [Fact]
+    public void Backup_copies_database_while_it_is_open()
+    {
+        using var t = new TempDir();
+        var db = new Database(Path.Combine(t.Path, "data.db"));
+        var repo = new UsageRepository(db);
+        var t0 = new DateTime(2026, 11, 3, 8, 0, 0, DateTimeKind.Utc);
+        repo.AddSessions([new UsageSession(@"C:\Office\EXCEL.EXE", t0, t0.AddMinutes(30))]);
+        using var keepOpen = db.Open(); // app đang chạy vẫn giữ kết nối
+
+        var copy = Path.Combine(t.Path, "moved", "data.db");
+        db.BackupTo(copy);
+
+        var top = new UsageRepository(new Database(copy)).TopApps(t0.AddDays(-1), t0.AddDays(1), 10);
+        Assert.Equal("EXCEL", Assert.Single(top).Name);
+        Assert.Equal(30 * 60, top[0].ActiveSeconds);
+    }
+
+    [Fact]
     public void Usage_top_apps_and_launch_counts()
     {
         using var t = new TempDir();

@@ -620,5 +620,19 @@
   "Part_WhatLetter": "change the letter of {part} → {letter}",
   "Part_WhatLabel": "rename {part} → \"{label}\"",
   "Part_WhatInit": "initialize disk {disk} ({style})",
-  "Btn_Cancel": "Cancel"
+  "Btn_Cancel": "Cancel",
+  "Data_Location": "Data folder (settings, statistics, logs)",
+  "Data_Change": "Change folder…",
+  "Data_Reset": "Use default",
+  "Data_PickTitle": "Choose where Manager Windows stores its data",
+  "Data_ChangeHint": "Changing the folder copies the data to the new place (in a \"ManagerWindows\" subfolder), restarts the app, and removes the old copy once the app runs from the new folder. If the drive holding the new folder is removed, the app falls back to the default folder. Background service data (%ProgramData%\\ManagerWindows) is not moved.",
+  "Data_Invalid": "Invalid folder: {path}",
+  "Data_Same": "This is already the current folder.",
+  "Data_Nested": "Choose a folder that is not inside (or containing) the current data folder: {path}",
+  "Data_NotWritable": "Cannot write to the folder: {path}",
+  "Data_ExistingAsk": "{path} already contains Manager Windows data.\n\nYes: use the data there (keep the current data where it is).\nNo: overwrite it with the current data.\nCancel: cancel.",
+  "Data_ConfirmMove": "Move Manager Windows data\n\nfrom: {from}\nto: {to}\n\nThe app will restart. Continue?",
+  "Data_ConfirmUse": "Use the existing data in {to} (the data in {from} is kept).\n\nThe app will restart. Continue?",
+  "Data_Copying": "Copying data…",
+  "Data_Failed": "Could not move the data: {error}\nThe app keeps using the old folder."
 }

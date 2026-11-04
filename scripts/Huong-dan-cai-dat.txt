@@ -28,6 +28,7 @@ CẬP NHẬT BẢN MỚI
 DỮ LIỆU
   - Cấu hình, thống kê, log của bạn: %LOCALAPPDATA%\ManagerWindows
   - Dữ liệu của dịch vụ nền:        %ProgramData%\ManagerWindows
+  - Đổi nơi lưu (vd. sang ổ D): mở app > Cài đặt > Dữ liệu > "Đổi thư mục…". App chép dữ liệu sang rồi tự khởi động lại.
 
 GỠ CÀI ĐẶT
   Chạy uninstall.cmd (trong gói này hoặc trong C:\Program Files\ManagerWindows).

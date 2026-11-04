@@ -14,6 +14,8 @@ public sealed class AppHost
     public static AppHost Current { get; private set; } = null!;
 
     public string DataDir { get; }
+    /// <summary>Thư mục dữ liệu mặc định (giữ file trỏ data-location.json khi người dùng đổi nơi lưu).</summary>
+    public string DefaultDataDir { get; }
     /// <summary>Bản portable (xem <see cref="Edition"/>): dữ liệu lưu trong thư mục data cạnh exe.</summary>
     public bool IsPortable { get; }
     public ConfigStore ConfigStore { get; }
@@ -41,8 +43,19 @@ public sealed class AppHost
     public AppHost()
     {
         Current = this;
-        (DataDir, IsPortable) = ResolveDataDir();
+        (DefaultDataDir, IsPortable) = ResolveDataDir();
+        // Người dùng có thể đã đổi nơi lưu dữ liệu (Cài đặt > Dữ liệu): đọc file trỏ ở thư mục mặc định.
+        var (dir, cleanup) = DataLocation.Resolve(DefaultDataDir);
+        DataDir = dir;
+        Directory.CreateDirectory(DataDir);
         Log.Dir = Path.Combine(DataDir, "logs");
+        if (cleanup != null && !DataLocation.SamePath(cleanup, DataDir))
+        {
+            // Lần chạy đầu sau khi chuyển: app cũ đã thoát nên xoá được dữ liệu ở thư mục cũ.
+            DataLocation.Cleanup(cleanup);
+            DataLocation.ClearCleanup(DefaultDataDir);
+            Log.Info("data", $"đã chuyển dữ liệu sang {DataDir}, dọn {cleanup}");
+        }
         ConfigStore = new ConfigStore(Path.Combine(DataDir, "config.json"));
         var firstRun = !File.Exists(ConfigStore.Path);
         Config = ConfigStore.Load();

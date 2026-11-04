@@ -14,6 +14,8 @@ Windows SmartScreen có thể cảnh báo vì file chưa ký số: bấm "More i
 DỮ LIỆU
   - Cấu hình, thống kê, log nằm trong thư mục "data" cạnh exe. Nếu thư mục đó không ghi được
     (vd. để exe trong Program Files) thì app dùng %LOCALAPPDATA%\ManagerWindows.
+  - Đổi nơi lưu: Cài đặt > Dữ liệu > "Đổi thư mục…". App chép dữ liệu sang rồi tự khởi động lại
+    (thư mục "data" cạnh exe chỉ còn giữ file trỏ data-location.json).
   - Cập nhật bản mới: thoát app (chuột phải biểu tượng ở khay > Thoát), chép exe mới đè lên exe cũ.
     Thư mục "data" được giữ nguyên.
 

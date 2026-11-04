@@ -1791,11 +1791,20 @@
                             <StackPanel>
                                 <TextBlock Text="{l:T Set_Data}" Style="{StaticResource CardTitle}" Margin="0,0,0,10" />
                                 <TextBlock Text="{l:T Set_Privacy}" Style="{StaticResource Muted}" Margin="0,0,0,10" />
+                                <TextBlock Text="{l:T Data_Location}" FontWeight="Medium" Margin="0,0,0,6" />
                                 <DockPanel>
-                                    <Button DockPanel.Dock="Right" Style="{StaticResource Secondary}" Content="{l:T Set_OpenData}" Command="{Binding OpenDataFolderCommand}" />
+                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                        <Button Style="{StaticResource Secondary}" Content="{l:T Set_OpenData}" Command="{Binding OpenDataFolderCommand}" />
+                                        <Button Style="{StaticResource Secondary}" Content="{l:T Data_Reset}" Command="{Binding ResetDataFolderCommand}"
+                                                Visibility="{Binding IsCustomDataDir, Converter={StaticResource BoolVis}}"
+                                                IsEnabled="{Binding Busy, Converter={StaticResource Not}}" ToolTip="{Binding DefaultDataDir}" />
+                                        <Button Style="{StaticResource Primary}" Content="{l:T Data_Change}" Command="{Binding ChangeDataFolderCommand}"
+                                                IsEnabled="{Binding Busy, Converter={StaticResource Not}}" />
+                                    </StackPanel>
                                     <TextBlock Text="{Binding DataDir}" FontFamily="{StaticResource MonoFont}" FontSize="12" VerticalAlignment="Center"
                                                TextTrimming="CharacterEllipsis" ToolTip="{Binding DataDir}" />
                                 </DockPanel>
+                                <TextBlock Text="{l:T Data_ChangeHint}" Style="{StaticResource Muted}" FontSize="12" TextWrapping="Wrap" Margin="0,8,0,0" />
                                 <TextBlock Style="{StaticResource Muted}" Margin="0,12,0,0">
                                     <Run Text="Manager Windows" /> <Run Text="{Binding Version, Mode=OneWay}" />
                                 </TextBlock>

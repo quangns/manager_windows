@@ -620,5 +620,19 @@
   "Part_WhatLetter": "đổi ký tự {part} → {letter}",
   "Part_WhatLabel": "đổi nhãn {part} → \"{label}\"",
   "Part_WhatInit": "khởi tạo đĩa {disk} ({style})",
-  "Btn_Cancel": "Huỷ"
+  "Btn_Cancel": "Huỷ",
+  "Data_Location": "Thư mục lưu dữ liệu (cấu hình, thống kê, log)",
+  "Data_Change": "Đổi thư mục…",
+  "Data_Reset": "Về mặc định",
+  "Data_PickTitle": "Chọn thư mục lưu dữ liệu Manager Windows",
+  "Data_ChangeHint": "Đổi thư mục: dữ liệu được chép sang thư mục mới (trong thư mục con \"ManagerWindows\"), app tự khởi động lại, dữ liệu ở chỗ cũ được xoá sau khi app chạy bằng thư mục mới. Nếu ổ chứa thư mục mới bị rút ra, app tạm dùng thư mục mặc định. Dữ liệu của dịch vụ nền (%ProgramData%\\ManagerWindows) không đổi.",
+  "Data_Invalid": "Thư mục không hợp lệ: {path}",
+  "Data_Same": "Đây đã là thư mục đang dùng.",
+  "Data_Nested": "Không chọn thư mục nằm trong (hoặc chứa) thư mục dữ liệu hiện tại: {path}",
+  "Data_NotWritable": "Không ghi được vào thư mục: {path}",
+  "Data_ExistingAsk": "Thư mục {path} đã có dữ liệu Manager Windows.\n\nYes: dùng dữ liệu có sẵn ở đó (giữ nguyên dữ liệu hiện tại ở chỗ cũ).\nNo: ghi đè bằng dữ liệu hiện tại.\nCancel: huỷ.",
+  "Data_ConfirmMove": "Chuyển dữ liệu của Manager Windows\n\ntừ: {from}\nsang: {to}\n\nApp sẽ khởi động lại. Tiếp tục?",
+  "Data_ConfirmUse": "Dùng dữ liệu có sẵn ở {to} (dữ liệu ở {from} được giữ nguyên).\n\nApp sẽ khởi động lại. Tiếp tục?",
+  "Data_Copying": "Đang chép dữ liệu…",
+  "Data_Failed": "Không chuyển được dữ liệu: {error}\nApp vẫn dùng thư mục cũ."
 }

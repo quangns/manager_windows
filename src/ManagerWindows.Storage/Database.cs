@@ -26,6 +26,21 @@ public sealed class Database
         return c;
     }
 
+    /// <summary>
+    /// Chép toàn bộ cơ sở dữ liệu sang file khác bằng SQLite online backup: bản chép nhất quán kể cả khi app
+    /// đang ghi (khác với chép file thô có thể bắt được trạng thái ghi dở). File đích bị ghi đè.
+    /// </summary>
+    public void BackupTo(string path)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
+        foreach (var f in new[] { path, path + "-wal", path + "-shm" })
+            if (File.Exists(f)) File.Delete(f);
+        using var src = Open();
+        using var dst = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Pooling = false }.ToString());
+        dst.Open();
+        src.BackupDatabase(dst);
+    }
+
     private static readonly string[] Migrations =
     [
         """

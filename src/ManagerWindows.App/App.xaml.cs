@@ -57,6 +57,14 @@ public partial class App : Application
             return;
         }
 
+        // Khởi động lại (vd. sau khi đổi nơi lưu dữ liệu): chờ phiên cũ thoát hẳn rồi mới nhận khoá một phiên.
+        var wait = Array.IndexOf(e.Args, "--wait-pid");
+        if (wait >= 0 && wait + 1 < e.Args.Length && int.TryParse(e.Args[wait + 1], out var oldPid))
+        {
+            try { using var old = System.Diagnostics.Process.GetProcessById(oldPid); old.WaitForExit(20000); }
+            catch (ArgumentException) { } // đã thoát
+        }
+
         if (!AcquireSingleInstance()) return;
         InstanceInfo.Current().Write();
 
@@ -66,6 +74,7 @@ public partial class App : Application
         _host.Notify += (title, message, tab) => Dispatcher.BeginInvoke(() => ShowBalloon(title, message, tab));
         _host.Priority.ExcelHeavy += file => Dispatcher.BeginInvoke(() => OnExcelHeavy(file));
         SettingsViewModel.LanguageChanged += RebuildWindow;
+        SettingsViewModel.RestartRequested += RestartApp;
 
         CreateTray();
         _host.Start();
@@ -74,7 +83,8 @@ public partial class App : Application
         catch (Exception ex) { Log.Error("tools", ex); }
         ListenForShowRequests();
 
-        if (!e.Args.Contains("--tray")) ShowMain();
+        var tab = Array.IndexOf(e.Args, "--tab");
+        if (!e.Args.Contains("--tray")) ShowMain(tab >= 0 && tab + 1 < e.Args.Length ? e.Args[tab + 1] : null);
     }
 
     /// <summary>
@@ -287,6 +297,14 @@ public partial class App : Application
         if (_pendingTab == "processes") _vm?.Processes.Start(ProcessFilter.Background);
         if (_pendingTab == "leftovers") _ = _vm?.Processes.OpenLeftoversCommand.ExecuteAsync(null);
         if (file != null && File.Exists(file)) _ = _vm!.Priority.AnalyzeAsync(file!);
+    }
+
+    /// <summary>Mở phiên mới (chờ phiên này thoát) rồi thoát; phiên mới mở cửa sổ ở tab Cài đặt.</summary>
+    private void RestartApp()
+    {
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(Environment.ProcessPath!,
+            $"--wait-pid {Environment.ProcessId} --tab settings") { UseShellExecute = false });
+        ExitApp();
     }
 
     private void ExitApp()
