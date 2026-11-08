@@ -3,6 +3,7 @@ using System.IO.Pipes;
 using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Security.Principal;
+using ManagerWindows.Core.Monitoring;
 using ManagerWindows.Core.Priority;
 using ManagerWindows.Ipc;
 using ManagerWindows.Platform;
@@ -65,6 +66,52 @@ public sealed partial class PipeServerWorker(SystemCleanupService cleanup, Usage
                     catch (Exception ex) { log.LogDebug(ex, "Kết nối pipe lỗi"); }
                 }
             }, ct);
+        }
+    }
+
+    private static readonly Lock BrowserPolicyLock = new();
+
+    /// <summary>
+    /// Ghi chính sách Memory Saver. Mọi người dùng đăng nhập đều gọi được nên chỉ nhận đúng 3 trình duyệt đã biết,
+    /// mức tiết kiệm 0–2 và mẫu URL đã kiểm tra lại; trình duyệt không có trong danh sách bật thì gỡ phần app đã đặt.
+    /// </summary>
+    private IpcResponse SetBrowserTabSleep(SetTabSleepRequest p)
+    {
+        if (p.Savings is < 0 or > 2) return IpcResponse.Fail("Mức tiết kiệm không hợp lệ");
+        var browsers = new HashSet<TabSleepBrowser>();
+        foreach (var b in p.Browsers ?? [])
+        {
+            if (!Enum.TryParse<TabSleepBrowser>(b, ignoreCase: false, out var v) || !Enum.IsDefined(v)) return IpcResponse.Fail("Trình duyệt không hỗ trợ");
+            browsers.Add(v);
+        }
+        var exceptions = p.Exceptions ?? [];
+        if (exceptions.Count > BrowserPolicyPlanner.MaxExceptions || !exceptions.All(BrowserPolicyPlanner.IsValidException))
+            return IpcResponse.Fail("Danh sách trang không hợp lệ");
+
+        lock (BrowserPolicyLock)
+        {
+            var config = cleanup.LoadConfig();
+            var results = new List<TabSleepBrowserResult>();
+            foreach (var info in BrowserCatalog.All)
+            {
+                var name = info.Browser.ToString();
+                var owned = new HashSet<string>(config.BrowserPolicyOwned.GetValueOrDefault(name) ?? [], StringComparer.Ordinal);
+                var enable = p.Enabled && browsers.Contains(info.Browser);
+                var plan = BrowserPolicyPlanner.Build(info.Browser, enable, (TabSleepSavings)p.Savings, exceptions, BrowserPolicies.Read(info.Browser), owned);
+                try { BrowserPolicies.Apply(plan.Ops); }
+                catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or System.Security.SecurityException)
+                {
+                    log.LogWarning(ex, "Không ghi được chính sách {Browser}", name);
+                    return IpcResponse.Fail($"Không ghi được chính sách {info.DisplayName}: {ex.Message}");
+                }
+                if (plan.Owned.Count > 0) config.BrowserPolicyOwned[name] = plan.Owned.Order().ToList();
+                else config.BrowserPolicyOwned.Remove(name);
+                cleanup.SaveConfig(config); // lưu ngay sau từng trình duyệt: lỗi giữa chừng vẫn biết mục nào do app đặt
+                results.Add(new TabSleepBrowserResult(name, enable && plan.Owned.Contains(BrowserPolicyPlanner.EnabledValue), plan.Conflicts));
+            }
+            log.LogInformation("Ngủ đông tab: {State}, mức {Savings}, trình duyệt {Browsers}, {Count} trang ngoại lệ",
+                p.Enabled ? "bật" : "tắt", p.Savings, string.Join(",", browsers), exceptions.Count);
+            return IpcResponse.Success(results);
         }
     }
 
@@ -139,6 +186,12 @@ public sealed partial class PipeServerWorker(SystemCleanupService cleanup, Usage
                     return IpcResponse.Success();
                 }
                 catch (ArgumentException) { return IpcResponse.Success(); } // đã thoát
+            }
+
+            case IpcCommands.SetBrowserTabSleep:
+            {
+                var p = IpcServerProtocol.Payload<SetTabSleepRequest>(req);
+                return SetBrowserTabSleep(p);
             }
 
             case IpcCommands.GetLaunchCounts:

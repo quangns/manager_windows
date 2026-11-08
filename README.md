@@ -12,7 +12,7 @@
 - **Phân tích dung lượng ổ đĩa** kiểu TreeSize.
 - **Quản lý phân vùng ổ cứng** kiểu MiniTool Partition Wizard.
 - **Chụp màn hình** kiểu Lightshot.
-- **Ngủ đông app** không dùng, **ưu tiên CPU** cho app hay dùng, xử lý **file Excel nặng**.
+- **Ngủ đông app** và **ngủ đông tab trình duyệt** (Chrome, Cốc Cốc, Brave) không dùng, **ưu tiên CPU** cho app hay dùng, xử lý **file Excel nặng**.
 - **Mini monitor** CPU / GPU / RAM / ổ đĩa luôn hiện trên cùng.
 
 Giao diện tiếng Việt và tiếng Anh, chế độ sáng/tối. Dữ liệu chỉ lưu trên máy, không gửi đi đâu.
@@ -46,6 +46,7 @@ Giao diện tiếng Việt và tiếng Anh, chế độ sáng/tối. Dữ liệu
 | [Ghim cửa sổ luôn trên cùng](#ghim-cửa-sổ-luôn-trên-cùng-và-mini-monitor) | PowerToys Always on Top | ✔ | ✔ |
 | [Mini monitor CPU/GPU/RAM/ổ đĩa](#ghim-cửa-sổ-luôn-trên-cùng-và-mini-monitor) | Rainmeter, MSI Afterburner OSD | ✔ | ✔ |
 | [Theo dõi tiến trình, ngủ đông app](#theo-dõi-tiến-trình-và-ngủ-đông-app) | Task Manager, Process Lasso | ✔ | ✔ |
+| [Ngủ đông tab trình duyệt](#ngủ-đông-tab-trình-duyệt-chrome-cốc-cốc-brave) | The Great Suspender, Auto Tab Discard | – | ✔ |
 | [Thống kê thời gian dùng app](#thống-kê-thời-gian-dùng-app-và-ưu-tiên-cpu) | ManicTime | ✔ (không đếm số lần mở) | ✔ |
 | [Ưu tiên CPU, tăng tốc Excel nặng](#thống-kê-thời-gian-dùng-app-và-ưu-tiên-cpu) | Process Lasso | ✔ | ✔ (cả app chạy quyền admin) |
 
@@ -154,6 +155,18 @@ Nhấn **`Ctrl+Alt+A`**: màn hình được đóng băng **đúng kích thướ
   - Có danh sách "không bao giờ cho ngủ".
 - **Dọn dẹp:** end task, giải phóng RAM, tìm tiến trình sót/treo.
 
+### Ngủ đông tab trình duyệt (Chrome, Cốc Cốc, Brave)
+
+Trình duyệt mở nhiều tab là thủ phạm ngốn RAM hàng đầu. Manager Windows bật **Memory Saver** có sẵn của trình duyệt bằng chính sách Windows:
+
+- Tab nền lâu không dùng được trình duyệt **giải phóng bộ nhớ**; bấm vào tab là **tự tải lại**.
+- Chọn mức tiết kiệm **Vừa / Cân bằng / Tối đa** (mức càng cao, tab càng sớm được cho ngủ).
+- **Danh sách trang không bao giờ cho ngủ**: mặc định có Zalo web, Google Meet, Teams, Telegram web.
+- Thẻ hiện trạng thái từng trình duyệt và RAM đang dùng.
+- **An toàn:** chỉ ghi 3 mục chính sách cố định; không đè chính sách quản trị viên đã đặt. Tắt tính năng hoặc gỡ cài đặt sẽ xoá đúng những gì app đã đặt.
+
+Cần bản cài đặt (dịch vụ nền ghi chính sách). Trình duyệt sẽ hiện dòng "Do tổ chức của bạn quản lý": đây là bình thường khi có chính sách.
+
 ### Thống kê thời gian dùng app và ưu tiên CPU
 
 - **Thống kê:** thời gian dùng thật của từng app (không tính lúc máy rảnh), số lần mở, biểu đồ theo giờ.
@@ -223,6 +236,9 @@ Không. Data được chép đầy đủ và so khớp trước khi đổi. Zalo
 
 **Chụp màn hình có giống Lightshot không?**
 Có: màn hình đóng băng, kéo thả vùng chọn tự do, thanh công cụ bám theo vùng chọn, vẽ ngay trên màn hình rồi `Ctrl+C` hoặc `Ctrl+S`. Ngoài ra có thêm che kín thông tin và đánh số thứ tự.
+
+**Ngủ đông tab trình duyệt có làm mất nội dung đang gõ không?**
+Trình duyệt không cho ngủ tab đang phát nhạc/video, đang dùng micro/camera hay đang có form chưa gửi. Tab đã ngủ thì bấm vào sẽ tải lại trang. Trang chat, họp trực tuyến nên để trong danh sách "không bao giờ cho ngủ".
 
 **App có gửi dữ liệu ra ngoài không?**
 Không. Mọi thống kê và cấu hình chỉ lưu trên máy của bạn.
@@ -335,6 +351,7 @@ App không chạy được qua junction (Outlook, OneDrive, WSL…) thì đặt 
 - **Overlay:** transparent always-on-top CPU/GPU/RAM/disk monitor.
 - **Performance:**
   - app hibernation (suspend unused apps, resume on click);
+  - browser tab hibernation for Chrome, Cốc Cốc and Brave (turns on the built-in Memory Saver via Windows policies);
   - CPU priority boost for your most-used apps;
   - EcoQoS for background apps;
   - heavy Excel workbook analyzer.
@@ -343,4 +360,4 @@ Download the portable or installer build from **[Releases](https://github.com/qu
 
 ---
 
-**Từ khoá:** dọn rác máy tính, phần mềm dọn rác Windows 11, giải phóng ổ C, ổ C bị đầy, chuyển dữ liệu Zalo sang ổ D, phân tích dung lượng ổ cứng, chia lại phân vùng ổ cứng, gộp phân vùng, mở rộng ổ C, chụp màn hình Windows, phần mềm chụp màn hình giống Lightshot, ghim cửa sổ luôn trên cùng, theo dõi CPU GPU RAM, tăng tốc Excel, tăng tốc máy tính.
+**Từ khoá:** dọn rác máy tính, phần mềm dọn rác Windows 11, giải phóng ổ C, ổ C bị đầy, chuyển dữ liệu Zalo sang ổ D, phân tích dung lượng ổ cứng, chia lại phân vùng ổ cứng, gộp phân vùng, mở rộng ổ C, chụp màn hình Windows, phần mềm chụp màn hình giống Lightshot, ngủ đông tab Chrome, giảm RAM trình duyệt, ghim cửa sổ luôn trên cùng, theo dõi CPU GPU RAM, tăng tốc Excel, tăng tốc máy tính.

@@ -23,6 +23,11 @@ public static class IpcCommands
     public const string TrimMemory = "trim-memory";
     /// <summary>End task tiến trình mà app không đủ quyền (chạy quyền admin). Chỉ trong phiên người gọi.</summary>
     public const string KillProcess = "kill-process";
+    /// <summary>
+    /// Bật/tắt ngủ đông tab (Memory Saver) cho Chrome / Cốc Cốc / Brave bằng chính sách HKLM.
+    /// Chỉ ghi 3 mục cố định dưới khoá chính sách cố định của từng trình duyệt; không đè chính sách quản trị viên đã đặt.
+    /// </summary>
+    public const string SetBrowserTabSleep = "set-browser-tab-sleep";
 }
 
 public static class IpcConstants
@@ -65,3 +70,6 @@ public sealed record SetPriorityRequest(int Pid, PriorityLevel Level, bool EcoQo
 public sealed record LaunchCountsRequest(DateTime FromUtc, DateTime ToUtc);
 public sealed record TrimMemoryResult(int Trimmed, int Failed, bool StandbyPurged);
 public sealed record KillProcessRequest(int Pid);
+public sealed record SetTabSleepRequest(bool Enabled, int Savings, List<string> Browsers, List<string> Exceptions);
+/// <summary>Kết quả từng trình duyệt: Applied = đã bật; Conflicts = mục quản trị viên đã đặt nên bỏ qua.</summary>
+public sealed record TabSleepBrowserResult(string Browser, bool Applied, List<string> Conflicts);

@@ -54,6 +54,7 @@ public sealed class AppConfig
     public MonitorOptions Monitor { get; set; } = new();
     public LeftoverOptions Leftovers { get; set; } = new();
     public HibernationOptions Hibernation { get; set; } = new();
+    public BrowserTabSleepOptions TabSleep { get; set; } = new();
     public ToolsOptions Tools { get; set; } = new();
 }
 

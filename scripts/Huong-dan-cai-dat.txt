@@ -37,6 +37,12 @@ GỠ CÀI ĐẶT
   - Giữ data ở ổ khác (Zalo… vẫn chạy bình thường):  uninstall.cmd -KeepRelocations
   - Xoá luôn cấu hình và thống kê:                   uninstall.cmd -RemoveData
 
+NGỦ ĐÔNG TAB TRÌNH DUYỆT (Chrome, Cốc Cốc, Brave)
+  Mở app > Ngủ đông > "Ngủ đông tab trình duyệt", tick "Bật", chọn mức tiết kiệm rồi bấm Lưu.
+  Tab nền lâu không dùng được trình duyệt giải phóng RAM; bấm vào tab là tự tải lại.
+  Trình duyệt sẽ hiện "Do tổ chức của bạn quản lý" — bình thường. Kiểm tra ở chrome://policy.
+  Tắt tính năng hoặc gỡ cài đặt sẽ xoá các chính sách do app đặt.
+
 PHÍM TẮT MẶC ĐỊNH (đổi được trong tab Công cụ)
   Ctrl+Alt+A  Chụp vùng (kéo thả hoặc bấm chọn cửa sổ)
   Ctrl+Alt+W  Chụp cửa sổ đang dùng

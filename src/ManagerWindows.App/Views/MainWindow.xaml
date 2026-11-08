@@ -1271,6 +1271,57 @@
                             </StackPanel>
                         </Border>
 
+                        <!-- Ngủ đông tab trình duyệt: bật Memory Saver có sẵn của Chrome / Cốc Cốc / Brave qua chính sách Windows -->
+                        <TextBlock Text="{l:T TabSleep_Title}" Style="{StaticResource CardTitle}" Margin="0,4,0,4" />
+                        <TextBlock Text="{l:T TabSleep_Desc}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,10" />
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                            <StackPanel>
+                                <c:SettingRow Title="{l:T TabSleep_Enabled}" Description="{l:T TabSleep_EnabledDesc}">
+                                    <CheckBox IsChecked="{Binding TabSleepEnabled}" />
+                                </c:SettingRow>
+                                <c:SettingRow Title="{l:T TabSleep_Savings}" Description="{l:T TabSleep_SavingsDesc}">
+                                    <ComboBox ItemsSource="{Binding TabSleepSavingsChoices}" SelectedIndex="{Binding TabSleepSavings}" Width="150" />
+                                </c:SettingRow>
+                                <c:SettingRow Title="{l:T TabSleep_Browsers}">
+                                    <ItemsControl ItemsSource="{Binding TabSleepBrowsers}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0,3">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="150" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="90" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <CheckBox Content="{Binding Name}" IsChecked="{Binding Selected}" IsEnabled="{Binding Installed}" VerticalAlignment="Center" />
+                                                    <Border Grid.Column="1" Style="{StaticResource LevelBadge}" HorizontalAlignment="Left" Margin="8,0">
+                                                        <TextBlock Text="{Binding State}" />
+                                                    </Border>
+                                                    <TextBlock Grid.Column="2" Text="{Binding RamText}" Style="{StaticResource Muted}" FontFamily="{StaticResource MonoFont}"
+                                                               HorizontalAlignment="Right" VerticalAlignment="Center" ToolTip="{l:T TabSleep_RamTip}" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </c:SettingRow>
+                                <c:SettingRow Title="{l:T TabSleep_Exceptions}" Description="{l:T TabSleep_ExceptionsDesc}" BorderThickness="0">
+                                    <TextBox Text="{Binding TabSleepExceptions, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="88" Width="300"
+                                             VerticalScrollBarVisibility="Auto" FontFamily="{StaticResource MonoFont}" />
+                                </c:SettingRow>
+                                <TextBlock Text="{l:T TabSleep_Note}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,8,0,0" />
+                                <TextBlock Text="{Binding TabSleepNote}" TextWrapping="Wrap" Margin="0,6,0,0" Foreground="{DynamicResource Accent}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <Trigger Property="Text" Value="">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+
                         <!-- Không bao giờ ngủ: kéo tâm ngắm thả lên cửa sổ app (kiểu EVKey) hoặc gõ tên -->
                         <DockPanel Margin="0,4,0,4">
                             <TextBlock Text="{Binding Excluded.Count}" DockPanel.Dock="Right" Style="{StaticResource Muted}" VerticalAlignment="Center" />

@@ -40,6 +40,7 @@ public sealed partial class HibernationViewModel : ViewModelBase
         var o = Host.Config.Hibernation;
         (_enabled, _idleMinutes, _onlyMinimized, _minRamMb) = (o.Enabled, o.IdleMinutes, o.OnlyMinimized, o.MinRamMb);
         LoadExcluded();
+        LoadTabSleep();
         _pickerText = Loc.Instance["Hib_PickerHint"];
         _timer.Tick += (_, _) => Refresh();
         Host.Hibernation.Changed += () => Application.Current.Dispatcher.BeginInvoke(Refresh);
@@ -48,6 +49,7 @@ public sealed partial class HibernationViewModel : ViewModelBase
     public void Start()
     {
         LoadExcluded(); // có thể vừa thêm từ tab Tiến trình
+        RefreshTabSleepState();
         Refresh();
         _timer.Start();
     }
@@ -205,7 +207,7 @@ public sealed partial class HibernationViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void Save()
+    private async Task Save()
     {
         var o = Host.Config.Hibernation;
         o.Enabled = Enabled;
@@ -216,5 +218,6 @@ public sealed partial class HibernationViewModel : ViewModelBase
         IdleMinutes = o.IdleMinutes;
         if (!o.Enabled) Host.Hibernation.WakeAll("disabled");
         Status = Loc.Instance["Saved"];
+        await SaveTabSleepAsync();
     }
 }

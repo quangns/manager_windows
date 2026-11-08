@@ -32,6 +32,27 @@ if ($svc) {
     sc.exe delete $ServiceName | Out-Null
 }
 
+# Gỡ chính sách ngủ đông tab trình duyệt do app đặt (danh sách trong service.json); chính sách quản trị viên tự đặt thì giữ nguyên.
+# Khoá phải khớp BrowserCatalog trong ManagerWindows.Core/Monitoring/BrowserTabSleep.cs.
+$policyKeys = @{ Chrome = 'HKLM:\SOFTWARE\Policies\Google\Chrome'; CocCoc = 'HKLM:\SOFTWARE\Policies\CocCoc\Browser'; Brave = 'HKLM:\SOFTWARE\Policies\BraveSoftware\Brave' }
+$serviceJson = Join-Path $env:ProgramData 'ManagerWindows\service.json'
+if (Test-Path $serviceJson) {
+    try {
+        $owned = (Get-Content $serviceJson -Raw -Encoding UTF8 | ConvertFrom-Json).BrowserPolicyOwned
+        if ($owned) {
+            foreach ($b in $owned.PSObject.Properties) {
+                $key = $policyKeys[$b.Name]
+                if (-not $key) { continue }
+                foreach ($item in $b.Value) {
+                    if ($item -eq 'TabDiscardingExceptions') { Remove-Item (Join-Path $key $item) -Recurse -Force -ErrorAction SilentlyContinue }
+                    else { Remove-ItemProperty -Path $key -Name $item -ErrorAction SilentlyContinue }
+                }
+            }
+            Write-Host 'Đã gỡ chính sách ngủ đông tab trình duyệt.'
+        }
+    } catch { Write-Host "Không đọc được $serviceJson, bỏ qua bước gỡ chính sách trình duyệt." }
+}
+
 Remove-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name 'ManagerWindows' -ErrorAction SilentlyContinue
 Remove-Item (Join-Path ([Environment]::GetFolderPath('CommonPrograms')) 'Manager Windows.lnk') -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 2
