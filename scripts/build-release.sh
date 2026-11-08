@@ -109,7 +109,5 @@ zipdir() { python3 -c "import shutil,sys; shutil.make_archive(sys.argv[1], 'zip'
 zipdir "dist/ManagerWindows-$VERSION-win-x64" dist ManagerWindows
 zipdir "dist/ManagerWindows-$VERSION-win-x64-portable" dist/portable ManagerWindows-Portable
 rm -rf dist/build
-# Bản macOS (Manager Mac): arm64 + x64
-./scripts/build-mac.sh
 ls -lh dist/*.zip
 (cd dist && sha256sum ./*.zip > SHA256SUMS.txt && cat SHA256SUMS.txt)
