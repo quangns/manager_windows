@@ -26,6 +26,9 @@ KHÁC BẢN CÀI ĐẶT
   - nút "Giải phóng RAM" không xả được bộ nhớ đệm standby, và không end task / đổi ưu tiên được app chạy quyền admin.
   Muốn đủ tính năng hãy dùng bản cài đặt (ManagerWindows-<phiên bản>-win-x64.zip, chạy install.cmd).
 
+  Ngủ đông tab trình duyệt (Chrome, Cốc Cốc, Brave) vẫn dùng được: khi bấm Lưu ở tab Ngủ đông,
+  Windows hỏi quyền Administrator một lần để app ghi chính sách trình duyệt.
+
   Mỗi lúc chỉ chạy được một bản Manager Windows. Nếu bản cài đặt đang chạy dưới khay, mở bản portable
   sẽ hỏi có đóng bản kia không.
 
@@ -33,6 +36,8 @@ TRƯỚC KHI XOÁ APP
   Nếu đã chuyển data app (Zalo, Telegram…) sang ổ khác, hãy mở app > Di chuyển data app > Hoàn tác,
   hoặc chạy:  ManagerWindows.App.exe --rollback-all
   Không hoàn tác thì Zalo… vẫn chạy bình thường vì junction vẫn còn.
+  Nếu đã bật ngủ đông tab trình duyệt: mở app > Ngủ đông, bỏ tick "Bật ngủ đông tab" rồi bấm Lưu
+  để gỡ chính sách khỏi trình duyệt (nếu không, trình duyệt vẫn giữ Memory Saver và dòng "do tổ chức quản lý").
 
 TUỲ CHỈNH LUẬT DỌN RÁC (nâng cao)
   Luật dọn rác và danh sách app chuyển data được nhúng sẵn trong exe. Muốn sửa, tạo thư mục "rules"
@@ -48,8 +53,9 @@ MANAGER WINDOWS — PORTABLE EDITION (no installation)
   - Update: exit the app from the tray, then overwrite the exe. The "data" folder is kept.
   - No background service: system folders aren't cleaned, app launches aren't counted, standby memory
     isn't purged. Use the installer edition for full features.
+  - Browser tab hibernation works too: saving it asks for Administrator rights (UAC) once.
   - Before deleting the app, undo moved app data: Move app data > Undo, or run
-    ManagerWindows.App.exe --rollback-all
+    ManagerWindows.App.exe --rollback-all. If tab hibernation is on, turn it off and Save first.
 
 
 GIẤY PHÉP FONT / FONT LICENSES

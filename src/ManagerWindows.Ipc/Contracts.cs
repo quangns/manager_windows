@@ -70,6 +70,3 @@ public sealed record SetPriorityRequest(int Pid, PriorityLevel Level, bool EcoQo
 public sealed record LaunchCountsRequest(DateTime FromUtc, DateTime ToUtc);
 public sealed record TrimMemoryResult(int Trimmed, int Failed, bool StandbyPurged);
 public sealed record KillProcessRequest(int Pid);
-public sealed record SetTabSleepRequest(bool Enabled, int Savings, List<string> Browsers, List<string> Exceptions);
-/// <summary>Kết quả từng trình duyệt: Applied = đã bật; Conflicts = mục quản trị viên đã đặt nên bỏ qua.</summary>
-public sealed record TabSleepBrowserResult(string Browser, bool Applied, List<string> Conflicts);

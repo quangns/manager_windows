@@ -46,7 +46,7 @@ Giao diện tiếng Việt và tiếng Anh, chế độ sáng/tối. Dữ liệu
 | [Ghim cửa sổ luôn trên cùng](#ghim-cửa-sổ-luôn-trên-cùng-và-mini-monitor) | PowerToys Always on Top | ✔ | ✔ |
 | [Mini monitor CPU/GPU/RAM/ổ đĩa](#ghim-cửa-sổ-luôn-trên-cùng-và-mini-monitor) | Rainmeter, MSI Afterburner OSD | ✔ | ✔ |
 | [Theo dõi tiến trình, ngủ đông app](#theo-dõi-tiến-trình-và-ngủ-đông-app) | Task Manager, Process Lasso | ✔ | ✔ |
-| [Ngủ đông tab trình duyệt](#ngủ-đông-tab-trình-duyệt-chrome-cốc-cốc-brave) | The Great Suspender, Auto Tab Discard | – | ✔ |
+| [Ngủ đông tab trình duyệt](#ngủ-đông-tab-trình-duyệt-chrome-cốc-cốc-brave) | The Great Suspender, Auto Tab Discard | ✔ (hỏi quyền Admin khi lưu) | ✔ |
 | [Thống kê thời gian dùng app](#thống-kê-thời-gian-dùng-app-và-ưu-tiên-cpu) | ManicTime | ✔ (không đếm số lần mở) | ✔ |
 | [Ưu tiên CPU, tăng tốc Excel nặng](#thống-kê-thời-gian-dùng-app-và-ưu-tiên-cpu) | Process Lasso | ✔ | ✔ (cả app chạy quyền admin) |
 
@@ -165,7 +165,7 @@ Trình duyệt mở nhiều tab là thủ phạm ngốn RAM hàng đầu. Manage
 - Thẻ hiện trạng thái từng trình duyệt và RAM đang dùng.
 - **An toàn:** chỉ ghi 3 mục chính sách cố định; không đè chính sách quản trị viên đã đặt. Tắt tính năng hoặc gỡ cài đặt sẽ xoá đúng những gì app đã đặt.
 
-Cần bản cài đặt (dịch vụ nền ghi chính sách). Trình duyệt sẽ hiện dòng "Do tổ chức của bạn quản lý": đây là bình thường khi có chính sách.
+Bản cài đặt nhờ dịch vụ nền ghi chính sách; bản portable hỏi quyền Administrator (UAC) một lần mỗi khi bấm Lưu. Trình duyệt sẽ hiện dòng "Do tổ chức của bạn quản lý": đây là bình thường khi có chính sách.
 
 ### Thống kê thời gian dùng app và ưu tiên CPU
 

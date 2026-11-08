@@ -13,8 +13,9 @@ public sealed class ServiceConfig
     public Schedule Schedule { get; set; } = new() { RequireIdleMinutes = 0 };
     public List<string>? EnabledRuleIds { get; set; }
     public DateTime? LastRunLocal { get; set; }
-    /// <summary>Chính sách trình duyệt do Manager Windows đặt (theo trình duyệt): khi tắt/gỡ cài đặt chỉ xoá đúng những mục này.</summary>
-    public Dictionary<string, List<string>> BrowserPolicyOwned { get; set; } = new();
+    /// <summary>Chỉ để đọc dữ liệu v0.11.0: nay lưu ở BrowserPolicies.OwnershipFile (dùng chung với bản portable).</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string, List<string>>? BrowserPolicyOwned { get; set; }
 }
 
 /// <summary>Dọn các thư mục rác cấp hệ thống (Scope=System). Chỉ chạy luật trong file của thư mục cài đặt.</summary>

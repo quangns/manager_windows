@@ -50,6 +50,12 @@ public partial class App : Application
             RunRollbackAll();
             return;
         }
+        // Bản portable ghi chính sách ngủ đông tab: app tự mở lại bằng quyền Admin, ghi xong thoát ngay (không cửa sổ, không khay).
+        if (e.Args.Contains(TabSleepApplier.HelperArg))
+        {
+            Shutdown(TabSleepApplier.RunHelper(e.Args));
+            return;
+        }
         // Cửa sổ quản lý phân vùng chạy quyền Admin (mở từ tab Phân vùng): không chạy nền, không giữ khoá một phiên.
         if (e.Args.Contains("--partitions"))
         {

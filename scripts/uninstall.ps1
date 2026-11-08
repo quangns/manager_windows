@@ -32,26 +32,31 @@ if ($svc) {
     sc.exe delete $ServiceName | Out-Null
 }
 
-# Gỡ chính sách ngủ đông tab trình duyệt do app đặt (danh sách trong service.json); chính sách quản trị viên tự đặt thì giữ nguyên.
+# Gỡ chính sách ngủ đông tab trình duyệt do app đặt; chính sách quản trị viên tự đặt thì giữ nguyên.
+# Danh sách mục do app đặt: browser-policies.json (dùng chung với bản portable), bản v0.11.0 còn nằm trong service.json.
 # Khoá phải khớp BrowserCatalog trong ManagerWindows.Core/Monitoring/BrowserTabSleep.cs.
 $policyKeys = @{ Chrome = 'HKLM:\SOFTWARE\Policies\Google\Chrome'; CocCoc = 'HKLM:\SOFTWARE\Policies\CocCoc\Browser'; Brave = 'HKLM:\SOFTWARE\Policies\BraveSoftware\Brave' }
-$serviceJson = Join-Path $env:ProgramData 'ManagerWindows\service.json'
-if (Test-Path $serviceJson) {
+$removedPolicies = $false
+foreach ($src in @(@{ File = 'browser-policies.json'; Prop = $null }, @{ File = 'service.json'; Prop = 'BrowserPolicyOwned' })) {
+    $path = Join-Path $env:ProgramData (Join-Path 'ManagerWindows' $src.File)
+    if (-not (Test-Path $path)) { continue }
     try {
-        $owned = (Get-Content $serviceJson -Raw -Encoding UTF8 | ConvertFrom-Json).BrowserPolicyOwned
-        if ($owned) {
-            foreach ($b in $owned.PSObject.Properties) {
-                $key = $policyKeys[$b.Name]
-                if (-not $key) { continue }
-                foreach ($item in $b.Value) {
-                    if ($item -eq 'TabDiscardingExceptions') { Remove-Item (Join-Path $key $item) -Recurse -Force -ErrorAction SilentlyContinue }
-                    else { Remove-ItemProperty -Path $key -Name $item -ErrorAction SilentlyContinue }
-                }
+        $json = Get-Content $path -Raw -Encoding UTF8 | ConvertFrom-Json
+        $owned = if ($src.Prop) { $json.($src.Prop) } else { $json }
+        if (-not $owned) { continue }
+        foreach ($b in $owned.PSObject.Properties) {
+            $key = $policyKeys[$b.Name]
+            if (-not $key) { continue }
+            foreach ($item in $b.Value) {
+                if ($item -eq 'TabDiscardingExceptions') { Remove-Item (Join-Path $key $item) -Recurse -Force -ErrorAction SilentlyContinue }
+                else { Remove-ItemProperty -Path $key -Name $item -ErrorAction SilentlyContinue }
+                $removedPolicies = $true
             }
-            Write-Host 'Đã gỡ chính sách ngủ đông tab trình duyệt.'
         }
-    } catch { Write-Host "Không đọc được $serviceJson, bỏ qua bước gỡ chính sách trình duyệt." }
+        if (-not $src.Prop) { Remove-Item $path -Force -ErrorAction SilentlyContinue }
+    } catch { Write-Host "Không đọc được $path, bỏ qua bước gỡ chính sách trình duyệt." }
 }
+if ($removedPolicies) { Write-Host 'Đã gỡ chính sách ngủ đông tab trình duyệt.' }
 
 Remove-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name 'ManagerWindows' -ErrorAction SilentlyContinue
 Remove-Item (Join-Path ([Environment]::GetFolderPath('CommonPrograms')) 'Manager Windows.lnk') -ErrorAction SilentlyContinue

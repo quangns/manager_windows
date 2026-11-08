@@ -1,10 +1,8 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using ManagerWindows.App.Services;
 using ManagerWindows.Core.Monitoring;
-using ManagerWindows.Ipc;
 using ManagerWindows.Platform;
 
 namespace ManagerWindows.App.ViewModels;
@@ -105,19 +103,18 @@ public sealed partial class HibernationViewModel
         TabSleepExceptions = string.Join(Environment.NewLine, valid);
         if (!o.Enabled && !wasEnabled) { TabSleepNote = ""; return; } // không đổi gì với trình duyệt
 
-        var r = await Host.Service.SendAsync(IpcCommands.SetBrowserTabSleep,
-            new SetTabSleepRequest(o.Enabled, (int)o.Savings, o.Browsers.Select(b => b.ToString()).ToList(), valid));
+        var r = await TabSleepApplier.ApplyAsync(Host.Service,
+            new TabSleepRequest(o.Enabled, (int)o.Savings, o.Browsers.Select(b => b.ToString()).ToList(), valid));
         var notes = new List<string>();
-        if (!r.Ok)
+        if (r.Cancelled) notes.Add(Loc.Instance["TabSleep_UacCancelled"]);
+        else if (r.Error != null)
         {
-            var ping = await Host.Service.SendAsync(IpcCommands.Ping);
-            notes.Add(ping.Ok ? Loc.F("TabSleep_Failed", ("error", r.Error ?? "")) : Loc.Instance["TabSleep_NeedService"]);
+            notes.Add(Loc.F("TabSleep_Failed", ("error", r.Error)));
             Log.Info("tab-sleep", $"Không áp dụng được: {r.Error}");
         }
         else
         {
-            var results = r.Data is { } d ? d.Deserialize<List<TabSleepBrowserResult>>(IpcConstants.Json) ?? [] : [];
-            var conflicted = results.Where(x => x.Conflicts.Count > 0)
+            var conflicted = r.Results.Where(x => x.Conflicts.Count > 0)
                 .Select(x => BrowserCatalog.All.FirstOrDefault(b => b.Browser.ToString() == x.Browser)?.DisplayName ?? x.Browser).ToList();
             notes.Add(Loc.Instance[o.Enabled ? "TabSleep_Applied" : "TabSleep_Removed"]);
             if (conflicted.Count > 0) notes.Add(Loc.F("TabSleep_Conflict", ("browsers", string.Join(", ", conflicted))));

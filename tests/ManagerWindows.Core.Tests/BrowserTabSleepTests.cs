@@ -84,3 +84,19 @@ public class BrowserTabSleepTests
         Assert.Equal(3, BrowserCatalog.All.Length);
     }
 }
+
+public class TabSleepRequestTests
+{
+    [Fact]
+    public void Validate_accepts_known_browsers_and_rejects_everything_else()
+    {
+        Assert.Null(BrowserPolicyPlanner.Validate(new TabSleepRequest(true, 1, ["Chrome", "CocCoc", "Brave"], ["chat.zalo.me"]), out var b));
+        Assert.Equal(3, b.Count);
+        Assert.NotNull(BrowserPolicyPlanner.Validate(new TabSleepRequest(true, 3, ["Chrome"], []), out _));
+        Assert.NotNull(BrowserPolicyPlanner.Validate(new TabSleepRequest(true, 1, ["Firefox"], []), out _));
+        Assert.NotNull(BrowserPolicyPlanner.Validate(new TabSleepRequest(true, 1, ["7"], []), out _)); // số enum không được tính là tên
+        Assert.NotNull(BrowserPolicyPlanner.Validate(new TabSleepRequest(true, 1, ["chrome"], []), out _)); // phải đúng tên
+        Assert.NotNull(BrowserPolicyPlanner.Validate(new TabSleepRequest(true, 1, ["Chrome"], ["bad site"]), out _));
+        Assert.NotNull(BrowserPolicyPlanner.Validate(new TabSleepRequest(true, 1, ["Chrome"], Enumerable.Range(0, 101).Select(i => $"s{i}.com").ToList()), out _));
+    }
+}

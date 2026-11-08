@@ -69,50 +69,28 @@ public sealed partial class PipeServerWorker(SystemCleanupService cleanup, Usage
         }
     }
 
-    private static readonly Lock BrowserPolicyLock = new();
-
     /// <summary>
-    /// Ghi chính sách Memory Saver. Mọi người dùng đăng nhập đều gọi được nên chỉ nhận đúng 3 trình duyệt đã biết,
-    /// mức tiết kiệm 0–2 và mẫu URL đã kiểm tra lại; trình duyệt không có trong danh sách bật thì gỡ phần app đã đặt.
+    /// Ghi chính sách Memory Saver (dùng chung <see cref="BrowserPolicies.ApplyRequest"/> với bản portable chạy quyền Admin).
+    /// Danh sách mục đã đặt ở v0.11.0 nằm trong service.json: gộp sang file chung một lần rồi xoá khỏi service.json.
     /// </summary>
-    private IpcResponse SetBrowserTabSleep(SetTabSleepRequest p)
+    private IpcResponse SetBrowserTabSleep(TabSleepRequest p)
     {
-        if (p.Savings is < 0 or > 2) return IpcResponse.Fail("Mức tiết kiệm không hợp lệ");
-        var browsers = new HashSet<TabSleepBrowser>();
-        foreach (var b in p.Browsers ?? [])
+        var config = cleanup.LoadConfig();
+        var legacy = config.BrowserPolicyOwned;
+        var (error, results) = BrowserPolicies.ApplyRequest(p, legacy is { Count: > 0 } ? legacy : null);
+        if (legacy is { Count: > 0 } && error == null)
         {
-            if (!Enum.TryParse<TabSleepBrowser>(b, ignoreCase: false, out var v) || !Enum.IsDefined(v)) return IpcResponse.Fail("Trình duyệt không hỗ trợ");
-            browsers.Add(v);
+            config.BrowserPolicyOwned = null;
+            cleanup.SaveConfig(config);
         }
-        var exceptions = p.Exceptions ?? [];
-        if (exceptions.Count > BrowserPolicyPlanner.MaxExceptions || !exceptions.All(BrowserPolicyPlanner.IsValidException))
-            return IpcResponse.Fail("Danh sách trang không hợp lệ");
-
-        lock (BrowserPolicyLock)
+        if (error != null)
         {
-            var config = cleanup.LoadConfig();
-            var results = new List<TabSleepBrowserResult>();
-            foreach (var info in BrowserCatalog.All)
-            {
-                var name = info.Browser.ToString();
-                var owned = new HashSet<string>(config.BrowserPolicyOwned.GetValueOrDefault(name) ?? [], StringComparer.Ordinal);
-                var enable = p.Enabled && browsers.Contains(info.Browser);
-                var plan = BrowserPolicyPlanner.Build(info.Browser, enable, (TabSleepSavings)p.Savings, exceptions, BrowserPolicies.Read(info.Browser), owned);
-                try { BrowserPolicies.Apply(plan.Ops); }
-                catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or System.Security.SecurityException)
-                {
-                    log.LogWarning(ex, "Không ghi được chính sách {Browser}", name);
-                    return IpcResponse.Fail($"Không ghi được chính sách {info.DisplayName}: {ex.Message}");
-                }
-                if (plan.Owned.Count > 0) config.BrowserPolicyOwned[name] = plan.Owned.Order().ToList();
-                else config.BrowserPolicyOwned.Remove(name);
-                cleanup.SaveConfig(config); // lưu ngay sau từng trình duyệt: lỗi giữa chừng vẫn biết mục nào do app đặt
-                results.Add(new TabSleepBrowserResult(name, enable && plan.Owned.Contains(BrowserPolicyPlanner.EnabledValue), plan.Conflicts));
-            }
-            log.LogInformation("Ngủ đông tab: {State}, mức {Savings}, trình duyệt {Browsers}, {Count} trang ngoại lệ",
-                p.Enabled ? "bật" : "tắt", p.Savings, string.Join(",", browsers), exceptions.Count);
-            return IpcResponse.Success(results);
+            log.LogWarning("Ngủ đông tab: {Error}", error);
+            return IpcResponse.Fail(error);
         }
+        log.LogInformation("Ngủ đông tab: {State}, mức {Savings}, trình duyệt {Browsers}, {Count} trang ngoại lệ",
+            p.Enabled ? "bật" : "tắt", p.Savings, string.Join(",", p.Browsers ?? []), p.Exceptions?.Count ?? 0);
+        return IpcResponse.Success(results);
     }
 
     private static PipeSecurity CreateSecurity()
@@ -190,7 +168,7 @@ public sealed partial class PipeServerWorker(SystemCleanupService cleanup, Usage
 
             case IpcCommands.SetBrowserTabSleep:
             {
-                var p = IpcServerProtocol.Payload<SetTabSleepRequest>(req);
+                var p = IpcServerProtocol.Payload<TabSleepRequest>(req);
                 return SetBrowserTabSleep(p);
             }
 

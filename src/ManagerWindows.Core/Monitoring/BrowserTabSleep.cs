@@ -60,6 +60,12 @@ public sealed record PolicySnapshot(int? Enabled, int? Savings, bool HasExceptio
     public static readonly PolicySnapshot Empty = new(null, null, false);
 }
 
+/// <summary>Yêu cầu bật/tắt (từ App gửi cho dịch vụ nền hoặc cho chính app chạy quyền Admin ở bản portable).</summary>
+public sealed record TabSleepRequest(bool Enabled, int Savings, List<string> Browsers, List<string> Exceptions);
+
+/// <summary>Kết quả từng trình duyệt: Applied = đã bật; Conflicts = mục quản trị viên đã đặt nên bỏ qua.</summary>
+public sealed record TabSleepBrowserResult(string Browser, bool Applied, List<string> Conflicts);
+
 /// <summary>Kết quả lập kế hoạch: thao tác cần làm, các mục app sở hữu sau khi làm, các mục bỏ qua vì quản trị viên đã đặt.</summary>
 public sealed record PolicyPlan(List<PolicyOp> Ops, HashSet<string> Owned, List<string> Conflicts);
 
@@ -119,6 +125,25 @@ public static partial class BrowserPolicyPlanner
         else conflicts.Add(ExceptionsKey);
 
         return new PolicyPlan(ops, nowOwned, conflicts);
+    }
+
+    /// <summary>
+    /// Kiểm tra yêu cầu trước khi ghi registry quyền cao (người gửi có thể là bất kỳ người dùng nào):
+    /// chỉ 3 trình duyệt đã biết, mức 0–2, tối đa 100 mẫu URL hợp lệ. Trả lỗi hoặc null nếu hợp lệ.
+    /// </summary>
+    public static string? Validate(TabSleepRequest r, out HashSet<TabSleepBrowser> browsers)
+    {
+        browsers = [];
+        if (r.Savings is < 0 or > 2) return "Mức tiết kiệm không hợp lệ";
+        foreach (var b in r.Browsers ?? [])
+        {
+            if (!Enum.TryParse<TabSleepBrowser>(b, ignoreCase: false, out var v) || !Enum.IsDefined(v) || int.TryParse(b, out _))
+                return "Trình duyệt không hỗ trợ";
+            browsers.Add(v);
+        }
+        var ex = r.Exceptions ?? [];
+        if (ex.Count > MaxExceptions || !ex.All(IsValidException)) return "Danh sách trang không hợp lệ";
+        return null;
     }
 
     /// <summary>Mẫu URL hợp lệ: không rỗng, ≤ 200 ký tự, chỉ gồm ký tự được phép trong URL (không khoảng trắng, không ký tự điều khiển).</summary>
