@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
 using ManagerWindows.App.Views;
+using ManagerWindows.Core.Tools;
 using ManagerWindows.Platform;
 
 namespace ManagerWindows.App.Services;
@@ -54,6 +55,7 @@ public sealed class ToolsService : IDisposable
     /// <summary>
     /// Chụp: Window = cửa sổ đang dùng (lấy ngay lúc bấm phím tắt), Region = khoanh vùng/bấm chọn cửa sổ trên ảnh đóng băng,
     /// FullScreen = mọi màn hình. <paramref name="hideFirst"/>: bấm từ cửa sổ app thì ẩn nó trước để không lọt vào ảnh.
+    /// Bật "chỉnh sửa sau khi chụp": mở màn hình đóng băng kiểu Lightshot (chọn sẵn cửa sổ / cả màn hình), vẽ và lưu ngay trên đó.
     /// </summary>
     public async void Capture(CaptureMode mode, Window? hideFirst = null, int delayMs = 0)
     {
@@ -72,10 +74,23 @@ public sealed class ToolsService : IDisposable
             }
             if (delayMs > 0) await Task.Delay(delayMs);
             var screen = ScreenCapture.VirtualScreen();
-            var windows = mode == CaptureMode.Region ? DesktopWindows.List() : [];
+            var edit = _host.Config.Tools.Capture.OpenEditor;
+            var windows = mode == CaptureMode.Region || edit ? DesktopWindows.List() : [];
             var shot = Grab(screen);
             if (shot == null) return;
 
+            if (edit)
+            {
+                var win = mode == CaptureMode.Window ? DesktopWindows.Bounds(target) : default;
+                Box? initial = mode switch
+                {
+                    CaptureMode.FullScreen => new Box(0, 0, shot.PixelWidth, shot.PixelHeight),
+                    CaptureMode.Window => new Box(win.X - screen.X, win.Y - screen.Y, win.Width, win.Height),
+                    _ => null,
+                };
+                new CaptureOverlayWindow(shot, screen, windows, initial, quick: false).ShowDialog();
+                return;
+            }
             BitmapSource? result = mode switch
             {
                 CaptureMode.FullScreen => shot,
@@ -117,7 +132,7 @@ public sealed class ToolsService : IDisposable
 
     private static BitmapSource? SelectRegion(BitmapSource shot, PixelRect screen, List<DesktopWindow> windows)
     {
-        var w = new RegionSelectWindow(shot, screen, windows);
+        var w = new CaptureOverlayWindow(shot, screen, windows, null, quick: true);
         w.ShowDialog();
         if (w.Result is not { } r) return null;
         var c = new CroppedBitmap(shot, r);
@@ -128,11 +143,6 @@ public sealed class ToolsService : IDisposable
     private void Deliver(BitmapSource img)
     {
         var opt = _host.Config.Tools.Capture;
-        if (opt.OpenEditor)
-        {
-            new CaptureEditorWindow(img).Show();
-            return;
-        }
         var parts = new List<string>();
         if (opt.CopyToClipboard && CaptureOutput.Copy(img)) parts.Add(Loc.Instance["Cap_Copied"]);
         if (opt.AutoSave || !opt.CopyToClipboard)

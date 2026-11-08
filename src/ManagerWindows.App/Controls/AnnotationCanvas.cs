@@ -6,7 +6,7 @@ using System.Windows.Media.Imaging;
 
 namespace ManagerWindows.App.Controls;
 
-public enum AnnotationTool { Rectangle, Ellipse, Arrow, Highlight, Redact, Number }
+public enum AnnotationTool { Rectangle, Ellipse, Arrow, Pen, Highlight, Redact, Number }
 
 /// <summary>Một nét chú thích trên ảnh chụp; toạ độ là pixel của ảnh.</summary>
 public abstract record Annotation(Color Color, double Thickness)
@@ -62,14 +62,30 @@ public sealed record RedactMark(Rect Box, Color Color) : Annotation(Color, 0)
     public override void Draw(DrawingContext dc, double ppd) => dc.DrawRectangle(new SolidColorBrush(Color), null, Box);
 }
 
-/// <summary>Số thứ tự trong vòng tròn (đánh dấu các bước 1, 2, 3…).</summary>
-public sealed record NumberMark(Point Center, int Number, Color Color, double Thickness) : Annotation(Color, Thickness)
+/// <summary>Nét bút vẽ tự do.</summary>
+public sealed record PenMark(Point[] Points, Color Color, double Thickness) : Annotation(Color, Thickness)
 {
-    public double Radius => 9 + Thickness * 3;
+    public override void Draw(DrawingContext dc, double ppd)
+    {
+        if (Points.Length < 2) return;
+        var g = new StreamGeometry();
+        using (var c = g.Open())
+        {
+            c.BeginFigure(Points[0], false, false);
+            c.PolyLineTo(Points.Skip(1).ToArray(), true, true);
+        }
+        dc.DrawGeometry(null, Stroke(), g);
+    }
+}
+
+/// <summary>Số thứ tự trong vòng tròn (đánh dấu các bước 1, 2, 3…). <paramref name="Scale"/> = pixel mỗi DIP để số không bị nhỏ trên màn hình DPI cao.</summary>
+public sealed record NumberMark(Point Center, int Number, Color Color, double Thickness, double Scale = 1) : Annotation(Color, Thickness)
+{
+    public double Radius => (9 + Thickness * 3) * Scale;
 
     public override void Draw(DrawingContext dc, double ppd)
     {
-        dc.DrawEllipse(new SolidColorBrush(Color), new Pen(Brushes.White, 2), Center, Radius, Radius);
+        dc.DrawEllipse(new SolidColorBrush(Color), new Pen(Brushes.White, 2 * Scale), Center, Radius, Radius);
         // Chữ đen trên màu sáng (vàng, trắng), chữ trắng trên màu đậm.
         var light = 0.299 * Color.R + 0.587 * Color.G + 0.114 * Color.B > 160;
         var text = new FormattedText(Number.ToString(CultureInfo.InvariantCulture), CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
@@ -80,27 +96,34 @@ public sealed record NumberMark(Point Center, int Number, Color Color, double Th
 }
 
 /// <summary>
-/// Ảnh chụp + các nét chú thích. Kích thước = đúng số pixel của ảnh (1 DIP = 1 pixel), đặt trong Viewbox để thu nhỏ khi hiển thị;
-/// xuất ảnh bằng cách vẽ lại vào DrawingVisual nên kết quả đúng độ phân giải gốc.
+/// Lớp chú thích phủ lên ảnh chụp toàn màn hình. Kích thước = đúng số pixel của ảnh (1 đơn vị = 1 pixel), đặt trong Viewbox
+/// phủ kín cửa sổ chụp nên hiển thị đúng kích thước thật. Ảnh nền do cửa sổ chụp vẽ; lớp này chỉ vẽ nét.
+/// Cửa sổ chụp tự xử lý chuột rồi gọi <see cref="BeginStroke"/> / <see cref="UpdateStroke"/> / <see cref="EndStroke"/> theo toạ độ pixel.
+/// Xuất ảnh bằng cách vẽ lại vào DrawingVisual nên kết quả đúng độ phân giải gốc.
 /// </summary>
 public sealed class AnnotationCanvas : FrameworkElement
 {
     private readonly List<Annotation> _items = new();
+    private readonly List<Point> _penPoints = new();
     private Annotation? _preview;
     private Point _start;
 
     public BitmapSource? Source { get; private set; }
     public AnnotationTool Tool { get; set; } = AnnotationTool.Rectangle;
     public Color Color { get; set; } = Colors.Red;
-    /// <summary>Độ dày nét 1–3 (mảnh/vừa/đậm), quy ra pixel theo kích thước ảnh.</summary>
+    /// <summary>Độ dày nét 1–3 (mảnh/vừa/đậm).</summary>
     public int ThicknessLevel { get; set; } = 2;
+    /// <summary>Pixel mỗi DIP của màn hình: nét và số thứ tự to theo, nhìn như nhau ở mọi mức phóng to.</summary>
+    public double Scale { get; set; } = 1;
+    /// <summary>Nét vẽ bị giới hạn trong vùng này (vùng chọn, pixel ảnh).</summary>
+    public Rect Bounds { get; set; } = Rect.Empty;
     public bool HasAnnotations => _items.Count > 0;
+    public bool IsStroking => _preview != null;
     public event Action? Changed;
 
     public AnnotationCanvas()
     {
-        Cursor = Cursors.Cross;
-        Focusable = true;
+        IsHitTestVisible = false;
     }
 
     public void SetSource(BitmapSource source)
@@ -111,7 +134,7 @@ public sealed class AnnotationCanvas : FrameworkElement
         InvalidateVisual();
     }
 
-    private double StrokeWidth => ThicknessLevel switch { 1 => 2, 3 => 6, _ => 4 };
+    private double StrokeWidth => (ThicknessLevel switch { 1 => 2, 3 => 6, _ => 4 }) * Scale;
     private int NextNumber => _items.OfType<NumberMark>().Select(n => n.Number).DefaultIfEmpty(0).Max() + 1;
 
     public void Undo()
@@ -122,75 +145,80 @@ public sealed class AnnotationCanvas : FrameworkElement
         Changed?.Invoke();
     }
 
-    public void ClearAll()
+    protected override void OnRender(DrawingContext dc)
     {
-        _items.Clear();
-        InvalidateVisual();
-        Changed?.Invoke();
-    }
-
-    private void Render(DrawingContext dc, double ppd, bool withPreview)
-    {
-        if (Source == null) return;
-        dc.DrawImage(Source, new Rect(0, 0, Source.PixelWidth, Source.PixelHeight));
+        var ppd = VisualTreeHelper.GetDpi(this).PixelsPerDip;
         foreach (var a in _items) a.Draw(dc, ppd);
-        if (withPreview) _preview?.Draw(dc, ppd);
+        _preview?.Draw(dc, ppd);
     }
 
-    protected override void OnRender(DrawingContext dc) => Render(dc, VisualTreeHelper.GetDpi(this).PixelsPerDip, true);
-
-    /// <summary>Ảnh kết quả (ảnh gốc + chú thích) đúng độ phân giải gốc.</summary>
-    public BitmapSource? Export()
+    /// <summary>Ảnh kết quả (ảnh gốc + chú thích) của vùng <paramref name="crop"/>, đúng độ phân giải gốc.</summary>
+    public BitmapSource? Export(Int32Rect crop)
     {
-        if (Source == null) return null;
+        if (Source == null || crop.Width <= 0 || crop.Height <= 0) return null;
         var dv = new DrawingVisual();
-        using (var dc = dv.RenderOpen()) Render(dc, 1.0, false);
-        var bmp = new RenderTargetBitmap(Source.PixelWidth, Source.PixelHeight, 96, 96, PixelFormats.Pbgra32);
+        using (var dc = dv.RenderOpen())
+        {
+            dc.PushTransform(new TranslateTransform(-crop.X, -crop.Y));
+            dc.DrawImage(Source, new Rect(0, 0, Source.PixelWidth, Source.PixelHeight));
+            foreach (var a in _items) a.Draw(dc, 1.0);
+            dc.Pop();
+        }
+        var bmp = new RenderTargetBitmap(crop.Width, crop.Height, 96, 96, PixelFormats.Pbgra32);
         bmp.Render(dv);
         bmp.Freeze();
         return bmp;
     }
 
-    private Point Clamp(Point p) => Source == null ? p : new Point(Math.Clamp(p.X, 0, Source.PixelWidth), Math.Clamp(p.Y, 0, Source.PixelHeight));
-
-    protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
+    private Point Clamp(Point p)
     {
-        base.OnMouseLeftButtonDown(e);
-        Focus();
-        _start = Clamp(e.GetPosition(this));
-        if (Tool == AnnotationTool.Number)
-        {
-            Add(new NumberMark(_start, NextNumber, Color, ThicknessLevel));
-            return;
-        }
-        CaptureMouse();
-        _preview = Make(_start, _start);
+        var b = Bounds.IsEmpty ? new Rect(0, 0, Width, Height) : Bounds;
+        return new Point(Math.Clamp(p.X, b.Left, b.Right), Math.Clamp(p.Y, b.Top, b.Bottom));
     }
 
-    protected override void OnMouseMove(MouseEventArgs e)
+    /// <summary>Bắt đầu một nét tại pixel <paramref name="p"/>. Trả false nếu nét đã xong ngay (đánh số: một cú bấm).</summary>
+    public bool BeginStroke(Point p)
     {
-        base.OnMouseMove(e);
-        if (_preview == null || !IsMouseCaptured) return;
-        var p = Clamp(e.GetPosition(this));
-        // Giữ Shift: hình vuông / tròn đều.
-        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) && Tool is AnnotationTool.Rectangle or AnnotationTool.Ellipse)
+        _start = Clamp(p);
+        if (Tool == AnnotationTool.Number)
+        {
+            Add(new NumberMark(_start, NextNumber, Color, ThicknessLevel, Scale));
+            return false;
+        }
+        _penPoints.Clear();
+        _penPoints.Add(_start);
+        _preview = Make(_start, _start);
+        InvalidateVisual();
+        return true;
+    }
+
+    /// <summary>Kéo nét tới <paramref name="p"/>; <paramref name="square"/> (giữ Shift) = hình vuông/tròn đều, mũi tên thẳng theo 45°.</summary>
+    public void UpdateStroke(Point p, bool square)
+    {
+        if (_preview == null) return;
+        p = Clamp(p);
+        if (square && Tool is AnnotationTool.Rectangle or AnnotationTool.Ellipse or AnnotationTool.Highlight or AnnotationTool.Redact)
         {
             var d = Math.Max(Math.Abs(p.X - _start.X), Math.Abs(p.Y - _start.Y));
-            p = new Point(_start.X + Math.Sign(p.X - _start.X) * d, _start.Y + Math.Sign(p.Y - _start.Y) * d);
+            p = Clamp(new Point(_start.X + Math.Sign(p.X - _start.X) * d, _start.Y + Math.Sign(p.Y - _start.Y) * d));
         }
+        else if (square && Tool == AnnotationTool.Arrow)
+        {
+            var v = p - _start;
+            var angle = Math.Round(Math.Atan2(v.Y, v.X) / (Math.PI / 4)) * (Math.PI / 4);
+            p = Clamp(_start + new Vector(Math.Cos(angle), Math.Sin(angle)) * v.Length);
+        }
+        if (Tool == AnnotationTool.Pen && (p - _penPoints[^1]).Length >= Scale) _penPoints.Add(p);
         _preview = Make(_start, p);
         InvalidateVisual();
     }
 
-    protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
+    public void EndStroke(Point p)
     {
-        base.OnMouseLeftButtonUp(e);
-        if (!IsMouseCaptured) return;
-        ReleaseMouseCapture();
         var done = _preview;
         _preview = null;
-        var p = Clamp(e.GetPosition(this));
-        if (done != null && (p - _start).Length >= 3) Add(done);
+        var moved = Tool == AnnotationTool.Pen ? _penPoints.Count >= 2 : (Clamp(p) - _start).Length >= 3;
+        if (done != null && moved) Add(done);
         else InvalidateVisual();
     }
 
@@ -208,6 +236,7 @@ public sealed class AnnotationCanvas : FrameworkElement
         {
             AnnotationTool.Ellipse => new EllipseMark(box, Color, StrokeWidth),
             AnnotationTool.Arrow => new ArrowMark(a, b, Color, StrokeWidth),
+            AnnotationTool.Pen => new PenMark(_penPoints.ToArray(), Color, StrokeWidth),
             AnnotationTool.Highlight => new HighlightMark(box, Color),
             AnnotationTool.Redact => new RedactMark(box, Color),
             _ => new RectMark(box, Color, StrokeWidth),

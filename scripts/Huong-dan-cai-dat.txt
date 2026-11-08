@@ -43,6 +43,8 @@ PHÍM TẮT MẶC ĐỊNH (đổi được trong tab Công cụ)
   Ctrl+Alt+F  Chụp toàn màn hình
   Ctrl+Alt+T  Ghim / bỏ ghim cửa sổ đang dùng luôn trên cùng
   Ctrl+Alt+M  Bật / tắt mini monitor CPU, GPU, RAM, ổ đĩa
+  Khi chụp (kiểu Lightshot): kéo cạnh/góc để chỉnh vùng, kéo bên trong để di chuyển,
+  phím 1-7 chọn công cụ vẽ, Ctrl+C / Enter sao chép, Ctrl+S lưu, Ctrl+Z hoàn tác, Esc huỷ.
 
 
 MANAGER WINDOWS — INSTALLER EDITION
