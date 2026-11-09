@@ -16,6 +16,8 @@ public static class ThemeManager
     private static bool _hooked;
 
     public static bool IsDark { get; private set; }
+    /// <summary>Đổi sáng/tối (người dùng chọn hoặc Windows đổi): cửa sổ tự vẽ màu riêng như mini monitor vẽ lại.</summary>
+    public static event Action? Changed;
 
     public static void Apply(string setting)
     {
@@ -39,6 +41,7 @@ public static class ThemeManager
 
         foreach (Window w in app.Windows) ApplyTitleBar(w);
         Log.Info("theme", $"setting={setting} dark={IsDark} os={Environment.OSVersion.Version}");
+        Changed?.Invoke();
 
         if (_hooked) return;
         _hooked = true;

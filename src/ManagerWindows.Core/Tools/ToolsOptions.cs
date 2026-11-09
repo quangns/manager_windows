@@ -50,4 +50,12 @@ public sealed class OverlayOptions
     /// <summary>Vị trí (DIP); null = góc trên bên phải màn hình chính. Không dùng NaN: JSON không ghi được NaN.</summary>
     public double? Left { get; set; }
     public double? Top { get; set; }
+    /// <summary>Nền: "transparent" (chỉ chữ) | "solid" (khối màu <see cref="BackgroundColor"/>).</summary>
+    public string Background { get; set; } = "transparent";
+    /// <summary>Màu nền dạng #RRGGBB khi <see cref="Background"/> = "solid".</summary>
+    public string BackgroundColor { get; set; } = "#1F1F23";
+    /// <summary>Độ đậm nền 10–100 (%).</summary>
+    public int BackgroundOpacity { get; set; } = 80;
+    /// <summary>Màu chữ: "auto" (theo nền / chế độ sáng-tối) | "light" | "dark".</summary>
+    public string TextColor { get; set; } = "auto";
 }

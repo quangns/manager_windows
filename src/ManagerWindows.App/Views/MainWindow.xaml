@@ -1784,6 +1784,46 @@
                                     <ComboBox ItemsSource="{Binding Sizes}" DisplayMemberPath="Label" SelectedValuePath="Value"
                                               SelectedValue="{Binding OverlaySize}" Width="140" />
                                 </c:SettingRow>
+                                <c:SettingRow Title="{l:T Mini_Background}" Description="{l:T Mini_BackgroundDesc}">
+                                    <ComboBox ItemsSource="{Binding Backgrounds}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                                              SelectedValue="{Binding OverlayBackground}" Width="140" />
+                                </c:SettingRow>
+                                <c:SettingRow Title="{l:T Mini_BgColor}" Description="{l:T Mini_BgColorDesc}" IsEnabled="{Binding IsSolidBackground}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ItemsControl ItemsSource="{Binding ColorPresets}" VerticalAlignment="Center">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Button Command="{Binding DataContext.PickOverlayColorCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                            CommandParameter="{Binding}" ToolTip="{Binding}" Width="24" Height="24" Margin="0,0,6,0"
+                                                            Cursor="Hand" FocusVisualStyle="{x:Null}">
+                                                        <Button.Template>
+                                                            <ControlTemplate TargetType="Button">
+                                                                <Border CornerRadius="12" Background="{Binding}" BorderBrush="{DynamicResource Hairline}" BorderThickness="1" />
+                                                            </ControlTemplate>
+                                                        </Button.Template>
+                                                    </Button>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <TextBox Text="{Binding OverlayColor, UpdateSourceTrigger=PropertyChanged}" Width="90" Margin="4,0,0,0"
+                                                 FontFamily="{StaticResource MonoFont}" ToolTip="#RRGGBB" />
+                                    </StackPanel>
+                                </c:SettingRow>
+                                <c:SettingRow Title="{l:T Mini_BgOpacity}" IsEnabled="{Binding IsSolidBackground}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Slider Minimum="10" Maximum="100" Value="{Binding OverlayOpacity}" Width="160" IsSnapToTickEnabled="True"
+                                                TickFrequency="5" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding OverlayOpacity, StringFormat={}{0}%}" Width="44" Margin="8,0,0,0" TextAlignment="Right"
+                                                   VerticalAlignment="Center" FontFamily="{StaticResource MonoFont}" />
+                                    </StackPanel>
+                                </c:SettingRow>
+                                <c:SettingRow Title="{l:T Mini_TextColor}" Description="{l:T Mini_TextColorDesc}">
+                                    <ComboBox ItemsSource="{Binding TextColors}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                                              SelectedValue="{Binding OverlayTextColor}" Width="140" />
+                                </c:SettingRow>
                                 <c:SettingRow Title="{l:T Mini_ClickThrough}" Description="{l:T Mini_ClickThroughDesc}">
                                     <CheckBox IsChecked="{Binding ClickThrough}" />
                                 </c:SettingRow>

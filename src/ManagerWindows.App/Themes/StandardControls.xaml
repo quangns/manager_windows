@@ -428,4 +428,56 @@
     <Style TargetType="ScrollViewer">
         <Setter Property="Background" Value="Transparent" />
     </Style>
+    <!-- Slider: rãnh mảnh màu Raised, phần đã chọn màu Accent, nút tròn; không phụ thuộc theme Aero/Fluent của máy. -->
+    <Style x:Key="SliderTrackButton" TargetType="RepeatButton">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RepeatButton">
+                    <Border Background="Transparent">
+                        <Border Height="4" CornerRadius="2" Background="{TemplateBinding Background}" VerticalAlignment="Center" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style TargetType="Slider">
+        <Setter Property="Foreground" Value="{DynamicResource Ink}" />
+        <Setter Property="Height" Value="22" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Slider">
+                    <Track x:Name="PART_Track" Orientation="Horizontal">
+                        <Track.DecreaseRepeatButton>
+                            <RepeatButton Style="{StaticResource SliderTrackButton}" Background="{DynamicResource AccentFill}" Command="Slider.DecreaseLarge" />
+                        </Track.DecreaseRepeatButton>
+                        <Track.IncreaseRepeatButton>
+                            <RepeatButton Style="{StaticResource SliderTrackButton}" Background="{DynamicResource Raised}" Command="Slider.IncreaseLarge" />
+                        </Track.IncreaseRepeatButton>
+                        <Track.Thumb>
+                            <Thumb Width="16" Height="16">
+                                <Thumb.Template>
+                                    <ControlTemplate TargetType="Thumb">
+                                        <Ellipse x:Name="Knob" Fill="{DynamicResource Surface}" Stroke="{DynamicResource AccentFill}" StrokeThickness="2" />
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Knob" Property="Fill" Value="{DynamicResource AccentFill}" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Thumb.Template>
+                            </Thumb>
+                        </Track.Thumb>
+                    </Track>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.45" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 </ResourceDictionary>

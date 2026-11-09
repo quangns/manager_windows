@@ -66,6 +66,20 @@ public sealed partial class ToolsViewModel : ViewModelBase
         new("large", Loc.Instance["Mini_SizeLarge"]),
     ];
 
+    public List<Option<string>> Backgrounds { get; } =
+    [
+        new("transparent", Loc.Instance["Mini_BgTransparent"]),
+        new("solid", Loc.Instance["Mini_BgSolid"]),
+    ];
+    public List<Option<string>> TextColors { get; } =
+    [
+        new("auto", Loc.Instance["Mini_TextAuto"]),
+        new("light", Loc.Instance["Mini_TextLight"]),
+        new("dark", Loc.Instance["Mini_TextDark"]),
+    ];
+    /// <summary>Ô màu gợi ý (bấm để chọn làm màu nền).</summary>
+    public List<string> ColorPresets { get; } = [.. OverlayPalette.Presets];
+
     [ObservableProperty] private bool _hotkeysEnabled;
     [ObservableProperty] private bool _openEditor;
     [ObservableProperty] private bool _copyToClipboard;
@@ -81,6 +95,14 @@ public sealed partial class ToolsViewModel : ViewModelBase
     [ObservableProperty] private bool _horizontal;
     [ObservableProperty] private string _overlaySize = "medium";
     [ObservableProperty] private bool _clickThrough;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsSolidBackground))]
+    private string _overlayBackground = "transparent";
+    /// <summary>Màu nền dạng #RRGGBB; gõ sai định dạng thì giữ màu cũ.</summary>
+    [ObservableProperty] private string _overlayColor = OverlayPalette.DefaultColor;
+    [ObservableProperty] private int _overlayOpacity = 80;
+    [ObservableProperty] private string _overlayTextColor = "auto";
+    public bool IsSolidBackground => OverlayBackground == "solid";
 
     public ToolsViewModel()
     {
@@ -96,6 +118,7 @@ public sealed partial class ToolsViewModel : ViewModelBase
         (_openEditor, _copyToClipboard, _autoSave, _saveFolder) = (c.OpenEditor, c.CopyToClipboard, c.AutoSave, CaptureOutput.Folder());
         var o = Opt.Overlay;
         (_showCpu, _showGpu, _showRam, _showDisk, _horizontal, _overlaySize, _clickThrough) = (o.Cpu, o.Gpu, o.Ram, o.Disk, o.Horizontal, o.Size, o.ClickThrough);
+        (_overlayBackground, _overlayColor, _overlayOpacity, _overlayTextColor) = (o.Background, o.BackgroundColor, o.BackgroundOpacity, o.TextColor);
         _pickerText = Loc.Instance["Pin_PickerHint"];
         _loading = false;
         if (Tools != null) Tools.StateChanged += OnToolsChanged;
@@ -114,6 +137,7 @@ public sealed partial class ToolsViewModel : ViewModelBase
         OverlayVisible = Tools?.OverlayVisible == true;
         var o = Opt.Overlay;
         (Horizontal, OverlaySize, ClickThrough) = (o.Horizontal, o.Size, o.ClickThrough);
+        (OverlayBackground, OverlayTextColor) = (o.Background, o.TextColor); // có thể vừa đổi từ menu chuột phải của mini monitor
         _loading = false;
         UpdateHotkeyStatus();
     }
@@ -285,12 +309,32 @@ public sealed partial class ToolsViewModel : ViewModelBase
     partial void OnHorizontalChanged(bool value) => SaveOverlay();
     partial void OnOverlaySizeChanged(string value) => SaveOverlay();
     partial void OnClickThroughChanged(bool value) => SaveOverlay();
+    partial void OnOverlayBackgroundChanged(string value) => SaveOverlay();
+    partial void OnOverlayOpacityChanged(int value) => SaveOverlay();
+    partial void OnOverlayTextColorChanged(string value) => SaveOverlay();
+    partial void OnOverlayColorChanged(string value)
+    {
+        if (OverlayPalette.ParseRgb(value) != null) SaveOverlay(); // đang gõ dở thì chưa lưu
+    }
+
+    /// <summary>Bấm ô màu gợi ý: dùng màu đó làm nền (tự chuyển sang nền màu).</summary>
+    [RelayCommand]
+    private void PickOverlayColor(string hex)
+    {
+        _loading = true;
+        OverlayColor = hex;
+        OverlayBackground = "solid";
+        _loading = false;
+        SaveOverlay();
+    }
 
     private void SaveOverlay()
     {
         if (_loading) return;
         var o = Opt.Overlay;
         (o.Cpu, o.Gpu, o.Ram, o.Disk, o.Horizontal, o.Size, o.ClickThrough) = (ShowCpu, ShowGpu, ShowRam, ShowDisk, Horizontal, OverlaySize, ClickThrough);
+        (o.Background, o.BackgroundOpacity, o.TextColor) = (OverlayBackground, Math.Clamp(OverlayOpacity, 10, 100), OverlayTextColor);
+        if (OverlayPalette.ParseRgb(OverlayColor) is { } rgb) o.BackgroundColor = $"#{rgb:X6}";
         Host.SaveConfig();
         Tools?.RefreshOverlay();
     }

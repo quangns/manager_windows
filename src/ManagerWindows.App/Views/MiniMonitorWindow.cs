@@ -12,7 +12,8 @@ using ManagerWindows.Platform;
 namespace ManagerWindows.App.Views;
 
 /// <summary>
-/// Mini monitor luôn nằm trên cùng, nền trong suốt, chỉ hiện CPU / GPU / RAM / ổ đĩa.
+/// Mini monitor luôn nằm trên cùng, chỉ hiện CPU / GPU / RAM / ổ đĩa. Nền trong suốt hoặc màu tuỳ chọn;
+/// màu chữ chọn theo <see cref="OverlayPalette"/> để đọc được ở cả chế độ sáng lẫn tối.
 /// Kéo để di chuyển (khi chưa khoá); "click xuyên" thì chuột đi qua, không che app bên dưới. Chuột phải: menu tuỳ chọn.
 /// </summary>
 public sealed class MiniMonitorWindow : Window
@@ -26,6 +27,7 @@ public sealed class MiniMonitorWindow : Window
     private readonly DiskMeter _disk = new();
     private readonly Dictionary<string, (TextBlock Label, TextBlock Value)> _cells = new();
     private int _tick;
+    private OverlayColors _colors = null!;
 
     public event Action? OptionsChanged;
 
@@ -42,6 +44,7 @@ public sealed class MiniMonitorWindow : Window
         Topmost = true;
         SizeToContent = SizeToContent.WidthAndHeight;
         _root = new Border { Padding = new Thickness(8, 4, 8, 4), CornerRadius = new CornerRadius(6), Child = _panel };
+        ThemeManager.Changed += OnThemeChanged;
         Content = _root;
         Build();
 
@@ -52,40 +55,60 @@ public sealed class MiniMonitorWindow : Window
         ContextMenu = BuildMenu();
     }
 
-    /// <summary>Dựng lại các ô theo tuỳ chọn (bật/tắt chỉ số, ngang/dọc, cỡ chữ).</summary>
+    /// <summary>Dựng lại các ô theo tuỳ chọn (bật/tắt chỉ số, ngang/dọc, cỡ chữ, nền, màu chữ).</summary>
     public void Build()
     {
+        _colors = OverlayPalette.Resolve(_opt, ThemeManager.IsDark);
         _panel.Children.Clear();
         _cells.Clear();
         _panel.Orientation = _opt.Horizontal ? Orientation.Horizontal : Orientation.Vertical;
         var size = _opt.Size switch { "small" => 11.0, "large" => 16.0, _ => 13.0 };
         var mono = TryFindResource("MonoFont") as FontFamily ?? new FontFamily("Consolas");
+        // Nền trong suốt: viền chữ (đen cho chữ sáng, trắng cho chữ tối) để đọc được trên mọi thứ phía sau.
+        // Nền màu: không cần viền, chữ đã được chọn tương phản với nền.
+        var outline = _opt.Background == "solid" ? null
+            : new DropShadowEffect { Color = ToColor(_colors.Outline), BlurRadius = 4, ShadowDepth = 0, Opacity = 1 };
         foreach (var (key, on) in new[] { ("CPU", _opt.Cpu), ("GPU", _opt.Gpu), ("RAM", _opt.Ram), ("Disk", _opt.Disk) })
         {
             if (!on) continue;
-            // Chữ sáng + viền tối để đọc được trên mọi nền (nền cửa sổ trong suốt nên không theo theme sáng/tối).
-            var label = new TextBlock { Text = key, FontSize = size * 0.85, FontWeight = FontWeights.SemiBold, Foreground = new SolidColorBrush(Color.FromRgb(0xB4, 0xE4, 0xDD)), VerticalAlignment = VerticalAlignment.Center };
-            var value = new TextBlock { Text = "…", FontSize = size, FontWeight = FontWeights.Bold, FontFamily = mono, Foreground = Brushes.White, Margin = new Thickness(5, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
+            var label = new TextBlock { Text = key, FontSize = size * 0.85, FontWeight = FontWeights.SemiBold, Foreground = Brush(_colors.Label), VerticalAlignment = VerticalAlignment.Center };
+            var value = new TextBlock { Text = "…", FontSize = size, FontWeight = FontWeights.Bold, FontFamily = mono, Foreground = Brush(_colors.Value), Margin = new Thickness(5, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
             var cell = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
                 Margin = _opt.Horizontal ? new Thickness(0, 0, 12, 0) : new Thickness(0, 1, 0, 1),
-                Effect = new DropShadowEffect { Color = Colors.Black, BlurRadius = 4, ShadowDepth = 0, Opacity = 1 },
+                Effect = outline,
                 Children = { label, value },
             };
             _panel.Children.Add(cell);
             _cells[key] = (label, value);
         }
         if (_panel.Children.Count == 0)
-            _panel.Children.Add(new TextBlock { Text = "Manager Windows", Foreground = Brushes.White, FontSize = size });
+            _panel.Children.Add(new TextBlock { Text = "Manager Windows", Foreground = Brush(_colors.Value), FontSize = size, Effect = outline });
+        // Ô cuối hàng ngang không cần lề phải: nền màu cân hai bên.
+        if (_opt.Horizontal && _panel.Children.Count > 0 && _panel.Children[^1] is FrameworkElement last) last.Margin = new Thickness(0);
         ApplyStyle();
         Update();
     }
 
+    private static Color ToColor(uint argb) => Color.FromArgb((byte)(argb >> 24), (byte)(argb >> 16), (byte)(argb >> 8), (byte)argb);
+
+    private static SolidColorBrush Brush(uint argb)
+    {
+        var b = new SolidColorBrush(ToColor(argb));
+        b.Freeze();
+        return b;
+    }
+
+    private void OnThemeChanged()
+    {
+        // Chỉ "tự động" mới phụ thuộc chế độ sáng/tối của app.
+        if (_opt.TextColor == "auto") Dispatcher.BeginInvoke(Build);
+    }
+
     private void ApplyStyle()
     {
-        // Nền gần như trong suốt (alpha 1) để vẫn bấm/kéo được; click xuyên thì trong suốt hẳn.
-        _root.Background = _opt.ClickThrough ? Brushes.Transparent : new SolidColorBrush(Color.FromArgb(1, 0, 0, 0));
+        _root.Background = Brush(_colors.Background);
         Cursor = _opt.ClickThrough ? null : Cursors.SizeAll;
         var hwnd = new WindowInteropHelper(this).Handle;
         if (hwnd != IntPtr.Zero) DesktopWindows.SetOverlayStyle(hwnd, _opt.ClickThrough);
@@ -124,12 +147,11 @@ public sealed class MiniMonitorWindow : Window
         if (++_tick % 5 == 0) DesktopWindows.BringToTop(new WindowInteropHelper(this).Handle);
     }
 
-    private static void SetValue(TextBlock t, double percent, string extra = "")
+    private void SetValue(TextBlock t, double percent, string extra = "")
     {
         t.Text = $"{percent,3:0}%{extra}";
-        // Trắng < 60%, vàng < 85%, đỏ khi gần đầy.
-        t.Foreground = percent >= 85 ? new SolidColorBrush(Color.FromRgb(0xFF, 0x6B, 0x6B))
-            : percent >= 60 ? new SolidColorBrush(Color.FromRgb(0xFB, 0xD3, 0x4D)) : Brushes.White;
+        // Màu thường < 60%, vàng/cam < 85%, đỏ khi gần đầy (bộ màu sáng hoặc tối tuỳ nền).
+        t.Foreground = Brush(percent >= 85 ? _colors.Critical : percent >= 60 ? _colors.Warning : _colors.Value);
     }
 
     protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
@@ -156,6 +178,13 @@ public sealed class MiniMonitorWindow : Window
         Add("Mini_SizeMedium", () => { _opt.Size = "medium"; Changed(); }, _opt.Size == "medium");
         Add("Mini_SizeLarge", () => { _opt.Size = "large"; Changed(); }, _opt.Size == "large");
         menu.Items.Add(new Separator());
+        Add("Mini_BgTransparent", () => { _opt.Background = "transparent"; Changed(); }, _opt.Background != "solid");
+        Add("Mini_BgSolid", () => { _opt.Background = "solid"; Changed(); }, _opt.Background == "solid");
+        menu.Items.Add(new Separator());
+        Add("Mini_TextAuto", () => { _opt.TextColor = "auto"; Changed(); }, _opt.TextColor is not ("light" or "dark"));
+        Add("Mini_TextLight", () => { _opt.TextColor = "light"; Changed(); }, _opt.TextColor == "light");
+        Add("Mini_TextDark", () => { _opt.TextColor = "dark"; Changed(); }, _opt.TextColor == "dark");
+        menu.Items.Add(new Separator());
         Add("Mini_ClickThrough", () => { _opt.ClickThrough = true; Changed(); });
         Add("Mini_Hide", () => ToolsService.Current?.SetOverlay(false));
         return menu;
@@ -169,6 +198,7 @@ public sealed class MiniMonitorWindow : Window
 
     protected override void OnClosed(EventArgs e)
     {
+        ThemeManager.Changed -= OnThemeChanged;
         _timer.Stop();
         _gpu.Dispose();
         _disk.Dispose();

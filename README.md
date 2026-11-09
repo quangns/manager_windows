@@ -141,7 +141,8 @@ Nhấn **`Ctrl+Alt+A`**: màn hình được đóng băng **đúng kích thướ
   - kéo tâm ngắm thả lên cửa sổ;
   - hoặc chọn trong danh sách cửa sổ đang mở.
 - **Mini monitor** (`Ctrl+Alt+M`):
-  - hiện CPU, GPU, RAM, ổ đĩa trên nền trong suốt, luôn nằm trên cùng;
+  - hiện CPU, GPU, RAM, ổ đĩa, luôn nằm trên cùng;
+  - nền trong suốt hoặc khối màu tuỳ chọn (chỉnh độ đậm); chữ sáng/tối tự chọn theo nền và chế độ sáng/tối, hoặc tự đặt;
   - chọn chỉ số muốn hiện, xếp ngang hoặc dọc, 3 cỡ chữ;
   - khoá vị trí và cho chuột bấm xuyên qua.
 
