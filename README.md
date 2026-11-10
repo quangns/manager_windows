@@ -10,14 +10,13 @@
 - **Dọn file rác** định kỳ.
 - **Giải phóng ổ C đầy**: chuyển data Zalo, Telegram, Chrome… sang ổ D mà app vẫn chạy bình thường.
 - **Phân tích dung lượng ổ đĩa** kiểu TreeSize.
-- **Quản lý phân vùng ổ cứng** kiểu MiniTool Partition Wizard.
 - **Chụp màn hình** kiểu Lightshot.
 - **Ngủ đông app** và **ngủ đông tab trình duyệt** (Chrome, Cốc Cốc, Brave) không dùng, **ưu tiên CPU** cho app hay dùng, xử lý **file Excel nặng**.
 - **Mini monitor** CPU / GPU / RAM / ổ đĩa luôn hiện trên cùng.
 
 Giao diện tiếng Việt và tiếng Anh, chế độ sáng/tối. Dữ liệu chỉ lưu trên máy, không gửi đi đâu.
 
-> *English:* Manager Windows is a free all-in-one Windows 10/11 utility: junk file cleaner, disk space analyzer (TreeSize-style), "C: drive full" fixer that moves app data (Zalo, Telegram, Chrome…) to another drive via NTFS junctions, partition manager (resize / move / merge, MiniTool-style), Lightshot-style screenshot tool with annotations, app hibernation, CPU priority booster, always-on-top window pinning and a transparent CPU/GPU/RAM overlay. [See the English summary](#english-summary).
+> *English:* Manager Windows is a free all-in-one Windows 10/11 utility: junk file cleaner, disk space analyzer (TreeSize-style), "C: drive full" fixer that moves app data (Zalo, Telegram, Chrome…) to another drive via NTFS junctions, Lightshot-style screenshot tool with annotations, app hibernation, CPU priority booster, always-on-top window pinning and a transparent CPU/GPU/RAM overlay. [See the English summary](#english-summary).
 
 **[⬇ Tải bản mới nhất](https://github.com/quangns/manager_windows/releases/latest)**
 
@@ -41,7 +40,6 @@ Giao diện tiếng Việt và tiếng Anh, chế độ sáng/tối. Dữ liệu
 | [Gợi ý file nên xoá, tìm file trùng](#gợi-ý-dọn-file-và-tìm-file-trùng) | Duplicate Cleaner | ✔ | ✔ |
 | [Phân tích dung lượng ổ đĩa](#phân-tích-dung-lượng-ổ-đĩa-kiểu-treesize) | TreeSize, WinDirStat | ✔ | ✔ |
 | [Chuyển data app khỏi ổ C](#chuyển-data-zalo-telegram-chrome-sang-ổ-khác) | Tạo symlink thủ công | ✔ | ✔ |
-| [Quản lý phân vùng ổ cứng](#quản-lý-phân-vùng-ổ-cứng) | MiniTool Partition Wizard, Disk Management | ✔ (cần quyền Admin) | ✔ |
 | [Chụp màn hình, vẽ chú thích](#chụp-màn-hình-kiểu-lightshot) | Lightshot, Snipping Tool | ✔ | ✔ |
 | [Ghim cửa sổ luôn trên cùng](#ghim-cửa-sổ-luôn-trên-cùng-và-mini-monitor) | PowerToys Always on Top | ✔ | ✔ |
 | [Mini monitor CPU/GPU/RAM/ổ đĩa](#ghim-cửa-sổ-luôn-trên-cùng-và-mini-monitor) | Rainmeter, MSI Afterburner OSD | ✔ | ✔ |
@@ -95,26 +93,6 @@ Quy trình chuyển:
 3. Giữ bản gốc để **Hoàn tác** khi cần. Bị ngắt giữa chừng (mất điện…) vẫn làm tiếp hoặc hoàn tác được.
 
 Thêm app khác bằng cách khai báo trong `rules/app-profiles.json` ([hướng dẫn](#thêm-app-vào-danh-sách-chuyển-data)).
-
-### Quản lý phân vùng ổ cứng
-
-- **Sơ đồ đĩa** theo tỉ lệ, giống MiniTool Partition Wizard / Disk Management.
-- **Thao tác cơ bản:**
-  - thu nhỏ / mở rộng phân vùng;
-  - tạo, xoá, format (NTFS / exFAT / FAT32);
-  - đổi ký tự ổ, đổi nhãn;
-  - kiểm tra lỗi (`chkdsk /scan`);
-  - khởi tạo đĩa mới (GPT/MBR).
-- **Di chuyển phân vùng, mở rộng sang trái, gộp phân vùng:**
-  - App chép dữ liệu theo từng sector. Mỗi đoạn được đọc lại để kiểm tra.
-  - App ghi nhật ký tiến độ, nên mất điện giữa chừng vẫn tiếp tục được.
-  - Dời được phân vùng Recovery để **mở rộng ổ C:**.
-- **Bảo vệ:**
-  - Không cho xoá hay format phân vùng Windows, EFI, MSR, Recovery.
-  - Thao tác nguy hiểm phải gõ chữ xác nhận, và app hiện khung cảnh báo rủi ro trước khi chạy.
-  - Mọi thay đổi chạy trong cửa sổ riêng có quyền Administrator (UAC).
-
-> ⚠ Sao lưu dữ liệu quan trọng trước khi di chuyển, gộp hoặc xoá phân vùng.
 
 ### Chụp màn hình kiểu Lightshot
 
@@ -230,11 +208,6 @@ Làm lần lượt:
 **Chuyển data Zalo sang ổ D có mất tin nhắn không?**
 Không. Data được chép đầy đủ và so khớp trước khi đổi. Zalo vẫn đọc ở đường dẫn cũ nhờ junction. Bản gốc được giữ lại để hoàn tác.
 
-**Có thay được MiniTool Partition Wizard không?**
-Được phần lớn việc thường làm: thu nhỏ / mở rộng, tạo, xoá, format, di chuyển, mở rộng sang trái, gộp phân vùng. Hai việc chưa làm được:
-- dời chính phân vùng Windows (C:) khi Windows đang chạy;
-- chuyển MBR↔GPT khi đĩa còn dữ liệu. Với ổ Windows có thể dùng lệnh `mbr2gpt` có sẵn.
-
 **Chụp màn hình có giống Lightshot không?**
 Có: màn hình đóng băng, kéo thả vùng chọn tự do, thanh công cụ bám theo vùng chọn, vẽ ngay trên màn hình rồi `Ctrl+C` hoặc `Ctrl+S`. Ngoài ra có thêm che kín thông tin và đánh số thứ tự.
 
@@ -263,9 +236,6 @@ App bị tạm dừng chứ không bị tắt, nên không mất dữ liệu đa
   - Không bao giờ dùng mức Realtime.
   - Không đụng tiến trình hệ thống và phần mềm diệt virus.
   - Trả mức ưu tiên cũ khi tắt tính năng hoặc thoát app.
-- **Phân vùng:**
-  - Chạy trong cửa sổ quyền Administrator riêng, không qua dịch vụ nền.
-  - Chặn máy đang chạy pin, phân vùng BitLocker, ổ đang có file mở.
 - **Dịch vụ nền:**
   - Named pipe chỉ cho người dùng đang đăng nhập, SYSTEM và Administrators kết nối.
   - Chỉ nhận một số lệnh cố định, không có lệnh nào nhận đường dẫn để xoá.
@@ -277,7 +247,7 @@ App bị tạm dừng chứ không bị tắt, nên không mất dữ liệu đa
 ```
 ManagerWindows.App (WPF, khay hệ thống, quyền người dùng)
  ├─ dọn rác phần của user, chuyển data AppData (junction), theo dõi cửa sổ đang dùng
- ├─ ưu tiên process, phân tích Excel, chụp màn hình, phân vùng (cửa sổ Admin riêng)
+ ├─ ưu tiên process, phân tích Excel, chụp màn hình
  └─ named pipe ──► ManagerWindows.Service (Windows Service, quyền SYSTEM)
                     ├─ dọn rác hệ thống theo lịch (Windows\Temp, SoftwareDistribution, WER…)
                     ├─ đếm số lần mở app (WMI Win32_ProcessStartTrace)
@@ -286,8 +256,8 @@ ManagerWindows.App (WPF, khay hệ thống, quyền người dùng)
 
 | Project | Nội dung |
 |---|---|
-| `src/ManagerWindows.Core` | Logic thuần, test được trên Linux: luật dọn, quét gợi ý, file trùng, chuyển data, thống kê, ưu tiên, phân tích xlsx, kế hoạch phân vùng, hình học vùng chụp |
-| `src/ManagerWindows.Platform` | Win32 API: junction, Thùng rác, SetPriorityClass/EcoQoS, chụp màn hình GDI, WMI Storage, đọc/ghi ổ vật lý |
+| `src/ManagerWindows.Core` | Logic thuần, test được trên Linux: luật dọn, quét gợi ý, file trùng, chuyển data, thống kê, ưu tiên, phân tích xlsx, hình học vùng chụp |
+| `src/ManagerWindows.Platform` | Win32 API: junction, Thùng rác, SetPriorityClass/EcoQoS, chụp màn hình GDI, chính sách trình duyệt |
 | `src/ManagerWindows.Storage` | SQLite: lịch sử dọn, các lần chuyển data, phiên sử dụng |
 | `src/ManagerWindows.Ipc` | Lệnh và client named pipe |
 | `src/ManagerWindows.Service` | Windows Service |
@@ -329,7 +299,7 @@ App không chạy được qua junction (Outlook, OneDrive, WSL…) thì đặt 
   - File Excel mở từ SharePoint/OneDrive dạng URL không phân tích được.
   - File `.xls`/`.xlsb` chỉ có gợi ý chung.
 - **Chuyển data:** junction chỉ hoạt động trên ổ NTFS gắn trong máy.
-- **Chụp màn hình và phân vùng:** dựa vào API Windows. Hãy báo lỗi ở mục [Issues](https://github.com/quangns/manager_windows/issues) nếu gặp vấn đề trên máy của bạn.
+- **Chụp màn hình:** dựa vào API Windows. Hãy báo lỗi ở mục [Issues](https://github.com/quangns/manager_windows/issues) nếu gặp vấn đề trên máy của bạn.
 
 ## English summary
 
@@ -340,10 +310,6 @@ App không chạy được qua junction (Outlook, OneDrive, WSL…) thì đặt 
   - **Disk space analyzer** like TreeSize/WinDirStat.
   - Large/old/duplicate file finder.
   - **Move app data to another drive** (Zalo, Telegram, Chrome, iPhone backups) using NTFS junctions, with one-click undo.
-- **Partition manager** like MiniTool Partition Wizard:
-  - shrink, extend, create, delete, format;
-  - move partitions, extend to the left, merge partitions, with resumable sector copy;
-  - move the Recovery partition to extend C:.
 - **Screenshot tool like Lightshot:**
   - frozen full-size screen, free drag selection with resize handles;
   - draw on the screen: box, ellipse, arrow, pen, highlight, redact, step numbers;
@@ -361,4 +327,4 @@ Download the portable or installer build from **[Releases](https://github.com/qu
 
 ---
 
-**Từ khoá:** dọn rác máy tính, phần mềm dọn rác Windows 11, giải phóng ổ C, ổ C bị đầy, chuyển dữ liệu Zalo sang ổ D, phân tích dung lượng ổ cứng, chia lại phân vùng ổ cứng, gộp phân vùng, mở rộng ổ C, chụp màn hình Windows, phần mềm chụp màn hình giống Lightshot, ngủ đông tab Chrome, giảm RAM trình duyệt, ghim cửa sổ luôn trên cùng, theo dõi CPU GPU RAM, tăng tốc Excel, tăng tốc máy tính.
+**Từ khoá:** dọn rác máy tính, phần mềm dọn rác Windows 11, giải phóng ổ C, ổ C bị đầy, chuyển dữ liệu Zalo sang ổ D, phân tích dung lượng ổ cứng, chụp màn hình Windows, phần mềm chụp màn hình giống Lightshot, ngủ đông tab Chrome, giảm RAM trình duyệt, ghim cửa sổ luôn trên cùng, theo dõi CPU GPU RAM, tăng tốc Excel, tăng tốc máy tính.

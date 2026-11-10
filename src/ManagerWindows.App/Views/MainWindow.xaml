@@ -3,7 +3,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:l="clr-namespace:ManagerWindows.App.Services"
         xmlns:c="clr-namespace:ManagerWindows.App.Controls"
-        xmlns:v="clr-namespace:ManagerWindows.App.Views"
         Title="{l:T App_Title}" Width="1240" Height="800" MinWidth="1000" MinHeight="640"
         Icon="/Assets/app.ico" WindowStartupLocation="CenterScreen"
         Background="{DynamicResource Canvas}" Foreground="{DynamicResource Ink}"
@@ -743,11 +742,6 @@
                     </Border>
                 </Grid>
             </DockPanel>
-        </TabItem>
-
-        <!-- ===================== PHÂN VÙNG Ổ ĐĨA ===================== -->
-        <TabItem Tag="&#xEDA2;" Header="{l:T Tab_Partitions}" DataContext="{Binding Partitions}">
-            <v:PartitionsView />
         </TabItem>
 
         <!-- ===================== DI CHUYỂN DATA APP ===================== -->
