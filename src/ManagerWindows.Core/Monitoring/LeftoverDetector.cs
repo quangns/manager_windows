@@ -63,6 +63,11 @@ public sealed class LeftoverOptions
     /// </summary>
     public List<string> LingeringApps { get; set; } = [.. DefaultLingeringApps];
 
+    /// <summary>Tự dừng app chạy ngầm lâu, không hoạt động (tắt sẵn; trừ danh sách "không bao giờ ngủ" và app chạy nền hợp lệ).</summary>
+    public bool AutoStopIdle { get; set; }
+    /// <summary>Tự dừng app đã đóng hết cửa sổ mà vẫn chạy ngầm (tắt sẵn).</summary>
+    public bool AutoStopClosed { get; set; }
+
     /// <summary>Trình duyệt Chromium: Chrome, Edge, Brave, Cốc Cốc (browser.exe), Opera, Vivaldi.</summary>
     public static readonly string[] DefaultLingeringApps = ["chrome", "msedge", "brave", "browser", "opera", "vivaldi"];
 }
@@ -140,6 +145,24 @@ public static class LeftoverDetector
                 g.Select(x => x.P.StartUtc).Where(t => t != null).DefaultIfEmpty().Min()))
             .OrderByDescending(g => g.Reasons.HasFlag(LeftoverReason.NotResponding))
             .ThenByDescending(g => g.WorkingSetBytes)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Nhóm được phép tự dừng theo tuỳ chọn: chạy ngầm lâu không hoạt động (<see cref="LeftoverOptions.AutoStopIdle"/>)
+    /// hoặc đã đóng cửa sổ mà vẫn chạy (<see cref="LeftoverOptions.AutoStopClosed"/>).
+    /// Không bao giờ tự dừng: app treo (có thể mất dữ liệu chưa lưu, để người dùng tự quyết), app trong <paramref name="neverStop"/>
+    /// (danh sách "không bao giờ ngủ" + app chạy nền hợp lệ), app người dùng đã bỏ qua.
+    /// </summary>
+    public static List<LeftoverGroup> AutoStopTargets(IEnumerable<LeftoverGroup> groups, LeftoverOptions opt, IReadOnlySet<string> neverStop)
+    {
+        if (!opt.AutoStopIdle && !opt.AutoStopClosed) return [];
+        var ignored = new HashSet<string>(opt.Ignored, StringComparer.OrdinalIgnoreCase);
+        return groups.Where(g =>
+                !g.Reasons.HasFlag(LeftoverReason.NotResponding)
+                && !neverStop.Contains(g.Name) && !ignored.Contains(g.Name)
+                && ((opt.AutoStopIdle && g.Reasons.HasFlag(LeftoverReason.IdleBackground))
+                    || (opt.AutoStopClosed && g.Reasons.HasFlag(LeftoverReason.WindowClosed))))
             .ToList();
     }
 

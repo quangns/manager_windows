@@ -209,6 +209,30 @@ public class LeftoverTests
     }
 
     [Fact]
+    public void Auto_stop_only_picks_enabled_kinds_and_never_the_protected_lists()
+    {
+        static LeftoverGroup G(string name, LeftoverReason r) => new(name, null, r, [1], 200L << 20, Now.AddHours(-3));
+        LeftoverGroup[] groups =
+        [
+            G("idleapp", LeftoverReason.IdleBackground),
+            G("chrome", LeftoverReason.WindowClosed),
+            G("hung", LeftoverReason.NotResponding | LeftoverReason.IdleBackground), // treo: không bao giờ tự dừng
+            G("Zalo", LeftoverReason.IdleBackground),                                // trong danh sách không bao giờ ngủ
+            G("node", LeftoverReason.Orphan),                                        // mồ côi: không thuộc 2 kiểu tự dừng
+            G("skipme", LeftoverReason.IdleBackground),                              // người dùng đã bỏ qua
+        ];
+        var never = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "zalo" };
+        var opt = new LeftoverOptions { Ignored = ["SkipMe"] };
+        Assert.Empty(LeftoverDetector.AutoStopTargets(groups, opt, never)); // mặc định tắt
+        opt.AutoStopIdle = true;
+        Assert.Equal(["idleapp"], LeftoverDetector.AutoStopTargets(groups, opt, never).Select(g => g.Name));
+        opt.AutoStopClosed = true;
+        Assert.Equal(["idleapp", "chrome"], LeftoverDetector.AutoStopTargets(groups, opt, never).Select(g => g.Name));
+        opt.AutoStopIdle = false;
+        Assert.Equal(["chrome"], LeftoverDetector.AutoStopTargets(groups, opt, never).Select(g => g.Name));
+    }
+
+    [Fact]
     public void Lingering_browser_that_just_started_is_left_alone()
     {
         ProcInfo[] fresh = [P(40, 0, "msedge", ageMin: 2, wsMb: 200)]; // vừa tự chạy lúc đăng nhập

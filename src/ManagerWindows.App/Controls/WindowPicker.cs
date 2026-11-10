@@ -10,7 +10,8 @@ namespace ManagerWindows.App.Controls;
 /// <summary>
 /// Biểu tượng tâm ngắm "kéo để chọn app" (giống EVKey): giữ chuột trái vào biểu tượng, kéo tới cửa sổ app bất kỳ rồi thả.
 /// Trong lúc kéo gọi <see cref="HoverCommand"/> với PID (hoặc handle cửa sổ nếu <see cref="PickWindow"/>) dưới con trỏ;
-/// khi thả gọi <see cref="PickedCommand"/>.
+/// khi thả gọi <see cref="PickedCommand"/>. Cửa sổ đang trỏ vào được tô khung để thấy rõ sẽ chọn app nào.
+/// PID là của app thật: cửa sổ "ma" của app treo/ngủ đông và khung app Store/UWP được quy về đúng tiến trình app.
 /// Chuột được "bắt" (CaptureMouse) nên vẫn nhận sự kiện khi con trỏ ra ngoài cửa sổ app.
 /// </summary>
 public sealed class WindowPicker : Border
@@ -26,7 +27,17 @@ public sealed class WindowPicker : Border
     /// <summary>true: tham số lệnh là handle cửa sổ (long) thay vì PID — dùng cho "ghim cửa sổ".</summary>
     public bool PickWindow { get; set; }
 
-    private long Target() => PickWindow ? DesktopWindows.AtCursor().ToInt64() : WindowInfo.PidAtCursor();
+    private PickerHighlight? _highlight;
+
+    private long Target(IntPtr window) => PickWindow ? window.ToInt64() : window == IntPtr.Zero ? 0 : DesktopWindows.AppPidOf(window);
+
+    /// <summary>Cửa sổ app dưới con trỏ (bỏ qua chính khung tô) và tô khung quanh nó.</summary>
+    private IntPtr WindowUnderCursor()
+    {
+        var h = DesktopWindows.AtCursor(_highlight?.Handle ?? IntPtr.Zero);
+        _highlight?.Show(h);
+        return h;
+    }
 
     private readonly System.Windows.Shapes.Path _icon;
     private bool _dragging;
@@ -63,6 +74,7 @@ public sealed class WindowPicker : Border
         _dragging = CaptureMouse();
         if (!_dragging) return;
         _last = -1;
+        _highlight ??= new PickerHighlight();
         Mouse.OverrideCursor = Cursors.Cross;
         _icon.Visibility = Visibility.Hidden; // "nhấc" tâm ngắm lên theo con trỏ như EVKey
         SetResourceReference(BorderBrushProperty, "Accent");
@@ -73,7 +85,7 @@ public sealed class WindowPicker : Border
     {
         base.OnMouseMove(e);
         if (!_dragging) return;
-        var target = Target();
+        var target = Target(WindowUnderCursor());
         if (target == _last) return;
         _last = target;
         Fire(HoverCommand, target);
@@ -83,7 +95,7 @@ public sealed class WindowPicker : Border
     {
         base.OnMouseLeftButtonUp(e);
         if (!_dragging) return;
-        var target = Target();
+        var target = Target(WindowUnderCursor());
         End();
         Fire(PickedCommand, target);
         e.Handled = true;
@@ -107,6 +119,8 @@ public sealed class WindowPicker : Border
         _dragging = false;
         Mouse.OverrideCursor = null;
         _icon.Visibility = Visibility.Visible;
+        _highlight?.Close();
+        _highlight = null;
         SetResourceReference(BorderBrushProperty, "Hairline");
         if (IsMouseCaptured) ReleaseMouseCapture();
     }

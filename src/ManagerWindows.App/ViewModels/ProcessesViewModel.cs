@@ -94,6 +94,9 @@ public sealed partial class ProcessesViewModel : ViewModelBase
 
     // Cài đặt cảnh báo app chạy ngầm
     [ObservableProperty] private bool _alertsEnabled;
+    /// <summary>Tự dừng app chạy ngầm lâu không hoạt động / đã đóng cửa sổ mà vẫn chạy (lưu ngay khi tick).</summary>
+    [ObservableProperty] private bool _autoStopIdle;
+    [ObservableProperty] private bool _autoStopClosed;
     [ObservableProperty] private int _alertCpu;
     [ObservableProperty] private int _alertRamMb;
     [ObservableProperty] private int _alertSeconds;
@@ -117,6 +120,7 @@ public sealed partial class ProcessesViewModel : ViewModelBase
 
         var m = Host.Config.Monitor;
         (_alertsEnabled, _alertCpu, _alertRamMb, _alertSeconds) = (m.AlertsEnabled, m.CpuPercent, m.RamMb, m.SustainSeconds);
+        (_autoStopIdle, _autoStopClosed) = (Host.Config.Leftovers.AutoStopIdle, Host.Config.Leftovers.AutoStopClosed);
         _ignoredText = TextList.Join(m.Ignored);
 
         _timer.Tick += async (_, _) =>
@@ -146,6 +150,17 @@ public sealed partial class ProcessesViewModel : ViewModelBase
     }
 
     public void Stop() => _timer.Stop();
+
+    partial void OnAutoStopIdleChanged(bool value) => SaveAutoStop();
+    partial void OnAutoStopClosedChanged(bool value) => SaveAutoStop();
+
+    private void SaveAutoStop()
+    {
+        var o = Host.Config.Leftovers;
+        (o.AutoStopIdle, o.AutoStopClosed) = (AutoStopIdle, AutoStopClosed);
+        Host.SaveConfig();
+        Status = AutoStopIdle || AutoStopClosed ? Loc.Instance["Left_AutoStopOn"] : Loc.Instance["Saved"];
+    }
 
     /// <summary>Mỗi 30 giây (khi đang xem tab) tìm app đã đóng cửa sổ mà vẫn chạy ngầm.</summary>
     private async Task CheckClosedAppsAsync(bool force = false)

@@ -42,12 +42,19 @@ public sealed partial class LeftoversViewModel : ViewModelBase
     /// </summary>
     public static List<LeftoverGroup> Scan(AppHost host)
     {
-        var keep = new HashSet<string>(HibernationOptions.DefaultExcluded, StringComparer.OrdinalIgnoreCase);
-        keep.UnionWith(host.Config.Hibernation.Excluded);
+        var keep = NeverStop(host);
         return LeftoverDetector.Detect(ProcessTree.Snapshot(), Process.GetCurrentProcess().SessionId, Environment.ProcessId,
                 DateTime.UtcNow, host.Config.Leftovers, Environment.GetFolderPath(Environment.SpecialFolder.Windows),
                 host.LeftoverWatcher.LastWindowSeen, keep)
             .Where(g => !host.Hibernation.IsAsleep(g.Name)).ToList();
+    }
+
+    /// <summary>App được chạy nền thoải mái: chat, mail, VPN, bộ gõ, nhạc (mặc định) + danh sách "không bao giờ ngủ" của người dùng.</summary>
+    public static HashSet<string> NeverStop(AppHost host)
+    {
+        var keep = new HashSet<string>(HibernationOptions.DefaultExcluded, StringComparer.OrdinalIgnoreCase);
+        keep.UnionWith(host.Config.Hibernation.Excluded);
+        return keep;
     }
 
     [RelayCommand]

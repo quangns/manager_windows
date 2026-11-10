@@ -1071,6 +1071,14 @@
                             <TextBox Text="{Binding AlertSeconds}" Width="64" Margin="0,0,16,0" />
                             <Button Style="{StaticResource Secondary}" Content="{l:T Btn_Save}" Command="{Binding SaveAlertsCommand}" />
                         </WrapPanel>
+                        <WrapPanel Margin="0,10,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="{l:T Left_AutoStopLabel}" VerticalAlignment="Center" Margin="0,0,12,0" FontWeight="Medium" />
+                            <CheckBox Content="{l:T Left_AutoStopIdle}" IsChecked="{Binding AutoStopIdle}" Margin="0,0,20,0" VerticalAlignment="Center"
+                                      ToolTip="{l:T Left_AutoStopIdleTip}" />
+                            <CheckBox Content="{l:T Left_AutoStopClosed}" IsChecked="{Binding AutoStopClosed}" VerticalAlignment="Center"
+                                      ToolTip="{l:T Left_AutoStopClosedTip}" />
+                        </WrapPanel>
+                        <TextBlock Text="{l:T Left_AutoStopNote}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,0" FontSize="12" />
                         <DockPanel Margin="0,10,0,0">
                             <TextBlock Text="{l:T Proc_IgnoredLabel}" VerticalAlignment="Center" Margin="0,0,8,0" Style="{StaticResource Muted}" />
                             <TextBox Text="{Binding IgnoredText}" FontFamily="{StaticResource MonoFont}" FontSize="12.5" ToolTip="{l:T Proc_IgnoredHint}" />

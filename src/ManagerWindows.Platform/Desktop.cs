@@ -159,12 +159,60 @@ public static class DesktopWindows
         return h != IntPtr.Zero && !IsShell(h) ? h : IntPtr.Zero;
     }
 
-    /// <summary>Cửa sổ cấp cao nhất dưới con trỏ chuột (kéo tâm ngắm để chọn cửa sổ).</summary>
-    public static IntPtr AtCursor()
+    [DllImport("user32.dll")] private static extern bool GetLayeredWindowAttributes(IntPtr hwnd, out uint key, out byte alpha, out uint flags);
+    [DllImport("user32.dll")] private static extern bool EnumChildWindows(IntPtr parent, EnumWindowsProc cb, IntPtr lParam);
+    private const uint LWA_ALPHA = 0x2;
+
+    /// <summary>
+    /// Cửa sổ app trên cùng (theo z-order) dưới con trỏ chuột — dùng cho tâm ngắm "kéo thả để chọn app".
+    /// Không dùng WindowFromPoint vì nó hay trả về lớp phủ trong suốt (overlay của game/ghi hình, khung tô của chính tâm ngắm),
+    /// cửa sổ con của app khác hoặc cửa sổ đã đóng nhưng còn "ẩn hình" (cloaked). <paramref name="ignore"/>: bỏ qua cửa sổ này.
+    /// </summary>
+    public static IntPtr AtCursor(IntPtr ignore = default)
     {
         if (!GetCursorPos(out var p)) return IntPtr.Zero;
-        var h = GetAncestor(WindowFromPoint(p), 2 /* GA_ROOT */);
-        return h != IntPtr.Zero && !IsShell(h) ? h : IntPtr.Zero;
+        var found = IntPtr.Zero;
+        EnumWindows((h, _) =>
+        {
+            if (h == ignore || !IsWindowVisible(h) || IsIconic(h)) return true;
+            var ex = GetWindowLongPtr(h, GWL_EXSTYLE).ToInt64();
+            if ((ex & WS_EX_TRANSPARENT) != 0) return true; // click xuyên: chuột không "chạm" được cửa sổ này
+            if ((ex & WS_EX_LAYERED) != 0 && GetLayeredWindowAttributes(h, out uint _key, out var alpha, out var flags)
+                && (flags & LWA_ALPHA) != 0 && alpha == 0) return true; // trong suốt hoàn toàn
+            if (DwmGetWindowAttribute(h, DWMWA_CLOAKED, out int cloaked, sizeof(int)) == 0 && cloaked != 0) return true;
+            if ((ex & WS_EX_TOOLWINDOW) != 0 && GetWindowTextLength(h) == 0) return true; // lớp phủ không tên (thanh công cụ ẩn, bóng đổ…)
+            var b = Bounds(h);
+            if (b.IsEmpty || !b.Contains(p.X, p.Y)) return true;
+            found = IsShell(h) ? IntPtr.Zero : h; // trỏ vào desktop/taskbar: không chọn gì
+            return false;
+        }, IntPtr.Zero);
+        return found;
+    }
+
+    /// <summary>
+    /// Tiến trình thật của app sở hữu cửa sổ: cửa sổ "ma" của app treo/ngủ đông (thuộc dwm) → app thật;
+    /// khung cửa sổ của app Store/UWP (thuộc ApplicationFrameHost) → tiến trình app bên trong.
+    /// </summary>
+    public static int AppPidOf(IntPtr h)
+    {
+        var pid = WindowInfo.OwnerPid(h);
+        if (pid <= 0) return pid;
+        string name;
+        try
+        {
+            using var proc = System.Diagnostics.Process.GetProcessById(pid);
+            name = proc.ProcessName;
+        }
+        catch (ArgumentException) { return pid; }
+        if (!name.Equals("ApplicationFrameHost", StringComparison.OrdinalIgnoreCase)) return pid;
+        var inner = 0;
+        EnumChildWindows(h, (c, _) =>
+        {
+            var cp = WindowInfo.PidOf(c);
+            if (cp > 0 && cp != pid) { inner = cp; return false; }
+            return true;
+        }, IntPtr.Zero);
+        return inner > 0 ? inner : pid;
     }
 
     public static void Activate(IntPtr h) => SetForegroundWindow(h);
