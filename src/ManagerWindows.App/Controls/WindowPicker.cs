@@ -12,7 +12,8 @@ namespace ManagerWindows.App.Controls;
 /// Trong lúc kéo gọi <see cref="HoverCommand"/> với PID (hoặc handle cửa sổ nếu <see cref="PickWindow"/>) dưới con trỏ;
 /// khi thả gọi <see cref="PickedCommand"/>. Cửa sổ đang trỏ vào được tô khung để thấy rõ sẽ chọn app nào.
 /// PID là của app thật: cửa sổ "ma" của app treo/ngủ đông và khung app Store/UWP được quy về đúng tiến trình app.
-/// Chuột được "bắt" (CaptureMouse) nên vẫn nhận sự kiện khi con trỏ ra ngoài cửa sổ app.
+/// Chuột được "bắt" (CaptureMouse) nên vẫn nhận sự kiện khi con trỏ ra ngoài cửa sổ app; ngoài ra một bộ đếm giờ đọc trực tiếp
+/// trạng thái nút chuột, nên dù Windows huỷ việc bắt chuột giữa chừng (cửa sổ khác được kích hoạt…), thả chuột vẫn được tính.
 /// </summary>
 public sealed class WindowPicker : Border
 {
@@ -28,6 +29,7 @@ public sealed class WindowPicker : Border
     public bool PickWindow { get; set; }
 
     private PickerHighlight? _highlight;
+    private readonly System.Windows.Threading.DispatcherTimer _poll = new() { Interval = TimeSpan.FromMilliseconds(30) };
 
     private long Target(IntPtr window) => PickWindow ? window.ToInt64() : window == IntPtr.Zero ? 0 : DesktopWindows.AppPidOf(window);
 
@@ -50,6 +52,8 @@ public sealed class WindowPicker : Border
         CornerRadius = new CornerRadius(10);
         BorderThickness = new Thickness(1);
         Cursor = Cursors.Hand;
+        Focusable = true; // nhận phím Esc để huỷ khi đang kéo
+        FocusVisualStyle = null;
         SetResourceReference(BackgroundProperty, "Raised");
         SetResourceReference(BorderBrushProperty, "Hairline");
         _icon = new System.Windows.Shapes.Path
@@ -66,13 +70,41 @@ public sealed class WindowPicker : Border
         _icon.SetResourceReference(Shape.StrokeProperty, "Accent");
         Child = _icon;
         ToolTip = Services.Loc.Instance["Hib_PickerTip"];
+        _poll.Tick += (_, _) => Poll();
+    }
+
+    /// <summary>Mỗi 30 ms khi đang kéo: cập nhật cửa sổ dưới con trỏ; nút chuột đã nhả thì coi là thả.</summary>
+    private void Poll()
+    {
+        if (!_dragging) { _poll.Stop(); return; }
+        if (DesktopWindows.PrimaryButtonDown()) Hover();
+        else FinishDrag();
+    }
+
+    private void Hover()
+    {
+        var target = Target(WindowUnderCursor());
+        if (target == _last) return;
+        _last = target;
+        Fire(HoverCommand, target);
+    }
+
+    private void FinishDrag()
+    {
+        if (!_dragging) return; // đã xử lý (sự kiện nhả chuột và bộ đếm giờ có thể cùng tới)
+        var target = Target(WindowUnderCursor());
+        End();
+        Fire(PickedCommand, target);
     }
 
     protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
     {
         base.OnMouseLeftButtonDown(e);
-        _dragging = CaptureMouse();
-        if (!_dragging) return;
+        Focus();
+        CaptureMouse();
+        // Không phụ thuộc kết quả bắt chuột: dù Windows huỷ bắt chuột giữa chừng, bộ đếm giờ vẫn theo dõi nút chuột. Esc để huỷ.
+        _dragging = true;
+        _poll.Start();
         _last = -1;
         _highlight ??= new PickerHighlight();
         Mouse.OverrideCursor = Cursors.Cross;
@@ -85,26 +117,15 @@ public sealed class WindowPicker : Border
     {
         base.OnMouseMove(e);
         if (!_dragging) return;
-        var target = Target(WindowUnderCursor());
-        if (target == _last) return;
-        _last = target;
-        Fire(HoverCommand, target);
+        Hover();
     }
 
     protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
     {
         base.OnMouseLeftButtonUp(e);
         if (!_dragging) return;
-        var target = Target(WindowUnderCursor());
-        End();
-        Fire(PickedCommand, target);
+        FinishDrag();
         e.Handled = true;
-    }
-
-    protected override void OnLostMouseCapture(MouseEventArgs e)
-    {
-        base.OnLostMouseCapture(e);
-        if (_dragging) End(); // bấm Esc / mất focus giữa chừng: huỷ
     }
 
     /// <summary>PID truyền dạng int (như trước), handle cửa sổ dạng long.</summary>
@@ -114,9 +135,20 @@ public sealed class WindowPicker : Border
         if (cmd?.CanExecute(arg) == true) cmd.Execute(arg);
     }
 
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        if (_dragging && e.Key == Key.Escape)
+        {
+            End(); // huỷ, không chọn gì
+            e.Handled = true;
+        }
+    }
+
     private void End()
     {
         _dragging = false;
+        _poll.Stop();
         Mouse.OverrideCursor = null;
         _icon.Visibility = Visibility.Visible;
         _highlight?.Close();

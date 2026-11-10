@@ -9,7 +9,7 @@ using ManagerWindows.Core.Monitoring;
 namespace ManagerWindows.App.ViewModels;
 
 /// <summary>Một app trong danh sách không bao giờ ngủ đông.</summary>
-public sealed record ExcludedRow(string Name, string DisplayName);
+public sealed record ExcludedRow(string Name, string DisplayName, bool IsNew = false);
 
 public sealed record SleepingRow(string Name, string DisplayName, string SinceText, string RamText, int Count);
 
@@ -114,10 +114,17 @@ public sealed partial class HibernationViewModel : ViewModelBase
         Refresh();
     });
 
+    /// <summary>App vừa thêm (mới nhất trước), hiện trên đầu danh sách với nhãn "Mới thêm" cho tới khi bấm Lưu.</summary>
+    private readonly List<string> _justAdded = new();
+
     private void LoadExcluded()
     {
+        var list = Host.Config.Hibernation.Excluded;
+        var fresh = _justAdded.Where(n => list.Contains(n, StringComparer.OrdinalIgnoreCase)).ToList();
         Excluded.Clear();
-        foreach (var n in Host.Config.Hibernation.Excluded.OrderBy(n => n, StringComparer.OrdinalIgnoreCase))
+        foreach (var n in fresh)
+            Excluded.Add(new ExcludedRow(n, RunningApps.Describe(n, ProcessPathOf(n)), IsNew: true));
+        foreach (var n in list.Where(n => !fresh.Contains(n, StringComparer.OrdinalIgnoreCase)).OrderBy(n => n, StringComparer.OrdinalIgnoreCase))
             Excluded.Add(new ExcludedRow(n, RunningApps.Describe(n, ProcessPathOf(n))));
     }
 
@@ -132,6 +139,12 @@ public sealed partial class HibernationViewModel : ViewModelBase
     private ExcludeResult AddExcluded(string name, string display)
     {
         var r = Host.Hibernation.Exclude(name);
+        if (r == ExcludeResult.Added)
+        {
+            var normalized = HibernationOptions.NormalizeName(name);
+            _justAdded.RemoveAll(n => n.Equals(normalized, StringComparison.OrdinalIgnoreCase));
+            _justAdded.Insert(0, normalized);
+        }
         Status = r switch
         {
             ExcludeResult.Added => Loc.F("Hib_Excluded", ("app", display)),
@@ -218,6 +231,8 @@ public sealed partial class HibernationViewModel : ViewModelBase
         IdleMinutes = o.IdleMinutes;
         if (!o.Enabled) Host.Hibernation.WakeAll("disabled");
         Status = Loc.Instance["Saved"];
+        _justAdded.Clear(); // đã lưu: sắp xếp lại theo tên
+        LoadExcluded();
         await SaveTabSleepAsync();
     }
 }

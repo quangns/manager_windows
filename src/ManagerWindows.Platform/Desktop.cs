@@ -218,8 +218,16 @@ public static class DesktopWindows
     public static void Activate(IntPtr h) => SetForegroundWindow(h);
 
     /// <summary>Đặt cửa sổ của app (overlay chụp màn hình) phủ đúng vùng pixel và nằm trên cùng.</summary>
-    public static void PlaceTopMost(IntPtr h, PixelRect r) =>
-        SetWindowPos(h, HWND_TOPMOST, r.X, r.Y, r.Width, r.Height, SWP_SHOWWINDOW);
+    /// <param name="activate">false: không kích hoạt cửa sổ (khung tô của tâm ngắm). Kích hoạt cửa sổ khác giữa lúc kéo
+    /// làm Windows huỷ việc "bắt chuột" của cửa sổ đang kéo → thả chuột không được tính.</param>
+    public static void PlaceTopMost(IntPtr h, PixelRect r, bool activate = true) =>
+        SetWindowPos(h, HWND_TOPMOST, r.X, r.Y, r.Width, r.Height, SWP_SHOWWINDOW | (activate ? 0 : SWP_NOACTIVATE));
+
+    [DllImport("user32.dll")] private static extern short GetAsyncKeyState(int vKey);
+    [DllImport("user32.dll")] private static extern int GetSystemMetrics(int index);
+
+    /// <summary>Nút chuột chính (trái, hoặc phải nếu đã đổi nút cho người thuận tay trái) đang được giữ.</summary>
+    public static bool PrimaryButtonDown() => (GetAsyncKeyState(GetSystemMetrics(23 /* SM_SWAPBUTTON */) != 0 ? 0x02 : 0x01) & 0x8000) != 0;
 
     /// <summary>Overlay theo dõi: không hiện trong Alt+Tab, không lấy focus; bật "click xuyên" thì chuột đi qua cửa sổ.</summary>
     public static void SetOverlayStyle(IntPtr h, bool clickThrough)

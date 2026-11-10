@@ -64,6 +64,6 @@ public sealed class PickerHighlight : Window
     private void Place()
     {
         var h = Handle;
-        if (h != IntPtr.Zero && !_rect.IsEmpty) DesktopWindows.PlaceTopMost(h, _rect);
+        if (h != IntPtr.Zero && !_rect.IsEmpty) DesktopWindows.PlaceTopMost(h, _rect, activate: false);
     }
 }

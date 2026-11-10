@@ -1387,6 +1387,10 @@
                                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                             <TextBlock Style="{StaticResource Icon}" Text="&#xE72E;" FontSize="12" Foreground="{DynamicResource Accent}" Margin="0,0,8,0" />
                                                             <TextBlock Text="{Binding DisplayName}" FontWeight="Medium" />
+                                                            <Border Style="{StaticResource BadgeGood}" Margin="8,0,0,0" VerticalAlignment="Center"
+                                                                    Visibility="{Binding IsNew, Converter={StaticResource BoolVis}}">
+                                                                <TextBlock Text="{l:T Hib_JustAdded}" />
+                                                            </Border>
                                                         </StackPanel>
                                                     </DataTemplate>
                                                 </DataGridTemplateColumn.CellTemplate>
