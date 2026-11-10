@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <!-- Cho phép build project net10.0-windows (WPF, Windows Service) trên Linux -->
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
-    <Version>0.11.3</Version>
+    <Version>0.11.4</Version>
     <Product>Manager Windows</Product>
     <Authors>Nguyễn Sỹ Quang</Authors>
   </PropertyGroup>

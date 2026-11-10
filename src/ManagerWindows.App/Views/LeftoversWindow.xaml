@@ -85,6 +85,13 @@
                                                 <TextBlock Text="{l:T Left_Reason_Orphan}" />
                                             </StackPanel>
                                         </Border>
+                                        <Border Style="{StaticResource BadgeWarning}" Margin="0,0,6,0" Visibility="{Binding IsWindowClosed, Converter={StaticResource BoolVis}}"
+                                                ToolTip="{l:T Left_Reason_ClosedTip}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Style="{StaticResource BadgeIcon}" Text="&#xE8BB;" />
+                                                <TextBlock Text="{l:T Left_Reason_Closed}" />
+                                            </StackPanel>
+                                        </Border>
                                         <Border Style="{StaticResource BadgeNeutral}" Visibility="{Binding IsIdle, Converter={StaticResource BoolVis}}">
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Style="{StaticResource BadgeIcon}" Text="&#xE823;" />

@@ -86,6 +86,11 @@ public sealed partial class ProcessesViewModel : ViewModelBase
     [ObservableProperty] private string _diskBusyText = "";
     [ObservableProperty] private string _diskDetail = "";
     [ObservableProperty] private bool _hasLag;
+    /// <summary>App đã đóng hết cửa sổ mà vẫn chạy ngầm giữ RAM (vd. Chrome): hiện thông báo kèm nút dừng.</summary>
+    [ObservableProperty] private bool _hasClosedApps;
+    [ObservableProperty] private string _closedAppsText = "";
+    private List<LeftoverGroup> _closedApps = [];
+    private DateTime _closedCheckedUtc = DateTime.MinValue;
 
     // Cài đặt cảnh báo app chạy ngầm
     [ObservableProperty] private bool _alertsEnabled;
@@ -114,7 +119,11 @@ public sealed partial class ProcessesViewModel : ViewModelBase
         (_alertsEnabled, _alertCpu, _alertRamMb, _alertSeconds) = (m.AlertsEnabled, m.CpuPercent, m.RamMb, m.SustainSeconds);
         _ignoredText = TextList.Join(m.Ignored);
 
-        _timer.Tick += async (_, _) => await SampleAsync();
+        _timer.Tick += async (_, _) =>
+        {
+            await SampleAsync();
+            if (WindowVisible()) await CheckClosedAppsAsync();
+        };
     }
 
     private bool Matches(ProcessKind kind) => KindFilter switch
@@ -137,6 +146,52 @@ public sealed partial class ProcessesViewModel : ViewModelBase
     }
 
     public void Stop() => _timer.Stop();
+
+    /// <summary>Mỗi 30 giây (khi đang xem tab) tìm app đã đóng cửa sổ mà vẫn chạy ngầm.</summary>
+    private async Task CheckClosedAppsAsync(bool force = false)
+    {
+        if (!force && DateTime.UtcNow - _closedCheckedUtc < TimeSpan.FromSeconds(30)) return;
+        _closedCheckedUtc = DateTime.UtcNow;
+        var groups = await Task.Run(() => LeftoversViewModel.Scan(Host).Where(g => g.Reasons.HasFlag(LeftoverReason.WindowClosed)).ToList());
+        _closedApps = groups;
+        HasClosedApps = groups.Count > 0;
+        ClosedAppsText = groups.Count == 0 ? "" : Loc.F("Proc_ClosedApps",
+            ("apps", string.Join(", ", groups.Take(4).Select(g => $"{RunningApps.Describe(g.Name, g.Path)} ({g.Pids.Count})"))),
+            ("ram", Fmt.Bytes(groups.Sum(g => g.WorkingSetBytes))));
+    }
+
+    /// <summary>Dừng mọi tiến trình của các app đã đóng cửa sổ mà vẫn chạy ngầm (có hỏi lại).</summary>
+    [RelayCommand]
+    private Task StopClosedAppsAsync() => RunBusyAsync(async () =>
+    {
+        await CheckClosedAppsAsync(force: true);
+        var apps = _closedApps;
+        if (apps.Count == 0) { Status = Loc.Instance["Left_NoneFound"]; return; }
+        var names = string.Join("\n• ", apps.Select(g => $"{RunningApps.Describe(g.Name, g.Path)} ({g.Pids.Count})").Prepend(""));
+        if (!Confirm(Loc.F("Left_ConfirmStop", ("apps", names)))) { Status = ""; return; }
+        int ok = 0, failed = 0;
+        foreach (var pid in apps.SelectMany(g => g.Pids))
+        {
+            var done = await Task.Run(() =>
+            {
+                try
+                {
+                    using var p = Process.GetProcessById(pid);
+                    p.Kill();
+                    return true;
+                }
+                catch (ArgumentException) { return true; } // đã tự thoát
+                catch (Exception) { return false; }
+            });
+            if (!done) done = (await Host.Service.SendAsync(IpcCommands.KillProcess, new KillProcessRequest(pid))).Ok;
+            if (done) ok++; else failed++;
+        }
+        Log.Info("processes", $"dừng app đã đóng cửa sổ: {string.Join(",", apps.Select(a => a.Name))} — {ok} ok, {failed} lỗi");
+        var freed = apps.Sum(g => g.WorkingSetBytes);
+        Status = Loc.F(failed == 0 ? "Left_Stopped" : "Left_StoppedPartial", ("count", ok), ("failed", failed), ("ram", Fmt.Bytes(freed)));
+        await CheckClosedAppsAsync(force: true);
+        await SampleAsync();
+    });
 
     private static bool WindowVisible() =>
         Application.Current.Windows.OfType<MainWindow>().Any(w => w.IsVisible && w.WindowState != WindowState.Minimized);
@@ -285,6 +340,7 @@ public sealed partial class ProcessesViewModel : ViewModelBase
         };
         _ = vm.ScanCommand.ExecuteAsync(null);
         window.ShowDialog();
+        await CheckClosedAppsAsync(force: true);
         await SampleAsync();
     }
 

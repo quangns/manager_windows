@@ -21,6 +21,7 @@ public sealed partial class LeftoverRow(LeftoverGroup g, string displayName) : O
     public bool IsHung => Group.Reasons.HasFlag(LeftoverReason.NotResponding);
     public bool IsOrphan => Group.Reasons.HasFlag(LeftoverReason.Orphan);
     public bool IsIdle => Group.Reasons.HasFlag(LeftoverReason.IdleBackground);
+    public bool IsWindowClosed => Group.Reasons.HasFlag(LeftoverReason.WindowClosed);
     public string AgeText => Group.OldestStartUtc is { } s ? Fmt.Age(DateTime.UtcNow - s) : "?";
     public string Pids => string.Join(", ", Group.Pids);
 
@@ -35,11 +36,19 @@ public sealed partial class LeftoversViewModel : ViewModelBase
     [ObservableProperty] private string _summary = "";
     [ObservableProperty] private bool _isEmpty;
 
-    /// <summary>App đang ngủ đông bị tạm dừng nên trông như "không phản hồi": không đưa vào danh sách.</summary>
-    public static List<LeftoverGroup> Scan(AppHost host) =>
-        LeftoverDetector.Detect(ProcessTree.Snapshot(), Process.GetCurrentProcess().SessionId, Environment.ProcessId,
-            DateTime.UtcNow, host.Config.Leftovers, Environment.GetFolderPath(Environment.SpecialFolder.Windows))
+    /// <summary>
+    /// App đang ngủ đông bị tạm dừng nên trông như "không phản hồi": không đưa vào danh sách.
+    /// App được phép chạy nền không cửa sổ (chat, mail, VPN, bộ gõ, nhạc và danh sách "không bao giờ ngủ") không bị coi là "đã đóng mà vẫn chạy".
+    /// </summary>
+    public static List<LeftoverGroup> Scan(AppHost host)
+    {
+        var keep = new HashSet<string>(HibernationOptions.DefaultExcluded, StringComparer.OrdinalIgnoreCase);
+        keep.UnionWith(host.Config.Hibernation.Excluded);
+        return LeftoverDetector.Detect(ProcessTree.Snapshot(), Process.GetCurrentProcess().SessionId, Environment.ProcessId,
+                DateTime.UtcNow, host.Config.Leftovers, Environment.GetFolderPath(Environment.SpecialFolder.Windows),
+                host.LeftoverWatcher.LastWindowSeen, keep)
             .Where(g => !host.Hibernation.IsAsleep(g.Name)).ToList();
+    }
 
     [RelayCommand]
     private Task ScanAsync() => RunBusyAsync(async () =>

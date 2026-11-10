@@ -62,6 +62,27 @@ public static class ProcessTree
         return map;
     }
 
+    /// <summary>
+    /// Tên tiến trình (không đuôi .exe) đang có cửa sổ hiển thị. Nhẹ: chỉ duyệt cửa sổ + một lượt Toolhelp32,
+    /// không mở từng tiến trình — gọi mỗi phút được.
+    /// </summary>
+    public static HashSet<string> WindowedAppNames()
+    {
+        var pids = ProcessMonitorSampler.PidsWithWindows();
+        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (pids.Count == 0) return names;
+        using var snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+        if (snap.IsInvalid) return names;
+        var e = new PROCESSENTRY32W { dwSize = (uint)Marshal.SizeOf<PROCESSENTRY32W>() };
+        if (!Process32FirstW(snap, ref e)) return names;
+        do
+        {
+            if (pids.Contains((int)e.th32ProcessID)) names.Add(Path.GetFileNameWithoutExtension(e.szExeFile));
+        }
+        while (Process32NextW(snap, ref e));
+        return names;
+    }
+
     /// <summary>Thời điểm khởi động và tổng thời gian CPU (đọc được cả tiến trình chạy quyền cao với quyền truy vấn hạn chế).</summary>
     public static (DateTime? Start, TimeSpan Cpu) Times(int pid)
     {

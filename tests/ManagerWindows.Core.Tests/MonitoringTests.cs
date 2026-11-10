@@ -169,6 +169,52 @@ public class LeftoverTests
     private static List<LeftoverGroup> Detect(params ProcInfo[] all) =>
         LeftoverDetector.Detect(all, Me, Self, Now, new LeftoverOptions(), @"C:\Windows");
 
+    private static List<LeftoverGroup> DetectClosed(Dictionary<string, DateTime>? lastWindow, HashSet<string>? keep, params ProcInfo[] all) =>
+        LeftoverDetector.Detect(all, Me, Self, Now, new LeftoverOptions(), @"C:\Windows", lastWindow, keep);
+
+    /// <summary>Chrome đã đóng cửa sổ: 1 tiến trình chính + 6 tiến trình con nhỏ, không cái nào đủ 100 MB nhưng cộng lại nhiều.</summary>
+    private static ProcInfo[] ChromeNoWindow(bool withWindow = false) =>
+        [P(10, 0, "chrome", ageMin: 300, wsMb: 90, window: withWindow), .. Enumerable.Range(11, 6).Select(i => P(i, 10, "chrome", ageMin: 300, wsMb: 60))];
+
+    [Fact]
+    public void Browser_running_after_its_window_closed_is_reported_as_one_app()
+    {
+        var g = Assert.Single(DetectClosed(null, null, ChromeNoWindow()));
+        Assert.Equal("chrome", g.Name);
+        Assert.Equal(LeftoverReason.WindowClosed, g.Reasons);
+        Assert.Equal(7, g.Pids.Count);                       // dừng cả tiến trình chính lẫn tiến trình con
+        Assert.Equal(450L << 20, g.WorkingSetBytes);
+        Assert.Empty(DetectClosed(null, null, ChromeNoWindow(withWindow: true))); // còn cửa sổ: đang dùng
+    }
+
+    [Fact]
+    public void Any_app_seen_with_a_window_then_closed_is_reported_after_a_while()
+    {
+        ProcInfo[] app = [P(20, 0, "Code", wsMb: 300), P(21, 20, "Code", wsMb: 200)];
+        Assert.Empty(DetectClosed(null, null, app));                                                   // chưa từng thấy cửa sổ, không phải trình duyệt
+        Assert.Empty(DetectClosed(new() { ["Code"] = Now.AddMinutes(-2) }, null, app));               // vừa đóng 2 phút
+        Assert.Equal(LeftoverReason.WindowClosed, Assert.Single(DetectClosed(new() { ["code"] = Now.AddMinutes(-30) }, null, app)).Reasons);
+    }
+
+    [Fact]
+    public void Tray_apps_small_apps_and_windows_components_are_not_reported_as_closed()
+    {
+        var closed = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase)
+            { ["Zalo"] = Now.AddHours(-1), ["Tiny"] = Now.AddHours(-1), ["SearchHost"] = Now.AddHours(-1) };
+        var r = DetectClosed(closed, new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Zalo" },
+            P(30, 0, "Zalo", wsMb: 400),                                          // app chat ở khay: được phép chạy nền
+            P(31, 0, "Tiny", wsMb: 40),                                           // ít RAM
+            P(32, 0, "SearchHost", wsMb: 300, path: @"C:\Windows\SystemApps\x\SearchHost.exe"));
+        Assert.Empty(r);
+    }
+
+    [Fact]
+    public void Lingering_browser_that_just_started_is_left_alone()
+    {
+        ProcInfo[] fresh = [P(40, 0, "msedge", ageMin: 2, wsMb: 200)]; // vừa tự chạy lúc đăng nhập
+        Assert.Empty(DetectClosed(null, null, fresh));
+    }
+
     [Fact]
     public void Finds_orphans_and_groups_them()
     {

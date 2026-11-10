@@ -154,7 +154,7 @@ Nhấn **`Ctrl+Alt+A`**: màn hình được đóng băng **đúng kích thướ
   - App không dùng một thời gian thì bị tạm dừng để trả lại RAM/CPU. Bấm vào app là chạy tiếp đúng trạng thái cũ.
   - Không áp dụng cho app chat, mail, VPN, bộ gõ, app đang phát nhạc.
   - Có danh sách "không bao giờ cho ngủ".
-- **Dọn dẹp:** end task, giải phóng RAM, tìm tiến trình sót/treo.
+- **Dọn dẹp:** end task, giải phóng RAM, tìm tiến trình sót/treo, và **app đã đóng cửa sổ nhưng vẫn chạy ngầm** (vd. Chrome còn hàng chục tiến trình con giữ RAM) — báo ngay ở tab Tiến trình, bấm một nút để dừng.
 
 ### Ngủ đông tab trình duyệt (Chrome, Cốc Cốc, Brave)
 
