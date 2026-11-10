@@ -142,11 +142,25 @@ public sealed class WindowPicker : Border
         e.Handled = true;
     }
 
-    /// <summary>PID truyền dạng int (như trước), handle cửa sổ dạng long.</summary>
+    /// <summary>Tham số gửi cho lệnh: handle cửa sổ dạng long (ghim cửa sổ), PID dạng int (ngủ đông).</summary>
+    /// <remarks>
+    /// Phải ép kiểu từng nhánh về object: viết <c>PickWindow ? target : (int)target</c> thì C# đưa cả biểu thức về long,
+    /// lệnh nhận int (RelayCommand&lt;int&gt;) ném ArgumentException và thao tác chọn app ở tab Ngủ đông không chạy.
+    /// </remarks>
+    internal static object CommandArgument(bool pickWindow, long target) => pickWindow ? (object)target : (object)(int)target;
+
     private void Fire(ICommand? cmd, long target)
     {
-        object arg = PickWindow ? target : (int)target;
-        if (cmd?.CanExecute(arg) == true) cmd.Execute(arg);
+        var arg = CommandArgument(PickWindow, target);
+        try
+        {
+            if (cmd?.CanExecute(arg) == true) cmd.Execute(arg);
+        }
+        catch (ArgumentException ex)
+        {
+            // Sai kiểu tham số không được âm thầm làm hỏng thao tác: ghi log để thấy ngay.
+            Services.Log.Error("picker", ex);
+        }
     }
 
     protected override void OnKeyDown(KeyEventArgs e)
