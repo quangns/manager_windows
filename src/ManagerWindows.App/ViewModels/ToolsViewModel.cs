@@ -203,10 +203,9 @@ public sealed partial class ToolsViewModel : ViewModelBase
 
     // ---------- Chụp màn hình ----------
 
-    private static Window? MainWin => Application.Current.Windows.OfType<Views.MainWindow>().FirstOrDefault();
 
-    [RelayCommand] private static void CaptureRegion() => Tools?.Capture(CaptureMode.Region, MainWin);
-    [RelayCommand] private static void CaptureFull() => Tools?.Capture(CaptureMode.FullScreen, MainWin);
+    [RelayCommand] private static void CaptureRegion() => Tools?.Capture(CaptureMode.Region);
+    [RelayCommand] private static void CaptureFull() => Tools?.Capture(CaptureMode.FullScreen);
 
     partial void OnOpenEditorChanged(bool value) => SaveCapture();
     partial void OnCopyToClipboardChanged(bool value) => SaveCapture();

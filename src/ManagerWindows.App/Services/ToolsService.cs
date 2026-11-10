@@ -54,10 +54,11 @@ public sealed class ToolsService : IDisposable
 
     /// <summary>
     /// Chụp: Window = cửa sổ đang dùng (lấy ngay lúc bấm phím tắt), Region = khoanh vùng/bấm chọn cửa sổ trên ảnh đóng băng,
-    /// FullScreen = mọi màn hình. <paramref name="hideFirst"/>: bấm từ cửa sổ app thì ẩn nó trước để không lọt vào ảnh.
+    /// FullScreen = mọi màn hình. Giống Lightshot: chụp đúng màn hình đang hiển thị, không ẩn/thu nhỏ cửa sổ nào
+    /// (kể cả cửa sổ Manager Windows khi bấm nút chụp trong app).
     /// Bật "chỉnh sửa sau khi chụp": mở màn hình đóng băng kiểu Lightshot (chọn sẵn cửa sổ / cả màn hình), vẽ và lưu ngay trên đó.
     /// </summary>
-    public async void Capture(CaptureMode mode, Window? hideFirst = null, int delayMs = 0)
+    public async void Capture(CaptureMode mode, int delayMs = 0)
     {
         if (_capturing) return;
         _capturing = true;
@@ -67,11 +68,6 @@ public sealed class ToolsService : IDisposable
             var target = mode == CaptureMode.Window ? DesktopWindows.Foreground() : IntPtr.Zero;
             if (mode == CaptureMode.Window && (target == IntPtr.Zero || WindowInfo.PidOf(target) == Environment.ProcessId))
                 mode = CaptureMode.Region;
-            if (hideFirst is { IsVisible: true })
-            {
-                hideFirst.WindowState = WindowState.Minimized;
-                delayMs = Math.Max(delayMs, 350); // chờ hiệu ứng thu nhỏ xong
-            }
             if (delayMs > 0) await Task.Delay(delayMs);
             var screen = ScreenCapture.VirtualScreen();
             var edit = _host.Config.Tools.Capture.OpenEditor;

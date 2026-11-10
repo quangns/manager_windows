@@ -1,4 +1,5 @@
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -121,9 +122,21 @@ public sealed class CaptureOverlayWindow : Window
             _editing = !_sel.IsEmpty;
         }
 
-        SourceInitialized += (_, _) => Place();
-        DpiChanged += (_, _) => Place(); // trải nhiều màn hình khác DPI: Windows có thể đổi kích thước, đặt lại
-        Loaded += (_, _) => { Place(); Activate(); Focus(); Refresh(); };
+        SourceInitialized += (_, _) =>
+        {
+            // Khoá vị trí/kích thước ngay từ đầu (trước khi cửa sổ hiện) để màn hình đóng băng luôn trùng khít màn hình thật.
+            HwndSource.FromHwnd(new WindowInteropHelper(this).Handle)?.AddHook(LockToScreen);
+            Place();
+        };
+        Loaded += (_, _) =>
+        {
+            Place();
+            Activate();
+            Focus();
+            Refresh();
+            Log.Info("capture", $"màn hình {_screen.Width}x{_screen.Height} @({_screen.X},{_screen.Y}), ảnh {_shot.PixelWidth}x{_shot.PixelHeight}, " +
+                $"cửa sổ {_root.ActualWidth:0.#}x{_root.ActualHeight:0.#} DIP, DPI {VisualTreeHelper.GetDpi(this).PixelsPerDip:0.##}");
+        };
         SizeChanged += (_, _) => Refresh();
     }
 
@@ -151,6 +164,44 @@ public sealed class CaptureOverlayWindow : Window
     };
 
     private void Place() => DesktopWindows.PlaceTopMost(new WindowInteropHelper(this).Handle, _screen);
+
+    private const int WM_WINDOWPOSCHANGING = 0x0046, WM_DPICHANGED = 0x02E0;
+    private const uint SWP_NOSIZE = 0x0001, SWP_NOMOVE = 0x0002;
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct WINDOWPOS
+    {
+        public IntPtr hwnd, hwndInsertAfter;
+        public int x, y, cx, cy;
+        public uint flags;
+    }
+
+    /// <summary>
+    /// Giữ nguyên kích thước màn hình: cửa sổ chụp luôn phủ đúng từng pixel của màn hình ảo.
+    /// Khi cửa sổ trải qua màn hình có độ phóng to khác (vd. laptop 150% + màn ngoài 100%), Windows gửi WM_DPICHANGED
+    /// và WPF tự co/giãn cửa sổ theo "kích thước gợi ý" → ảnh đóng băng bị thu nhỏ/lệch. Ở đây bỏ qua WM_DPICHANGED
+    /// và ép mọi lần di chuyển/đổi kích thước về đúng vùng màn hình.
+    /// </summary>
+    private IntPtr LockToScreen(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+    {
+        if (msg == WM_DPICHANGED)
+        {
+            handled = true; // không để WPF đổi kích thước theo DPI mới; toạ độ vẫn quy đổi theo tỉ lệ ảnh/cửa sổ nên đúng
+            return IntPtr.Zero;
+        }
+        if (msg == WM_WINDOWPOSCHANGING && lParam != IntPtr.Zero)
+        {
+            var pos = Marshal.PtrToStructure<WINDOWPOS>(lParam);
+            if ((pos.flags & SWP_NOSIZE) == 0 || (pos.flags & SWP_NOMOVE) == 0 ||
+                pos.x != _screen.X || pos.y != _screen.Y || pos.cx != _screen.Width || pos.cy != _screen.Height)
+            {
+                (pos.x, pos.y, pos.cx, pos.cy) = (_screen.X, _screen.Y, _screen.Width, _screen.Height);
+                pos.flags &= ~(SWP_NOSIZE | SWP_NOMOVE);
+                Marshal.StructureToPtr(pos, lParam, false);
+            }
+        }
+        return IntPtr.Zero;
+    }
 
     // ---------------- Quy đổi toạ độ ----------------
 
