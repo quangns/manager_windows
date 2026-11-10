@@ -1368,13 +1368,14 @@
                                         <TextBlock Text="{Binding PickerText}" Style="{StaticResource Muted}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBox Text="{Binding NewExcludedName, UpdateSourceTrigger=PropertyChanged}" Width="170"
-                                                 FontFamily="{StaticResource MonoFont}" FontSize="12.5" ToolTip="{l:T Hib_AddByNameHint}">
+                                        <TextBox Text="{Binding NewExcludedName, UpdateSourceTrigger=PropertyChanged}" Width="190"
+                                                 FontFamily="{StaticResource MonoFont}" FontSize="12.5" ToolTip="{l:T Hib_AddByNameHint}"
+                                                 c:FocusOn.Request="{Binding FocusNameBox}">
                                             <TextBox.InputBindings>
                                                 <KeyBinding Key="Return" Command="{Binding AddExcludedByNameCommand}" />
                                             </TextBox.InputBindings>
                                         </TextBox>
-                                        <Button Style="{StaticResource Secondary}" Content="{l:T Hib_AddByName}" Command="{Binding AddExcludedByNameCommand}" Margin="8,0,0,0" />
+                                        <Button Style="{StaticResource Primary}" Content="{l:T Hib_AddByName}" Command="{Binding AddExcludedByNameCommand}" Margin="8,0,0,0" />
                                     </StackPanel>
                                 </Grid>
                                 <Border Style="{StaticResource TableCard}">

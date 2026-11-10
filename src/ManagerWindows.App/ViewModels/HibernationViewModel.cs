@@ -27,6 +27,8 @@ public sealed partial class HibernationViewModel : ViewModelBase
     [ObservableProperty] private bool _onlyMinimized;
     [ObservableProperty] private int _minRamMb;
     [ObservableProperty] private string _newExcludedName = "";
+    /// <summary>Đặt true để đưa con trỏ nhập vào ô tên app (sau khi thả tâm ngắm).</summary>
+    [ObservableProperty] private bool _focusNameBox;
     [ObservableProperty] private ExcludedRow? _selectedExcluded;
     /// <summary>Dòng chữ cạnh tâm ngắm: đang trỏ vào app nào / vừa thêm app nào.</summary>
     [ObservableProperty] private string _pickerText = "";
@@ -48,6 +50,7 @@ public sealed partial class HibernationViewModel : ViewModelBase
 
     public void Start()
     {
+        _justAdded.Clear(); // mở lại tab: danh sách đã lưu, sắp xếp lại theo tên
         LoadExcluded(); // có thể vừa thêm từ tab Tiến trình
         RefreshTabSleepState();
         Refresh();
@@ -114,7 +117,7 @@ public sealed partial class HibernationViewModel : ViewModelBase
         Refresh();
     });
 
-    /// <summary>App vừa thêm (mới nhất trước), hiện trên đầu danh sách với nhãn "Mới thêm" cho tới khi bấm Lưu.</summary>
+    /// <summary>App vừa thêm (mới nhất trước, đã lưu ngay), hiện trên đầu danh sách với nhãn "Mới thêm" cho tới khi mở lại tab.</summary>
     private readonly List<string> _justAdded = new();
 
     private void LoadExcluded()
@@ -163,13 +166,19 @@ public sealed partial class HibernationViewModel : ViewModelBase
         if (row != null) AddExcluded(row.Name, row.DisplayName);
     }
 
+    /// <summary>Nút "Thêm" / Enter: thêm vào danh sách và lưu luôn (không cần bấm Lưu).</summary>
     [RelayCommand]
     private void AddExcludedByName()
     {
-        var name = NewExcludedName.Trim();
+        var name = HibernationOptions.NormalizeName(NewExcludedName.Trim());
         if (name.Length == 0) return;
-        AddExcluded(name, name);
+        var display = _pickedDisplay is { } p && p.Name.Equals(name, StringComparison.OrdinalIgnoreCase) ? p.Display : name;
+        var r = AddExcluded(name, display);
+        if (r == ExcludeResult.NotAllowed) return; // giữ chữ trong ô để sửa
         NewExcludedName = "";
+        _pickedDisplay = null;
+        PickerText = Loc.Instance["Hib_PickerHint"];
+        if (r == ExcludeResult.Added) Status = Loc.F("Hib_AddedSaved", ("app", display));
     }
 
     [RelayCommand]
@@ -204,20 +213,30 @@ public sealed partial class HibernationViewModel : ViewModelBase
             : Loc.Instance["Hib_PickerNone"];
     }
 
-    /// <summary>Thả tâm ngắm lên cửa sổ app: thêm app đó vào danh sách không bao giờ ngủ.</summary>
+    /// <summary>
+    /// Thả tâm ngắm lên cửa sổ app: điền tên tiến trình của app vào ô nhập để xác nhận; bấm "Thêm" (hoặc Enter) mới thêm và lưu.
+    /// </summary>
     [RelayCommand]
     private void Picked(int pid)
     {
-        if (pid == Environment.ProcessId || AppOf(pid) is not { } a || !HibernationService.CanExclude(a.Name))
+        var a = pid == Environment.ProcessId ? null : AppOf(pid);
+        Log.Info("hibernation", $"thả tâm ngắm: pid={pid} app={a?.Name ?? "?"}");
+        if (a is not { } app || !HibernationService.CanExclude(app.Name))
         {
-            PickerText = Loc.Instance["Hib_PickerHint"];
-            Status = Loc.Instance["Hib_PickerInvalid"];
+            PickerText = pid == Environment.ProcessId ? Loc.Instance["Hib_PickerSelf"] : Loc.Instance["Hib_PickerInvalid"];
             return;
         }
-        PickerText = AddExcluded(a.Name, a.Display) == ExcludeResult.AlreadyListed
-            ? Loc.F("Hib_AlreadyExcluded", ("app", a.Display))
-            : Loc.F("Hib_PickerAdded", ("app", a.Display));
+        NewExcludedName = app.Name;
+        _pickedDisplay = (app.Name, app.Display);
+        PickerText = Host.Config.Hibernation.IsExcluded(app.Name)
+            ? Loc.F("Hib_AlreadyExcluded", ("app", app.Display))
+            : Loc.F("Hib_PickerConfirm", ("app", app.Display), ("name", app.Name));
+        FocusNameBox = true;
+        FocusNameBox = false;
     }
+
+    /// <summary>Tên hiển thị của app vừa chọn bằng tâm ngắm (để thông báo đẹp hơn khi bấm Thêm).</summary>
+    private (string Name, string Display)? _pickedDisplay;
 
     [RelayCommand]
     private async Task Save()
@@ -231,8 +250,6 @@ public sealed partial class HibernationViewModel : ViewModelBase
         IdleMinutes = o.IdleMinutes;
         if (!o.Enabled) Host.Hibernation.WakeAll("disabled");
         Status = Loc.Instance["Saved"];
-        _justAdded.Clear(); // đã lưu: sắp xếp lại theo tên
-        LoadExcluded();
         await SaveTabSleepAsync();
     }
 }

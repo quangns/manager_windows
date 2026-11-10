@@ -1,4 +1,5 @@
 using System.Windows;
+using ComponentModelException = System.ComponentModel.Win32Exception;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -77,13 +78,23 @@ public sealed class WindowPicker : Border
     private void Poll()
     {
         if (!_dragging) { _poll.Stop(); return; }
-        if (DesktopWindows.PrimaryButtonDown()) Hover();
-        else FinishDrag();
+        try
+        {
+            if (DesktopWindows.PrimaryButtonDown()) Hover();
+            else FinishDrag();
+        }
+        catch (Exception ex)
+        {
+            // Lỗi đọc một cửa sổ/tiến trình (vừa đóng…) không được làm kẹt thao tác kéo.
+            Services.Log.Error("picker", ex);
+        }
     }
 
     private void Hover()
     {
-        var target = Target(WindowUnderCursor());
+        long target;
+        try { target = Target(WindowUnderCursor()); }
+        catch (Exception ex) when (ex is InvalidOperationException or ComponentModelException) { return; }
         if (target == _last) return;
         _last = target;
         Fire(HoverCommand, target);
@@ -92,7 +103,10 @@ public sealed class WindowPicker : Border
     private void FinishDrag()
     {
         if (!_dragging) return; // đã xử lý (sự kiện nhả chuột và bộ đếm giờ có thể cùng tới)
-        var target = Target(WindowUnderCursor());
+        long target;
+        try { target = Target(WindowUnderCursor()); }
+        catch (Exception ex) when (ex is InvalidOperationException or ComponentModelException) { target = _last > 0 ? _last : 0; }
+        if (target <= 0 && _last > 0) target = _last; // con trỏ vừa rời cửa sổ đúng lúc nhả: lấy app trỏ gần nhất
         End();
         Fire(PickedCommand, target);
     }
