@@ -51,6 +51,18 @@ public static class ProcessGrouping
     }
 }
 
+/// <summary>
+/// Tiến trình đang ngốn CPU: hiện cả khi bộ lọc mặc định ẩn tiến trình hệ thống, để người dùng thấy và dừng được
+/// (vd. tar.exe trong System32 giải nén file nặng). Có độ trễ hai ngưỡng để dòng không nhấp nháy ẩn/hiện.
+/// </summary>
+public static class HotProcess
+{
+    public const double ShowAtCpu = 5;
+    public const double HideBelowCpu = 2;
+
+    public static bool Update(bool wasHot, double cpuPercent) => cpuPercent >= (wasHot ? HideBelowCpu : ShowAtCpu);
+}
+
 public sealed class MonitorOptions
 {
     /// <summary>Báo khi app chạy ngầm dùng nhiều tài nguyên liên tục.</summary>

@@ -3,7 +3,9 @@ namespace ManagerWindows.Core.Monitoring;
 public enum LagResource { Cpu, Disk, Memory }
 
 /// <summary>Một nguyên nhân có thể gây lag: tài nguyên đang quá tải và các app dùng nhiều nhất.</summary>
-public sealed record LagCause(LagResource Resource, double Percent, IReadOnlyList<AppGroup> TopApps, string? Detail = null);
+/// <param name="UnattributedPercent">CPU: phần % không gắn được với tiến trình nào (ngắt phần cứng, driver).</param>
+public sealed record LagCause(LagResource Resource, double Percent, IReadOnlyList<AppGroup> TopApps, string? Detail = null,
+    double UnattributedPercent = 0);
 
 public sealed class LagThresholds
 {
@@ -12,6 +14,8 @@ public sealed class LagThresholds
     public double DiskBusyPercent { get; set; } = 80;
     public double RamUsedPercent { get; set; } = 90;
     public int TopApps { get; set; } = 3;
+    /// <summary>CPU toàn máy cao hơn tổng các tiến trình từ mức này thì báo phần còn lại (ngắt phần cứng/driver).</summary>
+    public double UnattributedCpuPercent { get; set; } = 15;
 }
 
 /// <summary>Đoán vì sao máy lag từ số liệu tức thời: tài nguyên nào quá tải, app nào dùng nó nhiều nhất.</summary>
@@ -27,8 +31,12 @@ public static class LagDiagnosis
             causes.Add(new LagCause(LagResource.Disk, diskBusyPercent,
                 Top(groups.Where(g => g.IoBytesPerSec >= 1024), g => g.IoBytesPerSec, t.TopApps), diskDetail));
         if (cpuPercent >= t.CpuPercent)
+        {
+            var other = cpuPercent - groups.Sum(g => g.CpuPercent);
             causes.Add(new LagCause(LagResource.Cpu, cpuPercent,
-                Top(groups.Where(g => g.CpuPercent >= 0.5), g => g.CpuPercent, t.TopApps)));
+                Top(groups.Where(g => g.CpuPercent >= 0.5), g => g.CpuPercent, t.TopApps),
+                UnattributedPercent: other >= t.UnattributedCpuPercent ? other : 0));
+        }
         if (ramUsedPercent >= t.RamUsedPercent)
             causes.Add(new LagCause(LagResource.Memory, ramUsedPercent,
                 Top(groups, g => g.WorkingSetBytes, t.TopApps)));

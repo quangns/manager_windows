@@ -109,6 +109,25 @@ public class MonitoringTests
     }
 
     [Fact]
+    public void Lag_cpu_reports_share_not_owned_by_any_process()
+    {
+        var cpu = Assert.Single(LagDiagnosis.Analyze(91, 0, 50, [A("tar", cpu: 13), A("Telegram", cpu: 4)]));
+        Assert.Equal(74, cpu.UnattributedPercent, 3);
+        Assert.Equal(["tar", "Telegram"], cpu.TopApps.Select(a => a.Name));
+
+        var owned = Assert.Single(LagDiagnosis.Analyze(91, 0, 50, [A("tar", cpu: 85)]));
+        Assert.Equal(0, owned.UnattributedPercent); // chênh 6% do lệch thời điểm đo: không báo
+    }
+
+    [Theory]
+    [InlineData(false, 4.9, false)]
+    [InlineData(false, 5, true)]
+    [InlineData(true, 3, true)]   // đang hiện: tụt nhẹ vẫn giữ, không nhấp nháy
+    [InlineData(true, 1.9, false)]
+    public void Hot_process_uses_hysteresis(bool wasHot, double cpu, bool expected) =>
+        Assert.Equal(expected, HotProcess.Update(wasHot, cpu));
+
+    [Fact]
     public void Grouping_sums_io_rate()
     {
         var g = Assert.Single(ProcessGrouping.Group(

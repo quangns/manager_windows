@@ -317,6 +317,7 @@
   "Lag_Cpu": "CPU at {percent}%. Top users: {apps}.",
   "Lag_Memory": "RAM {percent}% used, Windows is paging to disk. Top users: {apps}.",
   "Lag_NoApp": "no single app (likely Windows itself or a driver)",
+  "Lag_CpuUnattributed": "About {percent}% CPU isn't owned by any process (hardware interrupts/drivers) — try updating drivers or unplugging USB devices.",
   "Proc_Restart": "Restart",
   "Restart_Confirm": "Restart {app}?\n\nThe app is closed as if you clicked X (it may ask to save); if it hasn't closed after 10 seconds it is forced to stop, then reopened.\nUnsaved data may be lost.",
   "Restart_Working": "Restarting {app}…",

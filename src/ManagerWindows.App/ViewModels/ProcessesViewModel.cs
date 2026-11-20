@@ -43,12 +43,14 @@ public sealed partial class ProcessRow : ObservableObject
     [ObservableProperty] private double _io;
     [ObservableProperty] private string _ioText = "";
     [ObservableProperty] private double _ioRatio;
+    /// <summary>Đang ngốn CPU hoặc bị nêu tên trong chẩn đoán lag: hiện cả khi là tiến trình hệ thống.</summary>
+    [ObservableProperty] private bool _hot;
 }
 
 /// <summary>Một dòng chẩn đoán lag: tài nguyên quá tải + app dùng nhiều nhất.</summary>
 public sealed record LagLine(string Text, string Level);
 
-/// <summary>Bộ lọc loại: mặc định ẩn tiến trình hệ thống, chỉ hiện khi chọn "Tất cả".</summary>
+/// <summary>Bộ lọc loại: mặc định ẩn tiến trình hệ thống (trừ tiến trình đang ngốn CPU), hiện hết khi chọn "Tất cả".</summary>
 public enum ProcessFilter { UserApps, App, Background, All }
 
 public sealed partial class ProcessesViewModel : ViewModelBase
@@ -106,7 +108,7 @@ public sealed partial class ProcessesViewModel : ViewModelBase
     {
         View = (ListCollectionView)CollectionViewSource.GetDefaultView(Rows);
         View.Filter = o => o is ProcessRow r
-            && Matches(r.Kind)
+            && Matches(r)
             && (Search.Length == 0
                 || r.DisplayName.Contains(Search, StringComparison.OrdinalIgnoreCase)
                 || r.Name.Contains(Search, StringComparison.OrdinalIgnoreCase));
@@ -117,6 +119,7 @@ public sealed partial class ProcessesViewModel : ViewModelBase
             View.LiveSortingProperties.Add(p);
         View.IsLiveFiltering = true;
         View.LiveFilteringProperties.Add(nameof(ProcessRow.Kind));
+        View.LiveFilteringProperties.Add(nameof(ProcessRow.Hot));
 
         var m = Host.Config.Monitor;
         (_alertsEnabled, _alertCpu, _alertRamMb, _alertSeconds) = (m.AlertsEnabled, m.CpuPercent, m.RamMb, m.SustainSeconds);
@@ -130,12 +133,14 @@ public sealed partial class ProcessesViewModel : ViewModelBase
         };
     }
 
-    private bool Matches(ProcessKind kind) => KindFilter switch
+    private bool Matches(ProcessRow r) => KindFilter switch
     {
-        ProcessFilter.App => kind == ProcessKind.App,
-        ProcessFilter.Background => kind == ProcessKind.Background,
+        ProcessFilter.App => r.Kind == ProcessKind.App,
+        ProcessFilter.Background => r.Kind == ProcessKind.Background,
         ProcessFilter.All => true,
-        _ => kind != ProcessKind.System, // mặc định: ẩn tiến trình hệ thống
+        // Mặc định: ẩn tiến trình hệ thống, trừ khi nó đang ngốn CPU — nếu không, banner "máy chậm vì..."
+        // nêu tên một tiến trình mà bảng không có để kiểm tra hay End task.
+        _ => r.Kind != ProcessKind.System || r.Hot,
     };
 
     partial void OnKindFilterChanged(ProcessFilter value) => View.Refresh();
@@ -262,7 +267,12 @@ public sealed partial class ProcessesViewModel : ViewModelBase
             }));
             var text = Loc.F("Lag_" + c.Resource, ("percent", c.Percent.ToString("0")), ("disk", c.Detail ?? ""),
                 ("apps", apps.Length == 0 ? Loc.Instance["Lag_NoApp"] : apps));
+            if (c.UnattributedPercent > 0)
+                text += " " + Loc.F("Lag_CpuUnattributed", ("percent", c.UnattributedPercent.ToString("0")));
             LagCauses.Add(new LagLine(text, c.Percent >= 95 ? "critical" : "warn"));
+            // App được nêu tên phải có trong bảng để kiểm tra / End task.
+            foreach (var a in c.TopApps)
+                if (_rows.TryGetValue(a.Name, out var row)) row.Hot = true;
         }
         HasLag = LagCauses.Count > 0;
     }
@@ -295,6 +305,7 @@ public sealed partial class ProcessesViewModel : ViewModelBase
             row.Io = Math.Round(g.IoBytesPerSec);
             row.IoText = Rate(g.IoBytesPerSec);
             row.IoRatio = g.IoBytesPerSec / maxIo;
+            row.Hot = HotProcess.Update(row.Hot, g.CpuPercent);
         }
         foreach (var gone in _rows.Keys.Where(k => !alive.Contains(k)).ToList())
         {

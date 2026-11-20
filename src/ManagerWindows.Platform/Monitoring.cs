@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
@@ -32,7 +31,10 @@ public sealed class CpuMeter
 }
 
 /// <summary>
-/// Lấy mẫu mọi tiến trình: %CPU (so với toàn máy), RAM, phiên, có cửa sổ hay không.
+/// Lấy mẫu mọi tiến trình: %CPU (so với toàn máy), RAM, I/O, phiên, có cửa sổ hay không.
+/// Số liệu đọc một lượt bằng NtQuerySystemInformation (như Task Manager) nên có cả tiến trình chạy quyền admin/SYSTEM
+/// và tiến trình được bảo vệ — trước đây mở handle từng tiến trình, gặp tiến trình không đủ quyền thì CPU bị tính 0%
+/// nên tổng CPU cao mà bảng không thấy ai dùng.
 /// Cửa sổ được dò một lượt bằng EnumWindows thay vì gọi Process.MainWindowHandle cho từng tiến trình.
 /// </summary>
 [SupportedOSPlatform("windows")]
@@ -47,28 +49,44 @@ public sealed class ProcessMonitorSampler
     [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr hwnd, out uint pid);
 
     private const uint GW_OWNER = 4;
-    private const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
 
     [StructLayout(LayoutKind.Sequential)]
-    private struct IO_COUNTERS
+    private struct UNICODE_STRING { public ushort Length, MaximumLength; public IntPtr Buffer; }
+
+    /// <summary>SYSTEM_PROCESS_INFORMATION (winternl.h), đủ tới bộ đếm I/O; danh sách luồng theo sau không dùng.</summary>
+    [StructLayout(LayoutKind.Sequential)]
+    private struct SYSTEM_PROCESS_INFORMATION
     {
-        public ulong ReadOperationCount, WriteOperationCount, OtherOperationCount;
-        public ulong ReadTransferCount, WriteTransferCount, OtherTransferCount;
+        public uint NextEntryOffset, NumberOfThreads;
+        public long WorkingSetPrivateSize;
+        public uint HardFaultCount, NumberOfThreadsHighWatermark;
+        public ulong CycleTime;
+        public long CreateTime, UserTime, KernelTime;
+        public UNICODE_STRING ImageName;
+        public int BasePriority;
+        public IntPtr UniqueProcessId, InheritedFromUniqueProcessId;
+        public uint HandleCount, SessionId;
+        public UIntPtr UniqueProcessKey, PeakVirtualSize, VirtualSize;
+        public uint PageFaultCount;
+        public UIntPtr PeakWorkingSetSize, WorkingSetSize, QuotaPeakPagedPoolUsage, QuotaPagedPoolUsage,
+            QuotaPeakNonPagedPoolUsage, QuotaNonPagedPoolUsage, PagefileUsage, PeakPagefileUsage, PrivatePageCount;
+        public long ReadOperationCount, WriteOperationCount, OtherOperationCount;
+        public long ReadTransferCount, WriteTransferCount, OtherTransferCount;
     }
 
-    [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern SafeProcessHandle OpenProcess(uint access, bool inherit, int pid);
+    [DllImport("ntdll.dll")]
+    private static extern int NtQuerySystemInformation(int infoClass, IntPtr buffer, int length, out int returnLength);
 
-    [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern bool GetProcessIoCounters(SafeProcessHandle process, out IO_COUNTERS counters);
+    private const int SystemProcessInformation = 5;
+    private const int STATUS_INFO_LENGTH_MISMATCH = unchecked((int)0xC0000004);
 
-    private readonly Dictionary<int, (DateTime Start, TimeSpan Cpu, DateTime At, string? Path, ulong Io)> _last = new();
+    private readonly Dictionary<int, (long Start, long Cpu, DateTime At, string? Path, long Io)> _last = new();
+    private IntPtr _buffer;
+    private int _bufferSize;
 
-    /// <summary>Tổng byte đọc + ghi của tiến trình (gồm cả I/O mạng/thiết bị, như cột I/O của Task Manager).</summary>
-    private static ulong IoBytes(int pid)
+    ~ProcessMonitorSampler()
     {
-        using var h = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
-        return !h.IsInvalid && GetProcessIoCounters(h, out var c) ? c.ReadTransferCount + c.WriteTransferCount : 0;
+        if (_buffer != IntPtr.Zero) Marshal.FreeHGlobal(_buffer);
     }
 
     /// <summary>PID có cửa sổ chính hiển thị (cửa sổ cấp cao nhất, không có chủ, có tiêu đề).</summary>
@@ -87,46 +105,64 @@ public sealed class ProcessMonitorSampler
         return pids;
     }
 
+    /// <summary>Chụp bảng tiến trình của kernel; buffer giữ lại giữa các lần, thiếu chỗ thì nới rộng.</summary>
+    private bool QueryProcesses()
+    {
+        if (_buffer == IntPtr.Zero) (_bufferSize, _buffer) = (1 << 20, Marshal.AllocHGlobal(1 << 20));
+        for (var i = 0; i < 5; i++)
+        {
+            var status = NtQuerySystemInformation(SystemProcessInformation, _buffer, _bufferSize, out var needed);
+            if (status == 0) return true;
+            if (status != STATUS_INFO_LENGTH_MISMATCH) return false;
+            Marshal.FreeHGlobal(_buffer);
+            _bufferSize = Math.Max(needed, _bufferSize) + (256 << 10); // dư chỗ cho tiến trình mới sinh giữa hai lần gọi
+            _buffer = Marshal.AllocHGlobal(_bufferSize);
+        }
+        return false;
+    }
+
+    /// <summary>"chrome.exe" → "chrome", giống Process.ProcessName.</summary>
+    private static string ProcessName(in UNICODE_STRING image)
+    {
+        var name = image.Buffer == IntPtr.Zero ? "" : Marshal.PtrToStringUni(image.Buffer, image.Length / 2);
+        return name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? name[..^4] : name;
+    }
+
     public List<ProcessSample> Sample()
     {
         var now = DateTime.UtcNow;
         var windows = PidsWithWindows();
         var result = new List<ProcessSample>();
+        if (!QueryProcesses()) return result;
         var seen = new HashSet<int>();
-        foreach (var p in Process.GetProcesses())
+        var offset = 0;
+        while (true)
         {
-            using (p)
+            var info = Marshal.PtrToStructure<SYSTEM_PROCESS_INFORMATION>(_buffer + offset);
+            var pid = (int)info.UniqueProcessId;
+            if (pid != 0) // 0: Idle — thời gian rảnh của CPU, không phải tiến trình
             {
-                if (p.Id is 0 or 4) continue;
-                try
+                var name = ProcessName(info.ImageName);
+                var cpuTime = info.UserTime + info.KernelTime; // đơn vị 100 ns
+                var ioBytes = info.ReadTransferCount + info.WriteTransferCount;
+                double cpu = 0, io = 0;
+                string? path;
+                if (_last.TryGetValue(pid, out var prev) && prev.Start == info.CreateTime)
                 {
-                    var ws = p.WorkingSet64;
-                    var session = p.SessionId;
-                    double cpu = 0, io = 0;
-                    string? path = null;
-                    try
-                    {
-                        var start = p.StartTime;
-                        var total = p.TotalProcessorTime;
-                        var ioBytes = IoBytes(p.Id);
-                        if (_last.TryGetValue(p.Id, out var prev) && prev.Start == start)
-                        {
-                            path = prev.Path;
-                            var seconds = (now - prev.At).TotalSeconds;
-                            var wall = seconds * 1000 * Environment.ProcessorCount;
-                            if (wall > 0) cpu = Math.Clamp((total - prev.Cpu).TotalMilliseconds * 100.0 / wall, 0, 100);
-                            if (seconds > 0 && ioBytes >= prev.Io) io = (ioBytes - prev.Io) / seconds;
-                        }
-                        else path = SystemInfo.ProcessPath(p.Id);
-                        _last[p.Id] = (start, total, now, path, ioBytes);
-                    }
-                    catch (Win32Exception) { }               // tiến trình được bảo vệ: không đọc được thời gian CPU
-                    catch (InvalidOperationException) { continue; }
-                    seen.Add(p.Id);
-                    result.Add(new ProcessSample(p.Id, p.ProcessName, path, session, windows.Contains(p.Id), cpu, ws, io));
+                    path = prev.Path;
+                    var seconds = (now - prev.At).TotalSeconds;
+                    var wall = seconds * 10_000_000 * Environment.ProcessorCount;
+                    if (wall > 0) cpu = Math.Clamp((cpuTime - prev.Cpu) * 100.0 / wall, 0, 100);
+                    if (seconds > 0 && ioBytes >= prev.Io) io = (ioBytes - prev.Io) / seconds;
                 }
-                catch (InvalidOperationException) { } // vừa thoát
+                else path = pid == 4 ? null : SystemInfo.ProcessPath(pid);
+                _last[pid] = (info.CreateTime, cpuTime, now, path, ioBytes);
+                seen.Add(pid);
+                result.Add(new ProcessSample(pid, name, path, (int)info.SessionId, windows.Contains(pid), cpu,
+                    (long)(ulong)info.WorkingSetSize, io));
             }
+            if (info.NextEntryOffset == 0) break;
+            offset += (int)info.NextEntryOffset;
         }
         foreach (var gone in _last.Keys.Where(k => !seen.Contains(k)).ToList()) _last.Remove(gone);
         return result;
